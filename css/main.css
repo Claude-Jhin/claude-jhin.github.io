@@ -1080,12 +1080,12 @@ pre code {
 }
 @media (min-width: 1200px) {
   .header-inner {
-    width: 1350px;
+    width: 80em;
   }
 }
 @media (min-width: 1600px) {
   .header-inner {
-    width: 73%;
+    width: 80%;
   }
 }
 .site-brand-container {
@@ -1554,12 +1554,12 @@ pre code {
 }
 @media (min-width: 1200px) {
   .footer-inner {
-    width: 1350px;
+    width: 80em;
   }
 }
 @media (min-width: 1600px) {
   .footer-inner {
-    width: 73%;
+    width: 80%;
   }
 }
 .use-motion .footer {
@@ -2512,12 +2512,12 @@ ul.breadcrumb li:last-child {
 }
 @media (min-width: 1200px) {
   .main {
-    width: 1350px;
+    width: 80em;
   }
 }
 @media (min-width: 1600px) {
   .main {
-    width: 73%;
+    width: 80%;
   }
 }
 @media (max-width: 991px) {
@@ -2799,4 +2799,10 @@ ul.breadcrumb li:last-child {
   .comments {
     padding: 10px 54px;
   }
+}
+.fireworks {
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  top: 0;
 }
