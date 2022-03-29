@@ -1,271 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<search>
-  <entry>
-    <title>快速建站方案（hexo + next）全面记录</title>
-    <url>/2022/03/23/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/</url>
-    <content><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本文记录了笔者在搭建 <a href="https://claude-jhin.github.io/">个人博客网站</a> 时所经历的过程，包含整个流程和中间遇到的一些麻烦。<br>这里记录下来，作为自己一个阶段对网站开发学习的总结，并且如果能够帮助或者启发更多的人，也将不胜荣幸。<br>当然，笔者并不是专业的前端开发人员，前端开发只是作为工具而去粗浅的使用，所以在一些细节上难以尽善尽美。</p>
-<span id="more"></span>
-
-<p>本文仅是对工具浮于表面的粗浅使用，更多的信息还是请参考备注的各种官方链接。</p>
-<h3 id="Hexo简介"><a href="#Hexo简介" class="headerlink" title="Hexo简介"></a>Hexo简介</h3><p>依据 <a href="https://hexo.io/zh-cn">Hexo中文官网</a> 中的介绍，Hexo是一个快速、简洁且高效的博客框架。<br>最直观的，在这套框架的帮助下，我们可以很快的通过markdown来完成一篇又一篇博客的编辑。<br>此外，Hexo也是可扩展的，在各种各样插件的帮助下，可以实现多种多样的前端效果。</p>
-<h3 id="next简介"><a href="#next简介" class="headerlink" title="next简介"></a>next简介</h3><p>next是Hexo丰富多彩的主题中比较受欢迎的一个，其本身是一个 <a href="https://github.com/next-theme/hexo-theme-next">开源的项目</a> 到现在一直在不断得推出新的版本。</p>
-<p>如果说Hexo是对前端开发的简化和封装，那么next就是对hexo框架允许内的前端效果的封装。<br>在这两者的帮助下，降低了开发难度，让使用者可以仅仅通过简单的配置就可以拥有和维护属于自己的博客网站。</p>
-<h2 id="本地基础开发环境准备"><a href="#本地基础开发环境准备" class="headerlink" title="本地基础开发环境准备"></a>本地基础开发环境准备</h2><ul>
-<li><a href="https://nodejs.org/">Node.js</a></li>
-</ul>
-<p>下载后依据导航安装即可，推荐下载长期支持版（LTS）。</p>
-<ul>
-<li><a href="https://git-scm.com/">Git</a></li>
-</ul>
-<p>下载后依据导航安装即可，Git安装过程中会有很多的配置选项，如果有特定需求的话（了解其各个配置选项的含义）可以按需配置，否则就按照推荐选项进行安装即可。</p>
-<p>安装完成后，右键的下拉菜单中就会出现Git相关的功能选项。</p>
-<p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_rightclick.png"></p>
-<h2 id="hexo环境搭建"><a href="#hexo环境搭建" class="headerlink" title="hexo环境搭建"></a>hexo环境搭建</h2><p>在基本环境准备完成后，即可开始hexo相关的下载和安装。</p>
-<p>在预先准备好的文件夹下（如 E:&#x2F;Blog&#x2F;），右键打开下拉菜单，点击Git Bash Here，输入下面的命令后点击回车键：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
-
-<p>如图：</p>
-<p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_gitbush.png"></p>
-<p>完成后，再执行以下命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo init</span><br></pre></td></tr></table></figure>
-
-<p>完成后，对应文件夹中出现内容，目录如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">.</span><br><span class="line">├── _config.yml</span><br><span class="line">├── package.json</span><br><span class="line">├── scaffolds</span><br><span class="line">├── source</span><br><span class="line">|   ├── _drafts</span><br><span class="line">|   └── _posts</span><br><span class="line">└── themes</span><br></pre></td></tr></table></figure>
-
-<p>以上各文件各有作用，和我们博客最后的表现息息相关，在具体配置和使用时我们再做详细介绍。</p>
-<p>最后执行以下命令完成配置：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install</span><br></pre></td></tr></table></figure>
-
-<p>在等待上述命令执行完成后，可以在命令行键入以下命令启动hexo服务器：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-
-<p>此时，本地服务启动成功，可以在浏览器中键入<code>http://localhost:4000/</code> 来尝试访问默认的博客模板，<br>出现以下页面即表示着前面的安装过程没有出现问题：</p>
-<p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_defaultpage.png"></p>
-<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>在文件夹中找到 <code>_config.yml</code> 文件，该文件即是博客的主要配置文件，其中包含了绝大部分关于网站的我们可以自定义的部分。</p>
-<p>预想要完成博客的个性化定制，需要对该文件各个部分的配置内容有个大概的了解。这里罗列一些核心部分，剩余部分的配置建议参考 <a href="https://hexo.io/zh-cn/docs/configuration">官方网站的内容</a> 。</p>
-<p>当然，如果对美观和个性化没有需求的话，这一小节可以暂时先掠过，先进行后面的阅读。</p>
-<h3 id="Site"><a href="#Site" class="headerlink" title="Site"></a>Site</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Site</span><br><span class="line">title: </span><br><span class="line">subtitle: </span><br><span class="line">description: </span><br><span class="line">keywords: </span><br><span class="line">author: </span><br><span class="line">language: </span><br><span class="line">timezone: </span><br></pre></td></tr></table></figure>
-<p>这里是网站的一些主要属性的配置，其中各项代表的含义为：</p>
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">title</td>
-<td align="center">网站标题</td>
-</tr>
-<tr>
-<td align="center">subtitle</td>
-<td align="center">网站副标题</td>
-</tr>
-<tr>
-<td align="center">description</td>
-<td align="center">网站描述</td>
-</tr>
-<tr>
-<td align="center">keywords</td>
-<td align="center">网站的关键词。支持多个关键词。</td>
-</tr>
-<tr>
-<td align="center">author</td>
-<td align="center">您的名字</td>
-</tr>
-<tr>
-<td align="center">language</td>
-<td align="center">网站使用的语言。对于简体中文用户来说，使用不同的主题可能需要设置成不同的值，请参考你的主题的文档自行设置，常见的有 zh-Hans和 zh-CN。</td>
-</tr>
-<tr>
-<td align="center">timezone</td>
-<td align="center">网站时区。Hexo 默认使用您电脑的时区。请参考 时区列表 进行设置，如 America&#x2F;New_York, Japan, 和 UTC 。一般的，对于中国大陆地区可以使用 Asia&#x2F;Shanghai。</td>
-</tr>
-</tbody></table>
-<h3 id="URL"><a href="#URL" class="headerlink" title="URL"></a>URL</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># URL</span><br><span class="line">url: https://claude-jhin.github.io/</span><br><span class="line">permalink: :year/:month/:day/:title/</span><br><span class="line">permalink_defaults:</span><br><span class="line">pretty_urls:</span><br><span class="line">  trailing_index: true # Set to false to remove trailing &#x27;index.html&#x27; from permalinks</span><br><span class="line">  trailing_html: true # Set to false to remove trailing &#x27;.html&#x27; from permalinks</span><br></pre></td></tr></table></figure>
-
-<p>这里是关于网站url的一些配置相关的内容，主要作用是对url进行美化。</p>
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">url</td>
-<td align="center">后键入自己准备好的域名，我这里使用的是github提供的免费域名。</td>
-</tr>
-<tr>
-<td align="center">permalink</td>
-<td align="center">表示的是每一个我们编辑的markdown博客文件应该是以什么样子的域名来显示的，默认是以年+月+日+文章名字的形式。</td>
-</tr>
-<tr>
-<td align="center">permalink_defaults</td>
-<td align="center">是对permalink给出一个默认值。</td>
-</tr>
-<tr>
-<td align="center">trailing_index</td>
-<td align="center">是否为博客文件保留<code>index.html</code> 的后缀</td>
-</tr>
-<tr>
-<td align="center">trailing_html</td>
-<td align="center">是否为博客文件保留<code>.html</code> 的后缀</td>
-</tr>
-</tbody></table>
-<h3 id="Home-page-setting"><a href="#Home-page-setting" class="headerlink" title="Home page setting"></a>Home page setting</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Home page setting</span><br><span class="line"># path: Root path for your blogs index page. (default = &#x27;&#x27;) 博客索引页的根目录</span><br><span class="line"># per_page: Posts displayed per page. (0 = disable pagination) 每一页显示的文章数量</span><br><span class="line"># order_by: Posts order. (Order by date descending by default) 文章的排序方式</span><br><span class="line">index_generator:</span><br><span class="line">path: &#x27;&#x27;</span><br><span class="line">per_page: 10</span><br><span class="line">order_by: -date</span><br></pre></td></tr></table></figure>
-
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">path</td>
-<td align="center">博客索引页的根目录</td>
-</tr>
-<tr>
-<td align="center">per_page</td>
-<td align="center">每一页显示的文章数量</td>
-</tr>
-<tr>
-<td align="center">order_by</td>
-<td align="center">文章的排序方式</td>
-</tr>
-</tbody></table>
-<h3 id="Extension"><a href="#Extension" class="headerlink" title="Extension"></a>Extension</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">## Plugins: https://hexo.io/plugins/</span><br><span class="line">## Themes: https://hexo.io/themes/</span><br><span class="line">theme: next</span><br></pre></td></tr></table></figure>
-
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">theme</td>
-<td align="center">所选择的主题，主题下载后保存在根目录的themes文件夹下，通过这里指定加载的主题。</td>
-</tr>
-</tbody></table>
-<h2 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h2><h3 id="创建文章"><a href="#创建文章" class="headerlink" title="创建文章"></a>创建文章</h3><p>新建文章的指令为：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ hexo new [layout] &lt;title&gt;</span><br></pre></td></tr></table></figure>
-<p>其中 [layout] 默认有：</p>
-<table>
-<thead>
-<tr>
-<th align="center">布局</th>
-<th align="center">路径</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">post</td>
-<td align="center">source&#x2F;_posts</td>
-</tr>
-<tr>
-<td align="center">page</td>
-<td align="center">source</td>
-</tr>
-<tr>
-<td align="center">draft</td>
-<td align="center">source&#x2F;_drafts</td>
-</tr>
-<tr>
-<td align="center">在创建这三种不同类型的文件时，它们将会被保存到不同的路径。但是默认来说我们基本只需要用到post，即：</td>
-<td align="center"></td>
-</tr>
-</tbody></table>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ hexo new post &quot;文章名字&quot;</span><br></pre></td></tr></table></figure>
-
-<p>执行上面命令后，在source&#x2F;_posts文件夹下就会生成对应的md文件，按照md格式进行文档的编辑即可。</p>
-<p>截取本文的编辑界面如下：</p>
-<p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_content.png"></p>
-<h3 id="配置文章属性（Front-matter）"><a href="#配置文章属性（Front-matter）" class="headerlink" title="配置文章属性（Front-matter）"></a>配置文章属性（Front-matter）</h3><p>与博客一样，每篇文章除了内容以外，还有自己的属性，如建立时间、更行时间、分类和标签等。</p>
-<p>博客模板会利用这些属性来自动实现一些高级的功能，如显示博客文章时间戳，按照分类来讲文章进行归档等。<br>post模板会自动帮助我们创建出title，date和tags，此外还有一些其他内容，如下：</p>
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">title</td>
-<td align="center">标题</td>
-</tr>
-<tr>
-<td align="center">date</td>
-<td align="center">文件建立日期</td>
-</tr>
-<tr>
-<td align="center">updated</td>
-<td align="center">更新日期    文件更新日期</td>
-</tr>
-<tr>
-<td align="center">comments</td>
-<td align="center">开启文章的评论功能（true&#x2F;false）</td>
-</tr>
-<tr>
-<td align="center">tags</td>
-<td align="center">标签（不适用于分页）</td>
-</tr>
-<tr>
-<td align="center">categories</td>
-<td align="center">分类（不适用于分页）</td>
-</tr>
-</tbody></table>
-<p>如本文的Front-matter：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">title: 快速建站方案（hexo + next）全面记录</span><br><span class="line">date: 2022-03-23 21:35:53</span><br><span class="line">updated: 2022-03-24 20:00:00</span><br><span class="line">comments: true</span><br><span class="line">tags:</span><br><span class="line">  - 前端</span><br><span class="line">categories: </span><br><span class="line">  - hexo</span><br></pre></td></tr></table></figure>
-
-<h2 id="next主题"><a href="#next主题" class="headerlink" title="next主题"></a>next主题</h2><h3 id="主题下载与加载"><a href="#主题下载与加载" class="headerlink" title="主题下载与加载"></a>主题下载与加载</h3><p>在hexoblog文件夹下打开命令行，键入并执行：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git clone https://github.com/next-theme/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure>
-
-<p>等待完成后，有：</p>
-<p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_nextexplorer.png"></p>
-<p>在hexoblog下的_config.yml里配置theme即可：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">theme: next</span><br></pre></td></tr></table></figure>
-
-<h3 id="预览"><a href="#预览" class="headerlink" title="预览"></a>预览</h3><p>在hexoblog文件夹下打开命令行，键入并执行：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-
-<p>有：</p>
-<p>![](.&#x2F;快速建站全面记录&#x2F;快速建站全面记录_hexo s.png)</p>
-<p>此时就可以在浏览器中用 <code>http://localhost:4000/</code> 的地址来进行访问了。</p>
-<p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_localhost.png"></p>
-<p>但是注意，此时我们只是开启了一个本地服务，就是说，只能在我们开启服务时，在本地机器上进行访问，还没有发布到网络上供别人来查看。</p>
-<h2 id="github-page准备"><a href="#github-page准备" class="headerlink" title="github page准备"></a>github page准备</h2><p>在github上新建一个仓库，进入到 <code>General/Code and automation/Pages</code> 配置界面：</p>
-<p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_githubpage.png"></p>
-<p>这里顺便需要去设置界面把SSH给配置了，方便后续的更新和维护，<a href="https://docs.github.com/cn/authentication/connecting-to-github-with-ssh">具体操作</a> ，这里不做过多赘述。</p>
-<p>下面就是把之前做的内容推送到远程仓库里。</p>
-<h2 id="发布"><a href="#发布" class="headerlink" title="发布"></a>发布</h2><p>回到hexoblog文件夹下的_config.yml，将远程仓库相关内容键入（注意这里使用的是SSH地址）：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Deployment</span><br><span class="line">## Docs: https://hexo.io/docs/one-command-deployment</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:Github用户名/Github用户名全小写.github.io.git</span><br><span class="line">  branch: main</span><br></pre></td></tr></table></figure>
-
-<p>在hexoblog打开命令行，键入：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo g</span><br></pre></td></tr></table></figure>
-
-<p>生成静态页面内容后，再键入：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo d</span><br></pre></td></tr></table></figure>
-
-<p>如果是第一次的话，可能过程中还要填写github的用户名和密码，按导航完成即可。</p>
-<p>等待完成后，过一段时间（取决于github的处理），访问仓库地址（如<code>https://claude-jhin.github.io/</code> ），可以看到本地仓库已经发布到了网页。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>到此，基本上完成了从零开始的一个博客搭建，当然对于有心人来讲，事情远远还没有完成。<br>一篇篇博客的积累，一点点前端特性的尝试与引入，学习的乐趣，开发的乐趣，远不止于此。</p>
-]]></content>
+<search> 
+  
+  
+    
+    <entry>
+      <title>快速建站方案（hexo + next）全面记录</title>
+      <link href="/2022/03/23/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/"/>
+      <url>/2022/03/23/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/</url>
+      
+        <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本文记录了笔者在搭建 <a href="https://claude-jhin.github.io/">个人博客网站</a> 时所经历的过程，包含整个流程和中间遇到的一些麻烦。<br>这里记录下来，作为自己一个阶段对网站开发学习的总结，并且如果能够帮助或者启发更多的人，也将不胜荣幸。<br>当然，笔者并不是专业的前端开发人员，前端开发只是作为工具而去粗浅的使用，所以在一些细节上难以尽善尽美。</p><span id="more"></span><p>本文仅是对工具浮于表面的粗浅使用，更多的信息还是请参考备注的各种官方链接。</p><h3 id="Hexo简介"><a href="#Hexo简介" class="headerlink" title="Hexo简介"></a>Hexo简介</h3><p>依据 <a href="https://hexo.io/zh-cn">Hexo中文官网</a> 中的介绍，Hexo是一个快速、简洁且高效的博客框架。<br>最直观的，在这套框架的帮助下，我们可以很快的通过markdown来完成一篇又一篇博客的编辑。<br>此外，Hexo也是可扩展的，在各种各样插件的帮助下，可以实现多种多样的前端效果。</p><h3 id="next简介"><a href="#next简介" class="headerlink" title="next简介"></a>next简介</h3><p>next是Hexo丰富多彩的主题中比较受欢迎的一个，其本身是一个 <a href="https://github.com/next-theme/hexo-theme-next">开源的项目</a> 到现在一直在不断得推出新的版本。</p><p>如果说Hexo是对前端开发的简化和封装，那么next就是对hexo框架允许内的前端效果的封装。<br>在这两者的帮助下，降低了开发难度，让使用者可以仅仅通过简单的配置就可以拥有和维护属于自己的博客网站。</p><h2 id="本地基础开发环境准备"><a href="#本地基础开发环境准备" class="headerlink" title="本地基础开发环境准备"></a>本地基础开发环境准备</h2><ul><li><a href="https://nodejs.org/">Node.js</a></li></ul><p>下载后依据导航安装即可，推荐下载长期支持版（LTS）。</p><ul><li><a href="https://git-scm.com/">Git</a></li></ul><p>下载后依据导航安装即可，Git安装过程中会有很多的配置选项，如果有特定需求的话（了解其各个配置选项的含义）可以按需配置，否则就按照推荐选项进行安装即可。</p><p>安装完成后，右键的下拉菜单中就会出现Git相关的功能选项。</p><p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_rightclick.png"></p><h2 id="hexo环境搭建"><a href="#hexo环境搭建" class="headerlink" title="hexo环境搭建"></a>hexo环境搭建</h2><p>在基本环境准备完成后，即可开始hexo相关的下载和安装。</p><p>在预先准备好的文件夹下（如 E:&#x2F;Blog&#x2F;），右键打开下拉菜单，点击Git Bash Here，输入下面的命令后点击回车键：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ npm install -g hexo-cli</span><br></pre></td></tr></table></figure><p>如图：</p><p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_gitbush.png"></p><p>完成后，再执行以下命令：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo init</span><br></pre></td></tr></table></figure><p>完成后，对应文件夹中出现内容，目录如下：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── _config.yml</span><br><span class="line">├── package.json</span><br><span class="line">├── scaffolds</span><br><span class="line">├── source</span><br><span class="line">|   ├── _drafts</span><br><span class="line">|   └── _posts</span><br><span class="line">└── themes</span><br></pre></td></tr></table></figure><p>以上各文件各有作用，和我们博客最后的表现息息相关，在具体配置和使用时我们再做详细介绍。</p><p>最后执行以下命令完成配置：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install</span><br></pre></td></tr></table></figure><p>在等待上述命令执行完成后，可以在命令行键入以下命令启动hexo服务器：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure><p>此时，本地服务启动成功，可以在浏览器中键入<code>http://localhost:4000/</code> 来尝试访问默认的博客模板，<br>出现以下页面即表示着前面的安装过程没有出现问题：</p><p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_defaultpage.png"></p><h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>在文件夹中找到 <code>_config.yml</code> 文件，该文件即是博客的主要配置文件，其中包含了绝大部分关于网站的我们可以自定义的部分。</p><p>预想要完成博客的个性化定制，需要对该文件各个部分的配置内容有个大概的了解。这里罗列一些核心部分，剩余部分的配置建议参考 <a href="https://hexo.io/zh-cn/docs/configuration">官方网站的内容</a> 。</p><p>当然，如果对美观和个性化没有需求的话，这一小节可以暂时先掠过，先进行后面的阅读。</p><h3 id="Site"><a href="#Site" class="headerlink" title="Site"></a>Site</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Site</span><br><span class="line">title: </span><br><span class="line">subtitle: </span><br><span class="line">description: </span><br><span class="line">keywords: </span><br><span class="line">author: </span><br><span class="line">language: </span><br><span class="line">timezone: </span><br></pre></td></tr></table></figure><p>这里是网站的一些主要属性的配置，其中各项代表的含义为：</p><table><thead><tr><th align="center">参数</th><th align="center">描述</th></tr></thead><tbody><tr><td align="center">title</td><td align="center">网站标题</td></tr><tr><td align="center">subtitle</td><td align="center">网站副标题</td></tr><tr><td align="center">description</td><td align="center">网站描述</td></tr><tr><td align="center">keywords</td><td align="center">网站的关键词。支持多个关键词。</td></tr><tr><td align="center">author</td><td align="center">您的名字</td></tr><tr><td align="center">language</td><td align="center">网站使用的语言。对于简体中文用户来说，使用不同的主题可能需要设置成不同的值，请参考你的主题的文档自行设置，常见的有 zh-Hans和 zh-CN。</td></tr><tr><td align="center">timezone</td><td align="center">网站时区。Hexo 默认使用您电脑的时区。请参考 时区列表 进行设置，如 America&#x2F;New_York, Japan, 和 UTC 。一般的，对于中国大陆地区可以使用 Asia&#x2F;Shanghai。</td></tr></tbody></table><h3 id="URL"><a href="#URL" class="headerlink" title="URL"></a>URL</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># URL</span><br><span class="line">url: https://claude-jhin.github.io/</span><br><span class="line">permalink: :year/:month/:day/:title/</span><br><span class="line">permalink_defaults:</span><br><span class="line">pretty_urls:</span><br><span class="line">  trailing_index: true # Set to false to remove trailing &#x27;index.html&#x27; from permalinks</span><br><span class="line">  trailing_html: true # Set to false to remove trailing &#x27;.html&#x27; from permalinks</span><br></pre></td></tr></table></figure><p>这里是关于网站url的一些配置相关的内容，主要作用是对url进行美化。</p><table><thead><tr><th align="center">参数</th><th align="center">描述</th></tr></thead><tbody><tr><td align="center">url</td><td align="center">后键入自己准备好的域名，我这里使用的是github提供的免费域名。</td></tr><tr><td align="center">permalink</td><td align="center">表示的是每一个我们编辑的markdown博客文件应该是以什么样子的域名来显示的，默认是以年+月+日+文章名字的形式。</td></tr><tr><td align="center">permalink_defaults</td><td align="center">是对permalink给出一个默认值。</td></tr><tr><td align="center">trailing_index</td><td align="center">是否为博客文件保留<code>index.html</code> 的后缀</td></tr><tr><td align="center">trailing_html</td><td align="center">是否为博客文件保留<code>.html</code> 的后缀</td></tr></tbody></table><h3 id="Home-page-setting"><a href="#Home-page-setting" class="headerlink" title="Home page setting"></a>Home page setting</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Home page setting</span><br><span class="line"># path: Root path for your blogs index page. (default = &#x27;&#x27;) 博客索引页的根目录</span><br><span class="line"># per_page: Posts displayed per page. (0 = disable pagination) 每一页显示的文章数量</span><br><span class="line"># order_by: Posts order. (Order by date descending by default) 文章的排序方式</span><br><span class="line">index_generator:</span><br><span class="line">path: &#x27;&#x27;</span><br><span class="line">per_page: 10</span><br><span class="line">order_by: -date</span><br></pre></td></tr></table></figure><table><thead><tr><th align="center">参数</th><th align="center">描述</th></tr></thead><tbody><tr><td align="center">path</td><td align="center">博客索引页的根目录</td></tr><tr><td align="center">per_page</td><td align="center">每一页显示的文章数量</td></tr><tr><td align="center">order_by</td><td align="center">文章的排序方式</td></tr></tbody></table><h3 id="Extension"><a href="#Extension" class="headerlink" title="Extension"></a>Extension</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">## Plugins: https://hexo.io/plugins/</span><br><span class="line">## Themes: https://hexo.io/themes/</span><br><span class="line">theme: next</span><br></pre></td></tr></table></figure><table><thead><tr><th align="center">参数</th><th align="center">描述</th></tr></thead><tbody><tr><td align="center">theme</td><td align="center">所选择的主题，主题下载后保存在根目录的themes文件夹下，通过这里指定加载的主题。</td></tr></tbody></table><h2 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h2><h3 id="创建文章"><a href="#创建文章" class="headerlink" title="创建文章"></a>创建文章</h3><p>新建文章的指令为：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new [layout] &lt;title&gt;</span><br></pre></td></tr></table></figure><p>其中 [layout] 默认有：</p><table><thead><tr><th align="center">布局</th><th align="center">路径</th></tr></thead><tbody><tr><td align="center">post</td><td align="center">source&#x2F;_posts</td></tr><tr><td align="center">page</td><td align="center">source</td></tr><tr><td align="center">draft</td><td align="center">source&#x2F;_drafts</td></tr><tr><td align="center">在创建这三种不同类型的文件时，它们将会被保存到不同的路径。但是默认来说我们基本只需要用到post，即：</td><td align="center"></td></tr></tbody></table><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new post &quot;文章名字&quot;</span><br></pre></td></tr></table></figure><p>执行上面命令后，在source&#x2F;_posts文件夹下就会生成对应的md文件，按照md格式进行文档的编辑即可。</p><p>截取本文的编辑界面如下：</p><p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_content.png"></p><h3 id="配置文章属性（Front-matter）"><a href="#配置文章属性（Front-matter）" class="headerlink" title="配置文章属性（Front-matter）"></a>配置文章属性（Front-matter）</h3><p>与博客一样，每篇文章除了内容以外，还有自己的属性，如建立时间、更行时间、分类和标签等。</p><p>博客模板会利用这些属性来自动实现一些高级的功能，如显示博客文章时间戳，按照分类来讲文章进行归档等。<br>post模板会自动帮助我们创建出title，date和tags，此外还有一些其他内容，如下：</p><table><thead><tr><th align="center">参数</th><th align="center">描述</th></tr></thead><tbody><tr><td align="center">title</td><td align="center">标题</td></tr><tr><td align="center">date</td><td align="center">文件建立日期</td></tr><tr><td align="center">updated</td><td align="center">更新日期    文件更新日期</td></tr><tr><td align="center">comments</td><td align="center">开启文章的评论功能（true&#x2F;false）</td></tr><tr><td align="center">tags</td><td align="center">标签（不适用于分页）</td></tr><tr><td align="center">categories</td><td align="center">分类（不适用于分页）</td></tr></tbody></table><p>如本文的Front-matter：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">title: 快速建站方案（hexo + next）全面记录</span><br><span class="line">date: 2022-03-23 21:35:53</span><br><span class="line">updated: 2022-03-24 20:00:00</span><br><span class="line">comments: true</span><br><span class="line">tags:</span><br><span class="line">  - 前端</span><br><span class="line">categories: </span><br><span class="line">  - hexo</span><br></pre></td></tr></table></figure><h2 id="next主题"><a href="#next主题" class="headerlink" title="next主题"></a>next主题</h2><h3 id="主题下载与加载"><a href="#主题下载与加载" class="headerlink" title="主题下载与加载"></a>主题下载与加载</h3><p>在hexoblog文件夹下打开命令行，键入并执行：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/next-theme/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure><p>等待完成后，有：</p><p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_nextexplorer.png"></p><p>在hexoblog下的_config.yml里配置theme即可：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">theme: next</span><br></pre></td></tr></table></figure><h3 id="预览"><a href="#预览" class="headerlink" title="预览"></a>预览</h3><p>在hexoblog文件夹下打开命令行，键入并执行：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure><p>有：</p><p>![](.&#x2F;快速建站全面记录&#x2F;快速建站全面记录_hexo s.png)</p><p>此时就可以在浏览器中用 <code>http://localhost:4000/</code> 的地址来进行访问了。</p><p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_localhost.png"></p><p>但是注意，此时我们只是开启了一个本地服务，就是说，只能在我们开启服务时，在本地机器上进行访问，还没有发布到网络上供别人来查看。</p><h2 id="github-page准备"><a href="#github-page准备" class="headerlink" title="github page准备"></a>github page准备</h2><p>在github上新建一个仓库，进入到 <code>General/Code and automation/Pages</code> 配置界面：</p><p><img src="/./%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95/%E5%BF%AB%E9%80%9F%E5%BB%BA%E7%AB%99%E5%85%A8%E9%9D%A2%E8%AE%B0%E5%BD%95_githubpage.png"></p><p>这里顺便需要去设置界面把SSH给配置了，方便后续的更新和维护，<a href="https://docs.github.com/cn/authentication/connecting-to-github-with-ssh">具体操作</a> ，这里不做过多赘述。</p><p>下面就是把之前做的内容推送到远程仓库里。</p><h2 id="发布"><a href="#发布" class="headerlink" title="发布"></a>发布</h2><p>回到hexoblog文件夹下的_config.yml，将远程仓库相关内容键入（注意这里使用的是SSH地址）：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># Deployment</span><br><span class="line">## Docs: https://hexo.io/docs/one-command-deployment</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:Github用户名/Github用户名全小写.github.io.git</span><br><span class="line">  branch: main</span><br></pre></td></tr></table></figure><p>在hexoblog打开命令行，键入：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo g</span><br></pre></td></tr></table></figure><p>生成静态页面内容后，再键入：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo d</span><br></pre></td></tr></table></figure><p>如果是第一次的话，可能过程中还要填写github的用户名和密码，按导航完成即可。</p><p>等待完成后，过一段时间（取决于github的处理），访问仓库地址（如<code>https://claude-jhin.github.io/</code> ），可以看到本地仓库已经发布到了网页。</p><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>到此，基本上完成了从零开始的一个博客搭建，当然对于有心人来讲，事情远远还没有完成。<br>一篇篇博客的积累，一点点前端特性的尝试与引入，学习的乐趣，开发的乐趣，远不止于此。</p>]]></content>
+      
+      
       <categories>
-        <category>hexo</category>
+          
+          <category> hexo </category>
+          
       </categories>
-      <tags>
-        <tag>frontend</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>第一篇自建博客的尝试</title>
-    <url>/2022/03/23/%E7%AC%AC%E4%B8%80%E7%AF%87%E8%87%AA%E5%BB%BA%E5%8D%9A%E5%AE%A2%E7%9A%84%E5%B0%9D%E8%AF%95/</url>
-    <content><![CDATA[<p>为什么要建立自己的博客网站呢？</p>
-<p>主要是希望能够通过这样一种方式作为自身能力的展示。作为游戏开发流水线中的程序一角，与策划和美术不同的是，程序除了游戏作品以外，很难拿出能够显示自身实力的东西，类似美术人员的作品集和策划人员的舌灿莲花之类的。</p>
-<p>所以自己这才想到去建立这样一个博客网站，一方面记录自己在游戏开发之路上的点滴，另一方面亦可作对外人的展示之用。</p>
-<p>此前自己已经在csdn和知乎上进行了一定程度的博客积累，但是始终从技术的角度出发，有一种廉价之感，遂花了一些时间研究前端的内容，并且就一个方案（hexo框架）来实际落地自己的想法。</p>
-<p>这第一篇文章，就把自己此时完成建站时的所思所想，记录下来。</p>
-]]></content>
-  </entry>
+      
+      
+        <tags>
+            
+            <tag> frontend </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>第一篇自建博客的尝试</title>
+      <link href="/2022/03/23/%E7%AC%AC%E4%B8%80%E7%AF%87%E8%87%AA%E5%BB%BA%E5%8D%9A%E5%AE%A2%E7%9A%84%E5%B0%9D%E8%AF%95/"/>
+      <url>/2022/03/23/%E7%AC%AC%E4%B8%80%E7%AF%87%E8%87%AA%E5%BB%BA%E5%8D%9A%E5%AE%A2%E7%9A%84%E5%B0%9D%E8%AF%95/</url>
+      
+        <content type="html"><![CDATA[<p>为什么要建立自己的博客网站呢？</p><p>主要是希望能够通过这样一种方式作为自身能力的展示。作为游戏开发流水线中的程序一角，与策划和美术不同的是，程序除了游戏作品以外，很难拿出能够显示自身实力的东西，类似美术人员的作品集和策划人员的舌灿莲花之类的。</p><p>所以自己这才想到去建立这样一个博客网站，一方面记录自己在游戏开发之路上的点滴，另一方面亦可作对外人的展示之用。</p><p>此前自己已经在csdn和知乎上进行了一定程度的博客积累，但是始终从技术的角度出发，有一种廉价之感，遂花了一些时间研究前端的内容，并且就一个方案（hexo框架）来实际落地自己的想法。</p><p>这第一篇文章，就把自己此时完成建站时的所思所想，记录下来。</p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+  
+  
 </search>
