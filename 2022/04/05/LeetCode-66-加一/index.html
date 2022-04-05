@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/profile.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="KUflL11YgFFV-BXkuh_GOzF_0UQxhAIifFwOB4vPcH4">
+  <meta name="msvalidate.01" content="26DFEC846CC3A3E5CE260CAF90C4F9A5">
+  <meta name="baidu-site-verification" content="code-LgifJoRihJ">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" integrity="sha256-jTIdiMuX/e3DGJUGwl3pKSxuc6YOuqtJYkM0bGQESA4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/black/pace-theme-corner-indicator.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"claude-jhin.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.10.1","exturl":false,"sidebar":{"position":"right","width":260,"display":"post","padding":18,"offset":54},"copycode":true,"bookmark":{"enable":true,"color":"#222","save":"manual"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="循环进位">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LeetCode 66 加一">
+<meta property="og:url" content="https://claude-jhin.github.io/2022/04/05/LeetCode-66-%E5%8A%A0%E4%B8%80/index.html">
+<meta property="og:site_name" content="Claude的游戏之路">
+<meta property="og:description" content="循环进位">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/e7df2a129b68411fa582bec0b19b1a7b.png">
+<meta property="article:published_time" content="2022-04-04T19:13:02.000Z">
+<meta property="article:modified_time" content="2022-04-04T19:29:09.188Z">
+<meta property="article:author" content="Claude">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="LeetCode">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/e7df2a129b68411fa582bec0b19b1a7b.png">
+
+
+<link rel="canonical" href="https://claude-jhin.github.io/2022/04/05/LeetCode-66-%E5%8A%A0%E4%B8%80/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/04/05/LeetCode-66-%E5%8A%A0%E4%B8%80/","path":"2022/04/05/LeetCode-66-加一/","title":"LeetCode 66 加一"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>LeetCode 66 加一 | Claude的游戏之路</title>
+  
+
+
+
+
+<script src="/lib/fireworks.js"></script>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Claude的游戏之路</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">记录游戏开发的点滴</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E8%A6%81%E6%B1%82"><span class="nav-number">1.</span> <span class="nav-text"> 题目要求</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A7%A3%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text"> 解法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E8%BF%9B%E4%BD%8D"><span class="nav-number">2.1.</span> <span class="nav-text"> 循环进位</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Claude"
+      src="/images/profile_1.png">
+  <p class="site-author-name" itemprop="name">Claude</p>
+  <div class="site-description" itemprop="description">专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">30</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Claude-Jhin" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Claude-Jhin" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6321645600" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6321645600" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.csdn.net/xcinkey" title="https:&#x2F;&#x2F;blog.csdn.net&#x2F;xcinkey" rel="noopener" target="_blank">CSDN</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://claude-jhin.itch.io/" title="https:&#x2F;&#x2F;claude-jhin.itch.io&#x2F;" rel="noopener" target="_blank">Game Jam Profile</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/05/LeetCode-66-%E5%8A%A0%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="LeetCode 66 加一 | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LeetCode 66 加一
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-04-05 03:13:02 / 修改时间：03:29:09" itemprop="dateCreated datePublished" datetime="2022-04-05T03:13:02+08:00">2022-04-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/LeetCode/" itemprop="url" rel="index"><span itemprop="name">LeetCode</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/LeetCode/%E7%AE%80%E5%8D%95/" itemprop="url" rel="index"><span itemprop="name">简单</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>916</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><ul class="markdownIt-TOC">
+<li><a href="#%E5%BE%AA%E7%8E%AF%E8%BF%9B%E4%BD%8D">循环进位</a></li>
+</ul>
+</p>
+<span id="more"></span>
+<h1 id="题目要求"><a class="markdownIt-Anchor" href="#题目要求"></a> 题目要求</h1>
+<font color=#999AAA >
+给定一个由 整数 组成的 非空 数组所表示的非负整数，在该数的基础上加一。
+</font> 
+<font color=#999AAA >
+最高位数字存放在数组的首位， 数组中每个元素只存储单个数字。
+</font> 
+<font color=#999AAA >
+你可以假设除了整数 0 之外，这个整数不会以零开头。
+</font> 
+<p>示例 1：</p>
+<p>输入：digits = [1,2,3]<br />
+输出：[1,2,4]<br />
+解释：输入数组表示数字 123。<br />
+示例 2：</p>
+<p>输入：digits = [4,3,2,1]<br />
+输出：[4,3,2,2]<br />
+解释：输入数组表示数字 4321。<br />
+示例 3：</p>
+<p>输入：digits = [0]<br />
+输出：[1]</p>
+<p>来源：力扣（LeetCode）<br />
+链接：<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/plus-one">https://leetcode-cn.com/problems/plus-one</a><br />
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+<h1 id="解法"><a class="markdownIt-Anchor" href="#解法"></a> 解法</h1>
+<h2 id="循环进位"><a class="markdownIt-Anchor" href="#循环进位"></a> 循环进位</h2>
+<p>从数组最后一位开始遍历，如果有进位的话则继续下一位加一，最后需要在循环结束时判断是否还有进位，有的话则需要重新申请内存。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">plusOne</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; digits)</span> </span>&#123;</span><br><span class="line">        <span class="type">int</span> len = digits.<span class="built_in">size</span>();</span><br><span class="line">        <span class="type">int</span> end = len - <span class="number">1</span>;</span><br><span class="line">        <span class="type">int</span> carry = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = end; i &gt;= <span class="number">0</span>; i--)</span><br><span class="line">        &#123;</span><br><span class="line">            digits[i] += <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (digits[i] &gt;= <span class="number">10</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                carry = <span class="number">1</span>;</span><br><span class="line">                digits[i] = digits[i] % <span class="number">10</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                carry = <span class="number">0</span>;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (carry == <span class="number">1</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            vector&lt;<span class="type">int</span>&gt; vtemp;</span><br><span class="line">            vtemp.<span class="built_in">push_back</span>(<span class="number">1</span>);</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; i++)</span><br><span class="line">            &#123;</span><br><span class="line">                vtemp.<span class="built_in">push_back</span>(digits[i]);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> vtemp;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> digits;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="https://img-blog.csdnimg.cn/e7df2a129b68411fa582bec0b19b1a7b.png" alt="在这里插入图片描述" /></p>
+<p>复杂度分析<br />
+时间复杂度： <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathdefault">n</span><span class="mclose">)</span></span></span></span><br />
+空间复杂度： <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span></p>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Claude
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://claude-jhin.github.io/2022/04/05/LeetCode-66-%E5%8A%A0%E4%B8%80/" title="LeetCode 66 加一">https://claude-jhin.github.io/2022/04/05/LeetCode-66-加一/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://t.me/channel_name">
+          <span class="icon">
+            <i class="fab fa-telegram"></i>
+          </span>
+
+          <span class="label">Telegram</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/jin-yuan-60-21">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">Zhihu</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://blog.csdn.net/xcinkey">
+          <span class="icon">
+            <i class="fab fa-csdn"></i>
+          </span>
+
+          <span class="label">CSDN</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"><i class="fa fa-tag"></i> 算法</a>
+              <a href="/tags/C/" rel="tag"><i class="fa fa-tag"></i> C++</a>
+              <a href="/tags/LeetCode/" rel="tag"><i class="fa fa-tag"></i> LeetCode</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/04/05/LeetCode-58-%E6%9C%80%E5%90%8E%E4%B8%80%E4%B8%AA%E5%8D%95%E8%AF%8D%E7%9A%84%E9%95%BF%E5%BA%A6/" rel="prev" title="LeetCode 58 最后一个单词的长度">
+                  <i class="fa fa-chevron-left"></i> LeetCode 58 最后一个单词的长度
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/04/05/LeetCode-67-%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%B1%82%E5%92%8C/" rel="next" title="LeetCode 67 二进制求和">
+                  LeetCode 67 二进制求和 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Claude</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">27k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">25 分钟</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><script color="0,0,0" opacity="1" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdn.jsdelivr.net/npm/pdfobject@2.2.7/pdfobject.min.js","integrity":"sha256-ph3Dk89VmuTVXG6x/RDzk53SU9LPdAh1tpv0UvnDZ2I="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" integrity="sha256-94CNZ/bJtwrBYZrXhCOBvpB4rZUzBnvAsirFv31TMGo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.css" integrity="sha256-+oItviPaTmqjDhk4y4fLLUIMgRQYDV/ZyrRNvQiebWM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.js","integrity":"sha256-etSqbSVF4+Lwe8MGk/Vanc1sR+mWv+qOG73fxWw9p94="}}</script>
+  <script src="/js/third-party/math/katex.js"></script>
+
+
+
+
+  
+     <canvas class="fireworks" style="position: fixed;left: 0;top: 0;z-index: 1; pointer-events: none;" ></canvas>
+     <script type="text/javascript" src="//cdn.bootcss.com/animejs/2.2.0/anime.min.js"></script>
+     <script type="text/javascript" src="/js/cursor/fireworks.js"></script>
+  
+
+</body>
+</html>
