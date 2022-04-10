@@ -134,18 +134,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-count">34</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">22</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -242,7 +242,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-04-07 00:11:09" itemprop="dateModified" datetime="2022-04-07T00:11:09+08:00">2022-04-07</time>
+      <time title="修改时间：2022-04-07 18:09:46" itemprop="dateModified" datetime="2022-04-07T18:09:46+08:00">2022-04-07</time>
     </span>
 
   
@@ -291,6 +291,393 @@
 <p>此前自己已经在csdn和知乎上进行了一定量的博客文章撰写，但是考虑到有一些私人的东西希望自己管理，遂花了一些时间研究前端的内容，并且就一个方案（hexo框架）来实际落地自己的想法。</p>
 <p>这第一篇文章，就把自己此时完成建站时的所思所想，记录下来。</p>
 
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/07/ActionRPG%E4%B8%AD%E7%9A%84Gameplay-Ability-System%E6%8B%86%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/04/07/ActionRPG%E4%B8%AD%E7%9A%84Gameplay-Ability-System%E6%8B%86%E8%A7%A3/" class="post-title-link" itemprop="url">ActionRPG中的Gameplay Ability System拆解（更新中）</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-07 00:24:10" itemprop="dateCreated datePublished" datetime="2022-04-07T00:24:10+08:00">2022-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-10 19:53:36" itemprop="dateModified" datetime="2022-04-10T19:53:36+08:00">2022-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>本文是对虚幻官方Gameplay Ability System（GAS）的示例项目ActionRPG的详细代码向拆解，<br />
+将会涵盖GAS在代码和蓝图方面的各项配置和应用，旨在通过分析GAS的各种细节而掌握GAS的用法，<br />
+为未来的游戏项目做准备。</p>
+<p>关于方法，我希望是以工匠的态度，细致入微得深入代码的骨髓中，<br />
+具体做法就是逐代码得阅读和分析，可能会加入一定量GAS以外的内容，所以本文的内容可能会非常庞大。<br />
+我并不想在文章体量上做任何妥协，<br />
+因为本文除了作为这次的研究学习成果外，<br />
+也希望能作为未来一段时间使用GAS及虚幻引擎内其他与之相关的内容的参考文档。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/04/07/ActionRPG%E4%B8%AD%E7%9A%84Gameplay-Ability-System%E6%8B%86%E8%A7%A3/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/08/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8BGameFeature/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/04/08/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8BGameFeature/" class="post-title-link" itemprop="url">虚幻5新特性之GameFeature</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-08 18:05:10" itemprop="dateCreated datePublished" datetime="2022-04-08T18:05:10+08:00">2022-04-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-10 19:58:10" itemprop="dateModified" datetime="2022-04-10T19:58:10+08:00">2022-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          本篇文章加密，请联系作者获取邀请码
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/04/08/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8BGameFeature/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/07/%E8%99%9A%E5%B9%BB%E7%BC%96%E7%A8%8B%E5%87%86%E5%A4%87%E4%B9%8B-%E5%AE%8F%E5%AE%9A%E4%B9%89%E7%9A%84%E8%AF%AD%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/04/07/%E8%99%9A%E5%B9%BB%E7%BC%96%E7%A8%8B%E5%87%86%E5%A4%87%E4%B9%8B-%E5%AE%8F%E5%AE%9A%E4%B9%89%E7%9A%84%E8%AF%AD%E6%B3%95/" class="post-title-link" itemprop="url">虚幻编程准备之 宏定义的语法</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-04-07 12:01:27 / 修改时间：16:37:53" itemprop="dateCreated datePublished" datetime="2022-04-07T12:01:27+08:00">2022-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="最简形式的宏"><a class="markdownIt-Anchor" href="#最简形式的宏"></a> 最简形式的宏</h2>
+<h3 id="定义"><a class="markdownIt-Anchor" href="#定义"></a> 定义</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> pi 3.14</span></span><br></pre></td></tr></table></figure>
+<h3 id="使用"><a class="markdownIt-Anchor" href="#使用"></a> 使用</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">float</span> <span class="title">funcSampleMacro</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> pi * <span class="number">10</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="输出"><a class="markdownIt-Anchor" href="#输出"></a> 输出</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">31.4</span></span><br></pre></td></tr></table></figure>
+<h2 id="带参数的宏单参数"><a class="markdownIt-Anchor" href="#带参数的宏单参数"></a> 带参数的宏(单参数)</h2>
+<h3 id="定义-2"><a class="markdownIt-Anchor" href="#定义-2"></a> 定义</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> func(x) (x * 2)</span></span><br></pre></td></tr></table></figure>
+<h3 id="使用-2"><a class="markdownIt-Anchor" href="#使用-2"></a> 使用</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">float</span> <span class="title">funcParamerizedMacro</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">func</span>(<span class="number">3.14</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="输出-2"><a class="markdownIt-Anchor" href="#输出-2"></a> 输出</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">40</span></span><br></pre></td></tr></table></figure>
+<h2 id="带参数的宏多参数"><a class="markdownIt-Anchor" href="#带参数的宏多参数"></a> 带参数的宏(多参数)</h2>
+<h3 id="定义-3"><a class="markdownIt-Anchor" href="#定义-3"></a> 定义</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> TEST(...) t(##__VA_ARGS__)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">t</span><span class="params">(<span class="type">float</span> a, <span class="type">float</span> b, <span class="type">float</span> c)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> a + b + c;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="使用-3"><a class="markdownIt-Anchor" href="#使用-3"></a> 使用</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">t</span><span class="params">(<span class="type">float</span> a, <span class="type">float</span> b, <span class="type">float</span> c)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> a + b + c;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">t</span><span class="params">(<span class="type">float</span> a, <span class="type">float</span> b)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">float</span> <span class="title">funcMultiParaMacro</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">TEST</span>(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//float funcMultiParaMacro()</span></span><br><span class="line"><span class="comment">//&#123;</span></span><br><span class="line"><span class="comment">//	return TEST(1, 2);</span></span><br><span class="line"><span class="comment">//&#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="输出-3"><a class="markdownIt-Anchor" href="#输出-3"></a> 输出</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">6</span></span><br></pre></td></tr></table></figure>
+<p>和</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">3</span></span><br></pre></td></tr></table></figure>
+<h2 id="换行"><a class="markdownIt-Anchor" href="#换行"></a> 换行</h2>
+<h3 id="定义-4"><a class="markdownIt-Anchor" href="#定义-4"></a> 定义</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> Wrap(functionName) float functionName()\</span></span><br><span class="line"><span class="meta">&#123;\</span></span><br><span class="line"><span class="meta">	return 3.14;\</span></span><br><span class="line"><span class="meta">&#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="使用-4"><a class="markdownIt-Anchor" href="#使用-4"></a> 使用</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Wrap</span>(unnamed)</span><br><span class="line"><span class="function"><span class="type">float</span> <span class="title">funcWrapMacro</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">unnamed</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="输出-4"><a class="markdownIt-Anchor" href="#输出-4"></a> 输出</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">3.14</span></span><br></pre></td></tr></table></figure>
+<h2 id="号的使用"><a class="markdownIt-Anchor" href="#号的使用"></a> #号的使用</h2>
+<p><code>#</code> 用来转化字符串</p>
+<h3 id="定义-5"><a class="markdownIt-Anchor" href="#定义-5"></a> 定义</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> TOSTRING(x) #x</span></span><br></pre></td></tr></table></figure>
+<h3 id="使用-5"><a class="markdownIt-Anchor" href="#使用-5"></a> 使用</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">string <span class="title">funcToStringMacro</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">TOSTRING</span>(hello world);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="输出-5"><a class="markdownIt-Anchor" href="#输出-5"></a> 输出</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hello world</span><br></pre></td></tr></table></figure>
+<h2 id="号的使用-2"><a class="markdownIt-Anchor" href="#号的使用-2"></a> ##号的使用</h2>
+<p><code>##</code> 用来拼接</p>
+<h3 id="定义-6"><a class="markdownIt-Anchor" href="#定义-6"></a> 定义</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> COMBINE(x,y) x##y</span></span><br></pre></td></tr></table></figure>
+<h3 id="使用-6"><a class="markdownIt-Anchor" href="#使用-6"></a> 使用</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">string <span class="title">funcCombineMacro</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">COMBINE</span>(func, <span class="built_in">ToStringMacro</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="输出-6"><a class="markdownIt-Anchor" href="#输出-6"></a> 输出</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hello world</span><br></pre></td></tr></table></figure>
+<h2 id="内置的宏"><a class="markdownIt-Anchor" href="#内置的宏"></a> 内置的宏</h2>
+<h3 id="列举"><a class="markdownIt-Anchor" href="#列举"></a> 列举</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">__FILE__</span><br><span class="line">__LINE__</span><br><span class="line">__DATE__</span><br><span class="line">__TIME__</span><br><span class="line">__FUNCTION__</span><br></pre></td></tr></table></figure>
+<h3 id="使用-7"><a class="markdownIt-Anchor" href="#使用-7"></a> 使用</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">funcBuildInMacro</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	cout &lt;&lt; __FILE__ &lt;&lt; endl;</span><br><span class="line">	cout &lt;&lt; __LINE__ &lt;&lt; endl;</span><br><span class="line">	cout &lt;&lt; __DATE__ &lt;&lt; endl;</span><br><span class="line">	cout &lt;&lt; __TIME__ &lt;&lt; endl;</span><br><span class="line">	cout &lt;&lt; __FUNCTION__ &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="输出-7"><a class="markdownIt-Anchor" href="#输出-7"></a> 输出</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">E:\Project\CppResearchLoc\CppResearch\MacroResearch\Commen.h</span><br><span class="line"><span class="number">66</span></span><br><span class="line">Apr  <span class="number">7</span> <span class="number">2022</span></span><br><span class="line"><span class="number">16</span>:<span class="number">36</span>:<span class="number">28</span></span><br><span class="line">funcBuildInMacro</span><br></pre></td></tr></table></figure>
       
     </div>
 
@@ -994,353 +1381,6 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/05/LeetCode-83-%E5%88%A0%E9%99%A4%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/profile_1.png">
-      <meta itemprop="name" content="Claude">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Claude的游戏之路">
-      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Claude的游戏之路">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/05/LeetCode-83-%E5%88%A0%E9%99%A4%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/" class="post-title-link" itemprop="url">LeetCode 83 删除排序链表中的重复元素</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-04-05 03:14:02 / 修改时间：03:25:23" itemprop="dateCreated datePublished" datetime="2022-04-05T03:14:02+08:00">2022-04-05</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/" itemprop="url" rel="index"><span itemprop="name">LeetCode</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/%E7%AE%80%E5%8D%95/" itemprop="url" rel="index"><span itemprop="name">简单</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-
-          <div class="theme-info">
-            <div class="powered-by"></div>
-
-
-            </span>
-          </div>
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><ul class="markdownIt-TOC">
-<li><a href="#%E5%8F%8C%E6%8C%87%E9%92%88%E9%81%8D%E5%8E%86">双指针遍历</a></li>
-</ul>
-</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/05/LeetCode-83-%E5%88%A0%E9%99%A4%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/05/LeetCode-70-%E7%88%AC%E6%A5%BC%E6%A2%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/profile_1.png">
-      <meta itemprop="name" content="Claude">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Claude的游戏之路">
-      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Claude的游戏之路">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/05/LeetCode-70-%E7%88%AC%E6%A5%BC%E6%A2%AF/" class="post-title-link" itemprop="url">LeetCode 70 爬楼梯</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-04-05 03:13:43 / 修改时间：03:26:27" itemprop="dateCreated datePublished" datetime="2022-04-05T03:13:43+08:00">2022-04-05</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/" itemprop="url" rel="index"><span itemprop="name">LeetCode</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/%E7%AE%80%E5%8D%95/" itemprop="url" rel="index"><span itemprop="name">简单</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>766</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-
-          <div class="theme-info">
-            <div class="powered-by"></div>
-
-
-            </span>
-          </div>
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><ul class="markdownIt-TOC">
-<li><a href="#%E9%80%92%E5%BD%92">递归</a></li>
-<li><a href="#%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92">动态规划</a></li>
-</ul>
-</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/05/LeetCode-70-%E7%88%AC%E6%A5%BC%E6%A2%AF/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/05/LeetCode-69-x%E7%9A%84%E5%B9%B3%E6%96%B9%E6%A0%B9/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/profile_1.png">
-      <meta itemprop="name" content="Claude">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Claude的游戏之路">
-      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Claude的游戏之路">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/05/LeetCode-69-x%E7%9A%84%E5%B9%B3%E6%96%B9%E6%A0%B9/" class="post-title-link" itemprop="url">LeetCode 69 x的平方根</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-04-05 03:13:29 / 修改时间：03:27:19" itemprop="dateCreated datePublished" datetime="2022-04-05T03:13:29+08:00">2022-04-05</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/" itemprop="url" rel="index"><span itemprop="name">LeetCode</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/%E7%AE%80%E5%8D%95/" itemprop="url" rel="index"><span itemprop="name">简单</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>892</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-
-          <div class="theme-info">
-            <div class="powered-by"></div>
-
-
-            </span>
-          </div>
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><ul class="markdownIt-TOC">
-<li><a href="#%E6%9A%B4%E5%8A%9B%E6%9E%9A%E4%B8%BE">暴力枚举</a></li>
-<li><a href="#%E4%BA%8C%E5%88%86%E6%B3%95">二分法</a></li>
-</ul>
-</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/05/LeetCode-69-x%E7%9A%84%E5%B9%B3%E6%96%B9%E6%A0%B9/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
     <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
@@ -1366,14 +1406,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">28k</span>
+    <span title="站点总字数">34k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">26 分钟</span>
+    <span title="站点阅读时长">31 分钟</span>
   </span>
 </div>
 <div class="busuanzi-count">
