@@ -465,9 +465,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2022-04-10 20:13:07 / 修改时间：20:28:47" itemprop="dateCreated datePublished" datetime="2022-04-10T20:13:07+08:00">2022-04-10</time>
+      <time title="创建时间：2022-04-10 20:13:07" itemprop="dateCreated datePublished" datetime="2022-04-10T20:13:07+08:00">2022-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-11 14:45:11" itemprop="dateModified" datetime="2022-04-11T14:45:11+08:00">2022-04-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -515,53 +521,14 @@
 <p>任务系统是串联游戏，为游戏提供强力游玩驱动的有效手段之一， 在传统RPG等游戏中有着非常广泛的应用。<br />
 任务系统编辑器的意义就在于能够为创作者提供直观的非代码的界面，使其能够快速的创建一个又一个的任务并合理得安排其顺序或者逻辑， 并且在引擎的帮助下能够快速预览其效果。<br />
 本文将就Mission System任务编辑系统，介绍任务编辑涉及到的核心内容。</p>
-<p>（注：本文主要是对任务系统中涉及到的概念进行拆解，结合插件内容演示任务的定义、提示、开始、完成以及日志等等。同时，需要认识到，目前该系统是基于RPG类型游戏进行了高度的定制，所以任务的制作中包含了一定量的RPG要素，如经验等级）</p>
-<h2 id="资源获取"><a class="markdownIt-Anchor" href="#资源获取"></a> 资源获取</h2>
-<p><a target="_blank" rel="noopener" href="https://www.unrealengine.com/marketplace/zh-CN/product/multiplayer-mission-system">https://www.unrealengine.com/marketplace/zh-CN/product/multiplayer-mission-system</a></p>
-<p>本文使用的版本是4.26，其他版本可以自行编译使用。</p>
-<h2 id="快速上手"><a class="markdownIt-Anchor" href="#快速上手"></a> 快速上手</h2>
-<p>本小节内容是为了让读者快速上手使用该系统来进行任务的制作。<br />
-本文不包含资源的安装，这里假定读者已经安装成功。</p>
-<h3 id="输入模块"><a class="markdownIt-Anchor" href="#输入模块"></a> 输入模块</h3>
-<p>输入部分，系统使用了第三人称的模板，所以基本的移动可以参照第三人称模板来操作；此外，还进行了三项操作的扩充——攻击、交互和呼出任务面板；攻击对应鼠标左键，交互对应键盘E建，呼出任务面板对应键盘Tab键。这些按键响应都是实现于PlayerController，并通过核心任务组件（BP_MissionComponent）中定义的事件来作响应。<br />
-（注：任务管理器组件也可以挂载在任何位置，但是为了方便访问及网络复制Replication，放在PlayerController上是一个推荐的选择）</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_InputResponse.png" alt="" /></p>
-<p>UMG的输入提示：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_InputTips.png" alt="" /></p>
-<h3 id="任务制定"><a class="markdownIt-Anchor" href="#任务制定"></a> 任务制定</h3>
-<p>DT_Missions（Data Table资产）是用来创建、配置和维护任务的核心资产，其本质上是一个数据表，可以直接增加或删除任务（Mission）。Mission代表着一个大的阶段性任务，比如新手教学就可以作为一个任务存在：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_DTMissions.png" alt="" /></p>
-<p>其中，除了Mission名称（Name）之外，还可以配置任务是否是可以重复的（Repeatable，影响着任务是否可以重复接取），任务的具体描述（Description，可以反映到UMG上），需要的玩家等级（Level），任务子序列（Sequence），任务完成后的收益（Finished，经验收益以及新增任务等）。</p>
-<h3 id="任务拆解"><a class="markdownIt-Anchor" href="#任务拆解"></a> 任务拆解</h3>
-<p>假定在新手任务（Startup Mission）中，玩家需要根据指引探索区域，与机关交互解锁新的区域，最后完成新手的简单战斗。根据前文的描述可以将任务差分为三个子任务序列（序列代表着任务之间有着相对顺序，即完成任务一才可以去继续完成任务二，而不可以顺序颠倒）。<br />
-将所有子任务序列及其描述依次进行配置（sequence time是任务的限制时间，超时未完成将导致任务失败）：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_Sequences.png" alt="" /></p>
-<p>UMG中的子任务序列显示：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_SequenceInUMG.png" alt="" /></p>
-<p>Objectives代表了当前子任务序列的目标，即它定义了玩家当前任务的主要玩法。如可以定义玩家的当前任务目标为探索寻路（follow）：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_Objectives.png" alt="" /></p>
-<p>其中WidgeType描述了当前任务的UMG展现形式：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_WidgeType.png" alt="" /></p>
-<p>对于探索寻路任务（follow），可以使用检查点（Checkpoint）来定义要去的地方（主要是定义一些检查点的核心属性，如显示规则，位置及UI外观等）。<br />
-而对于其他任务来说，就需要用到Objective Targets。其中需要自己去添加相应的Target Actor来定义具体的规则，及对应的Actor上需要添加BP_TargetComponent组件，如与特定机关交互的Actor：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_TargetComponent.png" alt="" /></p>
-<p>如需要进行击杀的Actor：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_EnemyTargetComponent.png" alt="" /></p>
-<h3 id="任务切换"><a class="markdownIt-Anchor" href="#任务切换"></a> 任务切换</h3>
-<p>在配置表的最后，当任务完成时，可以配置经验奖励，以及在任务列表里新增的任务，该任务依然可以通过ID查找任务表里的其他任务来实现。</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_MissionSwitch.png" alt="" /></p>
-<h3 id="任务开始"><a class="markdownIt-Anchor" href="#任务开始"></a> 任务开始</h3>
-<p>任务的控制是在任务管理器（BP_MissionComponent）中进行的，可以利用BP_MissionComponent组件方便得进行任务的控制。</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_MissionEvent.png" alt="" /></p>
-<p>可以简单得在PlayerControler里在BeginPlay时开始之前配置好的任务：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_StartMission.png" alt="" /></p>
-<h3 id="接入umg"><a class="markdownIt-Anchor" href="#接入umg"></a> 接入UMG</h3>
-<p>BP_MissionComponent中管理着所有的任务数据和日志，包括完成的，未完成的，成功的，失败的，等等。UMG可以方便得访问运行时的任务数据，并予以显示：</p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_UMGGlobal.png" alt="" /></p>
-<p><img src="%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/MissionSystem_UMGLog.png" alt="" /></p>
-<h2 id="演示"><a class="markdownIt-Anchor" href="#演示"></a> 演示</h2>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1XY411777M">演示Demo</a></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/04/10/%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BMultiplayerMissionSystem/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -729,9 +696,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2022-04-07 12:01:27 / 修改时间：16:37:53" itemprop="dateCreated datePublished" datetime="2022-04-07T12:01:27+08:00">2022-04-07</time>
+      <time title="创建时间：2022-04-07 12:01:27" itemprop="dateCreated datePublished" datetime="2022-04-07T12:01:27+08:00">2022-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-11 14:45:33" itemprop="dateModified" datetime="2022-04-11T14:45:33+08:00">2022-04-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -775,7 +748,8 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="最简形式的宏"><a class="markdownIt-Anchor" href="#最简形式的宏"></a> 最简形式的宏</h2>
+          <span id="more"></span>
+<h2 id="最简形式的宏"><a class="markdownIt-Anchor" href="#最简形式的宏"></a> 最简形式的宏</h2>
 <h3 id="定义"><a class="markdownIt-Anchor" href="#定义"></a> 定义</h3>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> pi 3.14</span></span><br></pre></td></tr></table></figure>
 <h3 id="使用"><a class="markdownIt-Anchor" href="#使用"></a> 使用</h3>
