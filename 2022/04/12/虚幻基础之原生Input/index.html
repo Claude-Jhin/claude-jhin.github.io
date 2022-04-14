@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/profile.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="KUflL11YgFFV-BXkuh_GOzF_0UQxhAIifFwOB4vPcH4">
+  <meta name="msvalidate.01" content="26DFEC846CC3A3E5CE260CAF90C4F9A5">
+  <meta name="baidu-site-verification" content="code-LgifJoRihJ">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" integrity="sha256-jTIdiMuX/e3DGJUGwl3pKSxuc6YOuqtJYkM0bGQESA4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/black/pace-theme-corner-indicator.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"claude-jhin.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.10.1","exturl":false,"sidebar":{"position":"right","width":260,"display":"post","padding":18,"offset":54},"copycode":true,"bookmark":{"enable":true,"color":"#222","save":"manual"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="输入是游戏交互中非常重要的一环，输入处理本质上是让机器读取、理解人的某项操作。这个过程是否完善，是否符合人的直观认知，直接影响一款游戏的操作手感，从而影响到游戏的品质。 虚幻引擎内置实现了一套原生的Input模块，在多个版本一直沿用，同时在实际项目中，又会被具体项目组进行定制，从而衍生了一定量的输入补充插件。 本文的目的不在于那些衍生的针对输入的代码插件或者蓝图插件，而是着眼于虚幻底层的输入部分，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="虚幻基础之原生Input">
+<meta property="og:url" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/index.html">
+<meta property="og:site_name" content="Claude的游戏之路">
+<meta property="og:description" content="输入是游戏交互中非常重要的一环，输入处理本质上是让机器读取、理解人的某项操作。这个过程是否完善，是否符合人的直观认知，直接影响一款游戏的操作手感，从而影响到游戏的品质。 虚幻引擎内置实现了一套原生的Input模块，在多个版本一直沿用，同时在实际项目中，又会被具体项目组进行定制，从而衍生了一定量的输入补充插件。 本文的目的不在于那些衍生的针对输入的代码插件或者蓝图插件，而是着眼于虚幻底层的输入部分，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/Input_ActionMappings.png">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/Input_InputOnActor.png">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/Input_InputProcessingProcedure.png">
+<meta property="article:published_time" content="2022-04-12T13:18:11.000Z">
+<meta property="article:modified_time" content="2022-04-14T12:04:41.018Z">
+<meta property="article:author" content="Claude">
+<meta property="article:tag" content="ue5">
+<meta property="article:tag" content="c++">
+<meta property="article:tag" content="input">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/Input_ActionMappings.png">
+
+
+<link rel="canonical" href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/","path":"2022/04/12/虚幻基础之原生Input/","title":"虚幻基础之原生Input"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>虚幻基础之原生Input | Claude的游戏之路</title>
+  
+
+
+
+
+<script src="/lib/fireworks.js"></script>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Claude的游戏之路</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">记录游戏开发的点滴</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#playerinput"><span class="nav-number">1.</span> <span class="nav-text"> PlayerInput</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#inputcomponent"><span class="nav-number">2.</span> <span class="nav-text"> InputComponent</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#actor%E5%86%85%E7%9A%84inputcomponent"><span class="nav-number">2.1.</span> <span class="nav-text"> Actor内的InputComponent</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#playercontroller%E5%86%85%E7%9A%84inputstack"><span class="nav-number">2.2.</span> <span class="nav-text"> PlayerController内的InputStack</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text"> 总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text"> 参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Claude"
+      src="/images/profile_1.png">
+  <p class="site-author-name" itemprop="name">Claude</p>
+  <div class="site-description" itemprop="description">专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Claude-Jhin" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Claude-Jhin" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6321645600" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6321645600" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.csdn.net/xcinkey" title="https:&#x2F;&#x2F;blog.csdn.net&#x2F;xcinkey" rel="noopener" target="_blank">CSDN</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://claude-jhin.itch.io/" title="https:&#x2F;&#x2F;claude-jhin.itch.io&#x2F;" rel="noopener" target="_blank">Game Jam Profile</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="虚幻基础之原生Input | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          虚幻基础之原生Input
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-12 21:18:11" itemprop="dateCreated datePublished" datetime="2022-04-12T21:18:11+08:00">2022-04-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-14 20:04:41" itemprop="dateModified" datetime="2022-04-14T20:04:41+08:00">2022-04-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>8.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>输入是游戏交互中非常重要的一环，输入处理本质上是让机器读取、理解人的某项操作。这个过程是否完善，是否符合人的直观认知，直接影响一款游戏的操作手感，从而影响到游戏的品质。</p>
+<p>虚幻引擎内置实现了一套原生的Input模块，在多个版本一直沿用，同时在实际项目中，又会被具体项目组进行定制，从而衍生了一定量的输入补充插件。</p>
+<p>本文的目的不在于那些衍生的针对输入的代码插件或者蓝图插件，而是着眼于虚幻底层的输入部分，看看原生的输入部分的代码，也为以后的使用、改写和扩展建立理论基础。</p>
+<span id="more"></span>
+<h2 id="playerinput"><a class="markdownIt-Anchor" href="#playerinput"></a> PlayerInput</h2>
+<p>PlayerInput对象主要负责的是对玩家的输入数据的处理，是虚幻接收外部硬件输入并将信号处理后转入内部的一个中间模块。</p>
+<p>PlayerInput主要是在PlayerController里发挥管理作用， 在类定义的时候已经用关键字<code>Within=PlayerController</code>进行标记，表示其对象是存在于和PlayerController的对象实例里的，这意味着不可以随随便便去创建其他的PlayerInput。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UCLASS</span>(Within=PlayerController, config=Input, transient)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ENGINE_API</span> UPlayerInput : <span class="keyword">public</span> UObject</span><br></pre></td></tr></table></figure>
+<p>PlayerInput中，又声明了两个数组，<code>FInputActionKeyMapping</code>数组和<code>FInputAxisKeyMapping</code>数组，分别定义了动作映射<code>ActionMappings</code>和轴映射<code>AxisMappings</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** This player&#x27;s version of the Action Mappings */</span></span><br><span class="line">TArray&lt;<span class="keyword">struct</span> <span class="title class_">FInputActionKeyMapping</span>&gt; ActionMappings;</span><br><span class="line"></span><br><span class="line"><span class="comment">/** This player&#x27;s version of Axis Mappings */</span></span><br><span class="line">TArray&lt;<span class="keyword">struct</span> <span class="title class_">FInputAxisKeyMapping</span>&gt; AxisMappings;</span><br></pre></td></tr></table></figure>
+<p>结构体<code>FInputActionKeyMapping</code>，其中又有两个属性<code>ActionName</code>和<code>Key</code>，分别表示的是该输入绑定的动作名称和相应按键，其余属性均为组合按键的选项（如shift + 按键，来表示奔跑的指令）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * Defines a mapping between an action and key </span></span><br><span class="line"><span class="comment">**/</span></span><br><span class="line"><span class="built_in">USTRUCT</span>( BlueprintType )</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FInputActionKeyMapping</span></span><br><span class="line">&#123;</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** Friendly name of action, e.g &quot;jump&quot; */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	FName ActionName;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** true if one of the Shift keys must be down when the KeyEvent is received to be acknowledged */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	uint8 bShift:<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** true if one of the Ctrl keys must be down when the KeyEvent is received to be acknowledged */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	uint8 bCtrl:<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** true if one of the Alt keys must be down when the KeyEvent is received to be acknowledged */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	uint8 bAlt:<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** true if one of the Cmd keys must be down when the KeyEvent is received to be acknowledged */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	uint8 bCmd:<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Key to bind it to. */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	FKey Key;</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>结构体<code>FInputAxisKeyMapping</code>，其中也有两个属性<code>AxisName</code>和<code>Key</code>，分别表示的是该输入绑定的轴名称和相应按键，<code>Scale</code>属性用来给出具体值（相比于Action的离散触发，Axis则是连续的监听）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * Defines a mapping between an axis and key </span></span><br><span class="line"><span class="comment">**/</span></span><br><span class="line"><span class="built_in">USTRUCT</span>( BlueprintType )</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FInputAxisKeyMapping</span></span><br><span class="line">&#123;</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Friendly name of axis, e.g &quot;MoveForward&quot; */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	FName AxisName;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Multiplier to use for the mapping when accumulating the axis value */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	<span class="type">float</span> Scale;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Key to bind it to. */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=<span class="string">&quot;Input&quot;</span>)</span><br><span class="line">	FKey Key;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>两个结构体中都涉及到了同一个类（结构体）——<code>FKey</code>，它的定义位于<code>InputCoreTypes</code>中，其本质就是硬件输入的定义。</p>
+<p>如图，经由虚幻内部的反射机制，将属性<code>ActionMappings</code>和属性<code>AxisMappings</code>序列化到Editor里，并且可以自定义，添加映射等等。添加绑定的过程实际上就是在对ActionName/AxisName和FKey写入的过程（还有其他属性如组合按键和Scale也在Editor界面里有体现）。</p>
+<p><img src="Input_ActionMappings.png" alt="" /></p>
+<p>上述，基本可以描绘出游戏按键到行为的建立映射的过程，当然到这一步，我们也仅仅是将映射的概念建立起来，接下来就需要为特定的映射绑定具体的行为了，这就是InputComponent所承担的任务了。</p>
+<h2 id="inputcomponent"><a class="markdownIt-Anchor" href="#inputcomponent"></a> InputComponent</h2>
+<p>InputComponent直接继承自ActorComponent，对象可以对Input.ini进行写入。</p>
+<p>PlayerController里是维护着一个InputComponent的栈，而核心的处理逻辑实际上都在PlayerInput里。关于这一点，后面我们会细谈。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Implement an Actor component for input bindings.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * An Input Component is a transient component that enables an Actor to bind various forms of input events to delegate functions.  </span></span><br><span class="line"><span class="comment"> * Input components are processed from a stack managed by the PlayerController and processed by the PlayerInput.</span></span><br><span class="line"><span class="comment"> * Each binding can consume the input event preventing other components on the input stack from processing the input.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="built_in">UCLASS</span>(transient, config=Input, hidecategories=(Activation, <span class="string">&quot;Components|Activation&quot;</span>))</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ENGINE_API</span> UInputComponent: <span class="keyword">public</span> UActorComponent</span><br></pre></td></tr></table></figure>
+<h3 id="actor内的inputcomponent"><a class="markdownIt-Anchor" href="#actor内的inputcomponent"></a> Actor内的InputComponent</h3>
+<p>InputComponent在Pawn和Controller上非常常见，但实际上，其实Actor上就有在维护InputComponent相关的东西：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ENGINE_API</span> AActor : <span class="keyword">public</span> UObject</span><br><span class="line">&#123;</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** If true, all input on the stack below this actor will not be considered */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditDefaultsOnly, Category=Input)</span><br><span class="line">	uint8 bBlockInput:<span class="number">1</span>;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** Automatically registers this actor to receive input from a player. */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, Category=Input)</span><br><span class="line">	TEnumAsByte&lt;EAutoReceiveInput::Type&gt; AutoReceiveInput;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** The priority of this input component when pushed in to the stack. */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, Category=Input)</span><br><span class="line">	int32 InputPriority;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Component that handles input for this actor, if input is enabled. */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(DuplicateTransient)</span><br><span class="line">	TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">UInputComponent</span>&gt; InputComponent;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Actor上序列化出来的属性如图。默认情况下，Actor是不会接收用户输入的，即按图中配置Actor是不会响应PlayerInput设定好的输入事件的，但若是希望此Actor响应用户输入的话（在此Actor上使用输入事件，并使其实时响应），则需要修改<code>AutoReceiveInput</code>的值为<code>Player0</code>。</p>
+<p><img src="Input_InputOnActor.png" alt="" /></p>
+<p>相应的判定代码如下，该函数是在Actor生成的时候去调用的，主要就是在关卡一级进行Actor的输入管理。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">AActor::PreInitializeComponents</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (AutoReceiveInput != EAutoReceiveInput::Disabled)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">const</span> int32 PlayerIndex = <span class="built_in">int32</span>(AutoReceiveInput.<span class="built_in">GetValue</span>()) - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">		APlayerController* PC = UGameplayStatics::<span class="built_in">GetPlayerController</span>(<span class="keyword">this</span>, PlayerIndex);</span><br><span class="line">		<span class="keyword">if</span> (PC)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">EnableInput</span>(PC);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">GetWorld</span>()-&gt;PersistentLevel-&gt;<span class="built_in">RegisterActorForAutoReceiveInput</span>(<span class="keyword">this</span>, PlayerIndex);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="playercontroller内的inputstack"><a class="markdownIt-Anchor" href="#playercontroller内的inputstack"></a> PlayerController内的InputStack</h3>
+<p>PlayerController间接继承自Actor，所以会有一个自己的InputComponent，但是同时负责构建和维护一个InputStack（通过Update，Push，Pop等操作）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ENGINE_API</span> APlayerController : <span class="keyword">public</span> AController</span><br><span class="line">&#123;	</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">TickPlayerInput</span><span class="params">(<span class="type">const</span> <span class="type">float</span> DeltaSeconds, <span class="type">const</span> <span class="type">bool</span> bGamePaused)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">ProcessPlayerInput</span><span class="params">(<span class="type">const</span> <span class="type">float</span> DeltaTime, <span class="type">const</span> <span class="type">bool</span> bGamePaused)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">BuildInputStack</span><span class="params">(TArray&lt;UInputComponent*&gt;&amp; InputStack)</span></span>;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** Internal.  Current stack of InputComponents. */</span></span><br><span class="line">	TArray&lt; TWeakObjectPtr&lt;UInputComponent&gt; &gt; CurrentInputStack;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** Refresh state specific input components */</span></span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">UpdateStateInputComponents</span><span class="params">()</span></span>;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** Adds an inputcomponent to the top of the input stack. */</span></span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">PushInputComponent</span><span class="params">(UInputComponent* Input)</span></span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Removes given inputcomponent from the input stack (regardless of if it&#x27;s the top, actually). */</span></span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">PopInputComponent</span><span class="params">(UInputComponent* Input)</span></span>;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中，<code>ProcessPlayerInput</code>被<code>TickPlayerInput</code>调用（<code>TickPlayerInput</code>又被PlayerTick调用，故是每帧调用），其内部首先会调用<code>BuildInputStack</code>构建输入栈，再去调用<code>PlayerInput-&gt;ProcessInputStack(InputStack, DeltaTime, bGamePaused);</code>，即使用PlayerInput来处理InputStack。</p>
+<p>这样基本就构建出输入处理的流程。</p>
+<p><img src="Input_InputProcessingProcedure.png" alt="" /></p>
+<p>图中的InputComponent存在优先级，即如果前面一层的InputComponent接收了输入（PlayerInput在处理输入时的逻辑），那么堆栈的下方将会无法访问（不会相应输入事件），这个优先级其实就是由<code>BuildInputStack</code>构建输入栈时的压栈顺序：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">APlayerController::BuildInputStack</span><span class="params">(TArray&lt;UInputComponent*&gt;&amp; InputStack)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// Controlled pawn gets last dibs on the input stack</span></span><br><span class="line">	APawn* ControlledPawn = <span class="built_in">GetPawnOrSpectator</span>();</span><br><span class="line">	<span class="keyword">if</span> (ControlledPawn)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (ControlledPawn-&gt;<span class="built_in">InputEnabled</span>())</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="comment">// Get the explicit input component that is created upon Pawn possession. This one gets last dibs.</span></span><br><span class="line">			<span class="keyword">if</span> (ControlledPawn-&gt;InputComponent)</span><br><span class="line">			&#123;</span><br><span class="line">				InputStack.<span class="built_in">Push</span>(ControlledPawn-&gt;InputComponent);</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			<span class="comment">// See if there is another InputComponent that was added to the Pawn&#x27;s components array (possibly by script).</span></span><br><span class="line">			<span class="keyword">for</span> (UActorComponent* ActorComponent : ControlledPawn-&gt;<span class="built_in">GetComponents</span>())</span><br><span class="line">			&#123;</span><br><span class="line">				UInputComponent* PawnInputComponent = <span class="built_in">Cast</span>&lt;UInputComponent&gt;(ActorComponent);</span><br><span class="line">				<span class="keyword">if</span> (PawnInputComponent &amp;&amp; PawnInputComponent != ControlledPawn-&gt;InputComponent)</span><br><span class="line">				&#123;</span><br><span class="line">					InputStack.<span class="built_in">Push</span>(PawnInputComponent);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// LevelScriptActors are put on the stack next</span></span><br><span class="line">	<span class="keyword">for</span> (ULevel* Level : <span class="built_in">GetWorld</span>()-&gt;<span class="built_in">GetLevels</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		ALevelScriptActor* ScriptActor = Level-&gt;<span class="built_in">GetLevelScriptActor</span>();</span><br><span class="line">		<span class="keyword">if</span> (ScriptActor)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">if</span> (ScriptActor-&gt;<span class="built_in">InputEnabled</span>() &amp;&amp; ScriptActor-&gt;InputComponent)</span><br><span class="line">			&#123;</span><br><span class="line">				InputStack.<span class="built_in">Push</span>(ScriptActor-&gt;InputComponent);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">InputEnabled</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		InputStack.<span class="built_in">Push</span>(InputComponent);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Components pushed on to the stack get priority</span></span><br><span class="line">	<span class="keyword">for</span> (int32 Idx=<span class="number">0</span>; Idx&lt;CurrentInputStack.<span class="built_in">Num</span>(); ++Idx)</span><br><span class="line">	&#123;</span><br><span class="line">		UInputComponent* IC = CurrentInputStack[Idx].<span class="built_in">Get</span>();</span><br><span class="line">		<span class="keyword">if</span> (IC)</span><br><span class="line">		&#123;</span><br><span class="line">			InputStack.<span class="built_in">Push</span>(IC);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			CurrentInputStack.<span class="built_in">RemoveAt</span>(Idx--);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<p>这样基本上就将Input相关的代码进行了一遍简要的梳理，其内部的细节、流程基本已经清晰明了。我们在日常编程使用时，接触最多的可能是在Pawn/Character上使用<code>SetupPlayerInputComponent</code>来进行InputComponent的配置，底层的这些流程被封装好我们基本上是看不到的。</p>
+<p>有人可能会认为我做这样一番解析工作的意义不大，只要会使用就可以了。出于使用的目的话，确实如此，但是当我们希望更加明了引擎的架构，甚至范围再小一些，希望明了PlayerController，Actor等这些基础类的架构时，一点点的模块化拆解可能反而是更加聪明的做法。</p>
+<p>我们当然可以仅仅看一下官方文档里的相应的介绍，但是其字里行间隐藏的机要，不真正去到代码里，只能是看个皮毛。</p>
+<h2 id="参考"><a class="markdownIt-Anchor" href="#参考"></a> 参考</h2>
+<p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/input/">虚幻 5.0 Documentation - Input</a></p>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Claude
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E5%8E%9F%E7%94%9FInput/" title="虚幻基础之原生Input">https://claude-jhin.github.io/2022/04/12/虚幻基础之原生Input/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://t.me/channel_name">
+          <span class="icon">
+            <i class="fab fa-telegram"></i>
+          </span>
+
+          <span class="label">Telegram</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/jin-yuan-60-21">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">Zhihu</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://blog.csdn.net/xcinkey">
+          <span class="icon">
+            <i class="fab fa-csdn"></i>
+          </span>
+
+          <span class="label">CSDN</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/ue5/" rel="tag"><i class="fa fa-tag"></i> ue5</a>
+              <a href="/tags/c/" rel="tag"><i class="fa fa-tag"></i> c++</a>
+              <a href="/tags/input/" rel="tag"><i class="fa fa-tag"></i> input</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/" rel="prev" title="虚幻基础之Gameplay游戏框架">
+                  <i class="fa fa-chevron-left"></i> 虚幻基础之Gameplay游戏框架
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E6%95%B0%E6%8D%AE%E9%A9%B1%E5%8A%A8/" rel="next" title="虚幻基础之数据驱动">
+                  虚幻基础之数据驱动 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Claude</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">50k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">46 分钟</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><script color="0,0,0" opacity="1" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdn.jsdelivr.net/npm/pdfobject@2.2.7/pdfobject.min.js","integrity":"sha256-ph3Dk89VmuTVXG6x/RDzk53SU9LPdAh1tpv0UvnDZ2I="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" integrity="sha256-94CNZ/bJtwrBYZrXhCOBvpB4rZUzBnvAsirFv31TMGo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.css" integrity="sha256-+oItviPaTmqjDhk4y4fLLUIMgRQYDV/ZyrRNvQiebWM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.js","integrity":"sha256-etSqbSVF4+Lwe8MGk/Vanc1sR+mWv+qOG73fxWw9p94="}}</script>
+  <script src="/js/third-party/math/katex.js"></script>
+
+
+
+
+  
+     <canvas class="fireworks" style="position: fixed;left: 0;top: 0;z-index: 1; pointer-events: none;" ></canvas>
+     <script type="text/javascript" src="//cdn.bootcss.com/animejs/2.2.0/anime.min.js"></script>
+     <script type="text/javascript" src="/js/cursor/fireworks.js"></script>
+  
+
+</body>
+</html>
