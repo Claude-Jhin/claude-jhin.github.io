@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/profile.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="KUflL11YgFFV-BXkuh_GOzF_0UQxhAIifFwOB4vPcH4">
+  <meta name="msvalidate.01" content="26DFEC846CC3A3E5CE260CAF90C4F9A5">
+  <meta name="baidu-site-verification" content="code-LgifJoRihJ">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" integrity="sha256-jTIdiMuX/e3DGJUGwl3pKSxuc6YOuqtJYkM0bGQESA4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/black/pace-theme-corner-indicator.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"claude-jhin.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.10.1","exturl":false,"sidebar":{"position":"right","width":260,"display":"post","padding":18,"offset":54},"copycode":true,"bookmark":{"enable":true,"color":"#222","save":"manual"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="我的程序学习之路是自大学就开始了，但是真正第一次拜读《C++ Primer》这部公认的必读书籍却是从研究生阶段才开始的，当时我身在法国，从网上找了一本像模像样的电子版就开始了阅读学习。 其实第一次读完（其实也并没有读完，只是将学业要求内的知识点相关看完了），并没有感到什么所谓脱胎换骨的感觉，其中的很多知识点我从前就接触过，而一些新的细节的地方当时也没有仔细去做记录和研究，所以当时心中也并没有像其他">
+<meta property="og:type" content="article">
+<meta property="og:title" content="再读《C++ Primer》（更新中）">
+<meta property="og:url" content="https://claude-jhin.github.io/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/index.html">
+<meta property="og:site_name" content="Claude的游戏之路">
+<meta property="og:description" content="我的程序学习之路是自大学就开始了，但是真正第一次拜读《C++ Primer》这部公认的必读书籍却是从研究生阶段才开始的，当时我身在法国，从网上找了一本像模像样的电子版就开始了阅读学习。 其实第一次读完（其实也并没有读完，只是将学业要求内的知识点相关看完了），并没有感到什么所谓脱胎换骨的感觉，其中的很多知识点我从前就接触过，而一些新的细节的地方当时也没有仔细去做记录和研究，所以当时心中也并没有像其他">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-04-29T12:08:45.000Z">
+<meta property="article:modified_time" content="2022-05-02T05:52:26.866Z">
+<meta property="article:author" content="Claude">
+<meta property="article:tag" content="c++">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://claude-jhin.github.io/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/","path":"2022/04/29/再读C-Primer/","title":"再读《C++ Primer》（更新中）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>再读《C++ Primer》（更新中） | Claude的游戏之路</title>
+  
+
+
+
+
+<script src="/lib/fireworks.js"></script>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Claude的游戏之路</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">记录游戏开发的点滴</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E7%AB%A0-%E5%BC%80%E5%A7%8B"><span class="nav-number">1.</span> <span class="nav-text"> 第一章 开始</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#11-%E7%AE%80%E5%8D%95%E7%9A%84c%E7%A8%8B%E5%BA%8F"><span class="nav-number">1.1.</span> <span class="nav-text"> 1.1 简单的C++程序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-%E8%BE%93%E5%85%A5%E5%92%8C%E8%BE%93%E5%87%BA"><span class="nav-number">1.2.</span> <span class="nav-text"> 1.2 输入和输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#13-%E6%B3%A8%E9%87%8Acomments"><span class="nav-number">1.3.</span> <span class="nav-text"> 1.3 注释（comments）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-%E6%8E%A7%E5%88%B6%E6%B5%81"><span class="nav-number">1.4.</span> <span class="nav-text"> 1.4 控制流</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#while%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.4.0.1.</span> <span class="nav-text"> while语句</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#for%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.4.0.2.</span> <span class="nav-text"> for语句</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E8%AF%BB%E5%8F%96%E8%BE%93%E5%85%A5"><span class="nav-number">1.4.0.3.</span> <span class="nav-text"> 循环读取输入</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#if%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.4.0.4.</span> <span class="nav-text"> if语句</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#15-%E7%B1%BB"><span class="nav-number">1.5.</span> <span class="nav-text"> 1.5 类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E7%AB%A0-%E5%8F%98%E9%87%8F%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text"> 第二章 变量和基本类型</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Claude"
+      src="/images/profile_1.png">
+  <p class="site-author-name" itemprop="name">Claude</p>
+  <div class="site-description" itemprop="description">专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">61</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Claude-Jhin" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Claude-Jhin" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6321645600" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6321645600" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.csdn.net/xcinkey" title="https:&#x2F;&#x2F;blog.csdn.net&#x2F;xcinkey" rel="noopener" target="_blank">CSDN</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://claude-jhin.itch.io/" title="https:&#x2F;&#x2F;claude-jhin.itch.io&#x2F;" rel="noopener" target="_blank">Game Jam Profile</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="再读《C++ Primer》（更新中） | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          再读《C++ Primer》（更新中）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-29 20:08:45" itemprop="dateCreated datePublished" datetime="2022-04-29T20:08:45+08:00">2022-04-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-05-02 13:52:26" itemprop="dateModified" datetime="2022-05-02T13:52:26+08:00">2022-05-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>我的程序学习之路是自大学就开始了，但是真正第一次拜读《C++ Primer》这部公认的必读书籍却是从研究生阶段才开始的，当时我身在法国，从网上找了一本像模像样的电子版就开始了阅读学习。</p>
+<p>其实第一次读完（其实也并没有读完，只是将学业要求内的知识点相关看完了），并没有感到什么所谓脱胎换骨的感觉，其中的很多知识点我从前就接触过，而一些新的细节的地方当时也没有仔细去做记录和研究，所以当时心中也并没有像其他读者那样将之封为神作。当然这段读书经历还是在很长一段时间作为了我自我炫耀的其中一项谈资，因为毕竟是耐着性子读完了一本七八百页的理论书，现在想想也是颇为幼稚。</p>
+<p>但是随着学业和工作的不断深入，我愈发得感觉到自己对于某些内容、对于人生和学习等，产生了一些不同的理解，关于类，关于内存，关于对细节的执着，关于读书的习惯。我发觉这本书给我的影响比想象中要大的多。</p>
+<p>彼时我使用C<ins>仅限于对图形图像的研究学习，此外的同时，还学习了Python以及更多的，使用C#进行Unity相关内容的开发。此刻，我也在虚幻研究中探索了一段时间，虚幻引擎内对C</ins>的使用使我对这门语言又产生了一些不一样的理解。我觉得是时候了，去再翻开这本书，将第一遍阅读时未竟的遗憾完成，也希望这个自己能够再次借着这本书，蜕变。</p>
+<span id="more"></span>
+<p><ul class="markdownIt-TOC">
+<li><a href="#%E7%AC%AC%E4%B8%80%E7%AB%A0-%E5%BC%80%E5%A7%8B">第一章 开始</a>
+<ul>
+<li><a href="#11-%E7%AE%80%E5%8D%95%E7%9A%84c%E7%A8%8B%E5%BA%8F">1.1 简单的C++程序</a></li>
+<li><a href="#12-%E8%BE%93%E5%85%A5%E5%92%8C%E8%BE%93%E5%87%BA">1.2 输入和输出</a></li>
+<li><a href="#13-%E6%B3%A8%E9%87%8Acomments">1.3 注释（comments）</a></li>
+<li><a href="#14-%E6%8E%A7%E5%88%B6%E6%B5%81">1.4 控制流</a><br />
+*
+<ul>
+<li><a href="#while%E8%AF%AD%E5%8F%A5">while语句</a></li>
+<li><a href="#for%E8%AF%AD%E5%8F%A5">for语句</a></li>
+<li><a href="#%E5%BE%AA%E7%8E%AF%E8%AF%BB%E5%8F%96%E8%BE%93%E5%85%A5">循环读取输入</a></li>
+<li><a href="#if%E8%AF%AD%E5%8F%A5">if语句</a></li>
+</ul>
+</li>
+<li><a href="#15-%E7%B1%BB">1.5 类</a></li>
+</ul>
+</li>
+<li><a href="#%E7%AC%AC%E4%BA%8C%E7%AB%A0-%E5%8F%98%E9%87%8F%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B">第二章 变量和基本类型</a></li>
+</ul>
+</p>
+<h2 id="第一章-开始"><a class="markdownIt-Anchor" href="#第一章-开始"></a> 第一章 开始</h2>
+<h3 id="11-简单的c程序"><a class="markdownIt-Anchor" href="#11-简单的c程序"></a> 1.1 简单的C++程序</h3>
+<p>函数（function）的四个部分：返回类型（return type），函数名（function name），形参列表（parameter list），函数体（function body）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 返回类型：int，函数名：main，形参列表：[空]，函数体：&#123;return 0;&#125;</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>类型（type），定义了数据元素（变量）的内容，同时定义了该类数据可以进行的运算。</p>
+<h3 id="12-输入和输出"><a class="markdownIt-Anchor" href="#12-输入和输出"></a> 1.2 输入和输出</h3>
+<p>iostream库提供IO机制。</p>
+<ul>
+<li>istream表示输入流，使用cin的istream类型对象作为标准输入（standard input），从所运行的窗口读入；</li>
+<li>ostream表示输出流，使用cout的ostream类型对象作为标准输出（standard output），此外标准库还定义了cerr和clog两个ostream类型的对象，分别用来输出错误信息和日志信息；这些信息也都是通过正在运行的程序窗口进行输出。</li>
+</ul>
+<p>流的本质就是字符序列，表示对特定的设备（如计算机）进行读取或者写入。</p>
+<p>简单的输入输出示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span> <span class="comment">// 头文件引用，表明要使用iostream库</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// 输出运算符（&lt;&lt;）左侧必须是一个ostream对象，右侧是要打印的值，</span></span><br><span class="line">	<span class="comment">// 表示将待打印的值写到给定的ostream对象cout上，用来在标准信息上打印消息</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 两个&lt;&lt;符号其实是链式编程思想的体现，</span></span><br><span class="line">	<span class="comment">// 即第一个运算符的结果成为第二个运算符的左侧对象，从而对输出请求进行连接</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 第二个要打印的是一个操纵符（manipulator）endl，</span></span><br><span class="line">	<span class="comment">// 意味着结束当前行，并把缓冲区（buffer）中的内容刷新到设备中</span></span><br><span class="line">	<span class="comment">// 刷新的操作可以保证产生的输出都真正写入到流中，避免输入停留在缓冲区，从而导致一些错误的判断</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">// std::用来表明对象的命名空间（namespace），</span></span><br><span class="line">	<span class="comment">// std为标准库定义的所有名字的命名空间，::为作用域运算符</span></span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;Enter two numbers:&quot;</span> &lt;&lt; std::endl; </span><br><span class="line">	<span class="type">int</span> v1 = <span class="number">0</span>, v2 = <span class="number">0</span>;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 输入运算符（&gt;&gt;）左侧必须是一个istream对象，表明从该对象读入数据，并存取到右侧对象上</span></span><br><span class="line">	std::cin &gt;&gt; v1 &gt;&gt; v2; </span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 打印输出</span></span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;The sum of &quot;</span> &lt;&lt; v1 &lt;&lt; <span class="string">&quot; and &quot;</span> &lt;&lt; v2 &lt;&lt; <span class="string">&quot; is &quot;</span> &lt;&lt; v1 + v2 &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="13-注释comments"><a class="markdownIt-Anchor" href="#13-注释comments"></a> 1.3 注释（comments）</h3>
+<p>程序会忽略注释（预处理器遇到注释会以空行替换），所以注释的作用是帮助代码的人类读者理解程序内容。</p>
+<p>单行注释：以双斜线（//）开始，以换行符结束，其间所有内容都会被编译器所忽略，通常用于半行和单行附注；</p>
+<p>界定符对注释（源自C语言）：以/<em>开始，以</em>/结束，通常用于多行解释。</p>
+<p>简单用法示意如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* 界定符对注释</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// 单行注释</span></span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;Enter two numbers:&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">	<span class="type">int</span> v1 = <span class="number">0</span>, v2 = <span class="number">0</span>; <span class="comment">// 半行注释（同样属于单行注释）</span></span><br><span class="line">	std::cin &gt;&gt; v1 &gt;&gt; v2; </span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;The sum of &quot;</span> &lt;&lt; v1 &lt;&lt; <span class="string">&quot; and &quot;</span> &lt;&lt; v2 &lt;&lt; <span class="string">&quot; is &quot;</span> &lt;&lt; v1 + v2 &lt;&lt; std::endl;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="14-控制流"><a class="markdownIt-Anchor" href="#14-控制流"></a> 1.4 控制流</h3>
+<h5 id="while语句"><a class="markdownIt-Anchor" href="#while语句"></a> while语句</h5>
+<p>反复执行一段代码（<em>statement</em>），直到给定条件（<em>condition</em>）为假。</p>
+<p>形式：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (condition)</span><br><span class="line">    statement</span><br></pre></td></tr></table></figure>
+<p>示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">int</span> sum = <span class="number">0</span>, i = <span class="number">1</span>;</span><br><span class="line">	<span class="keyword">while</span> (i &lt;= <span class="number">10</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// 复合复制运算符（+=），将右侧的运算对象加到左侧运算对象上，将结果保存到左侧运算对象上</span></span><br><span class="line">		sum += i; <span class="comment">// 等价于 sum = sum + i</span></span><br><span class="line">		<span class="comment">// 后缀递增运算符（++），将运算对象的值增加1</span></span><br><span class="line">		i++；<span class="comment">// 等价于 i = i + 1</span></span><br><span class="line">	&#125;</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;Sum of 1 to 10 inclusive is: &quot;</span> &lt;&lt; sum &lt;&lt; std::endl;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="for语句"><a class="markdownIt-Anchor" href="#for语句"></a> for语句</h5>
+<p>是一种特定的针对变量递增（递减）的模式的循环语句，是对while的某种意义上的简化。</p>
+<p>for语句的结构为循环头+循环体两部分。</p>
+<p>循环头控制循环体的执行次数，它又更进一步由三部分组成：初始化语句（<em>init-statement</em>），循环条件（<em>condition</em>），以及表达式（<em>expression</em>）。</p>
+<p>简化while中的示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">int</span> sum = <span class="number">0</span>, i = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//while (i &lt;= 10)</span></span><br><span class="line">	<span class="comment">//&#123;</span></span><br><span class="line">	<span class="comment">//	sum += i;</span></span><br><span class="line">	<span class="comment">//	i++;</span></span><br><span class="line">	<span class="comment">//&#125;</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> (i = <span class="number">1</span>; i &lt;= <span class="number">10</span>; i++)</span><br><span class="line">	&#123;</span><br><span class="line">		sum += i;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;Sum of 1 to 10 inclusive is: &quot;</span> &lt;&lt; sum &lt;&lt; std::endl;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="循环读取输入"><a class="markdownIt-Anchor" href="#循环读取输入"></a> 循环读取输入</h5>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">int</span> sum = <span class="number">0</span>, val = <span class="number">0</span>;</span><br><span class="line">	<span class="comment">// 循环条件为std::cin &gt;&gt; val，本质上是判断对象cin是否为空，</span></span><br><span class="line">	<span class="comment">// 若输入错误，或遇到文件结束符（end-of——file，windows平台为Ctrl+Z），此时istream对象无效，从而结束循环</span></span><br><span class="line">	<span class="keyword">while</span> (std::cin &gt;&gt; val)</span><br><span class="line">	&#123;</span><br><span class="line">		sum += val;</span><br><span class="line">	&#125;</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;Sum is: &quot;</span> &lt;&lt; sum &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="if语句"><a class="markdownIt-Anchor" href="#if语句"></a> if语句</h5>
+<p>对某个条件进行求值。</p>
+<p>统计数字出现次数的示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">int</span> currentVal = <span class="number">0</span>, val = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">if</span> (std::cin &gt;&gt; currentVal)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">int</span> count = <span class="number">1</span>;</span><br><span class="line">		<span class="keyword">while</span> (std::cin &gt;&gt; val)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="comment">// 使用相等运算符（==）来判断符号两侧的值是否相等，这与赋值运算符（=）是完全不同的</span></span><br><span class="line">			<span class="keyword">if</span> (val == currentVal)</span><br><span class="line">			&#123;</span><br><span class="line">				count++;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">else</span></span><br><span class="line">			&#123;</span><br><span class="line">				std::cout &lt;&lt; currentVal &lt;&lt; <span class="string">&quot; occurs &quot;</span> &lt;&lt; count &lt;&lt; <span class="string">&quot; times&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">				currentVal = val;</span><br><span class="line">				count = <span class="number">1</span>;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		std::cout &lt;&lt; currentVal &lt;&lt; <span class="string">&quot; occurs &quot;</span> &lt;&lt; count &lt;&lt; <span class="string">&quot; times&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="15-类"><a class="markdownIt-Anchor" href="#15-类"></a> 1.5 类</h3>
+<p>类（class）定义了一种数据类型（设计目的与内置数据类型一样，如int，float等）的同时，还定义了与该类型相关联的一系列操作。</p>
+<p>成员函数（member function）作为类的一部分而存在，有时候也称为是方法（method）。</p>
+<p>成员函数通常是通过类的对象使用点运算符（.）来进行调用。点运算符的左侧是类类型的对象，右侧是该类型的一个成员名，运算结果是右侧对象的返回值。</p>
+<p>而调用某个函数需要使用调用运算符（()），里面可以为空也可以放置实参列表（argument）。</p>
+<h2 id="第二章-变量和基本类型"><a class="markdownIt-Anchor" href="#第二章-变量和基本类型"></a> 第二章 变量和基本类型</h2>
+<p>数据类型是程序的基础：它告诉我们数据的意义以及我们能在数据上执行的操作。</p>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Claude
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://claude-jhin.github.io/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/" title="再读《C++ Primer》（更新中）">https://claude-jhin.github.io/2022/04/29/再读C-Primer/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://t.me/channel_name">
+          <span class="icon">
+            <i class="fab fa-telegram"></i>
+          </span>
+
+          <span class="label">Telegram</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/jin-yuan-60-21">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">Zhihu</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://blog.csdn.net/xcinkey">
+          <span class="icon">
+            <i class="fab fa-csdn"></i>
+          </span>
+
+          <span class="label">CSDN</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/c/" rel="tag"><i class="fa fa-tag"></i> c++</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/" rel="prev" title="虚幻基础之编译">
+                  <i class="fa fa-chevron-left"></i> 虚幻基础之编译
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Claude</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">69k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><script color="0,0,0" opacity="1" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdn.jsdelivr.net/npm/pdfobject@2.2.7/pdfobject.min.js","integrity":"sha256-ph3Dk89VmuTVXG6x/RDzk53SU9LPdAh1tpv0UvnDZ2I="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" integrity="sha256-94CNZ/bJtwrBYZrXhCOBvpB4rZUzBnvAsirFv31TMGo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.css" integrity="sha256-+oItviPaTmqjDhk4y4fLLUIMgRQYDV/ZyrRNvQiebWM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.js","integrity":"sha256-etSqbSVF4+Lwe8MGk/Vanc1sR+mWv+qOG73fxWw9p94="}}</script>
+  <script src="/js/third-party/math/katex.js"></script>
+
+
+
+
+  
+     <canvas class="fireworks" style="position: fixed;left: 0;top: 0;z-index: 1; pointer-events: none;" ></canvas>
+     <script type="text/javascript" src="//cdn.bootcss.com/animejs/2.2.0/anime.min.js"></script>
+     <script type="text/javascript" src="/js/cursor/fireworks.js"></script>
+  
+
+</body>
+</html>

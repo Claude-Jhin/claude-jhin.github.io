@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/profile.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/profile.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="KUflL11YgFFV-BXkuh_GOzF_0UQxhAIifFwOB4vPcH4">
+  <meta name="msvalidate.01" content="26DFEC846CC3A3E5CE260CAF90C4F9A5">
+  <meta name="baidu-site-verification" content="code-LgifJoRihJ">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" integrity="sha256-jTIdiMuX/e3DGJUGwl3pKSxuc6YOuqtJYkM0bGQESA4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/black/pace-theme-corner-indicator.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"claude-jhin.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.10.1","exturl":false,"sidebar":{"position":"right","width":260,"display":"post","padding":18,"offset":54},"copycode":true,"bookmark":{"enable":true,"color":"#222","save":"manual"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="虽然不像Unity3D那样以多平台支持作为宣传点，虚幻本身依然是多平台支持的，如Windows，IOS，安卓等等。同时为了应对开发和部署的需要，编译的配置也是一个花样繁多的过程。 本篇文章就初步得从概念和工具的角度对虚幻的编译做一定的总结。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="虚幻基础之编译">
+<meta property="og:url" content="https://claude-jhin.github.io/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/index.html">
+<meta property="og:site_name" content="Claude的游戏之路">
+<meta property="og:description" content="虽然不像Unity3D那样以多平台支持作为宣传点，虚幻本身依然是多平台支持的，如Windows，IOS，安卓等等。同时为了应对开发和部署的需要，编译的配置也是一个花样繁多的过程。 本篇文章就初步得从概念和工具的角度对虚幻的编译做一定的总结。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/Compile_BuildCommandLine.png">
+<meta property="article:published_time" content="2022-04-25T10:11:21.000Z">
+<meta property="article:modified_time" content="2022-04-25T17:58:22.510Z">
+<meta property="article:author" content="Claude">
+<meta property="article:tag" content="ue5">
+<meta property="article:tag" content="c++">
+<meta property="article:tag" content="编译">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://claude-jhin.github.io/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/Compile_BuildCommandLine.png">
+
+
+<link rel="canonical" href="https://claude-jhin.github.io/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/","path":"2022/04/25/虚幻基础之编译/","title":"虚幻基础之编译"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>虚幻基础之编译 | Claude的游戏之路</title>
+  
+
+
+
+
+<script src="/lib/fireworks.js"></script>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Claude的游戏之路</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">记录游戏开发的点滴</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.</span> <span class="nav-text"> 编译系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#unrealbuildtool"><span class="nav-number">1.1.</span> <span class="nav-text"> UnrealBuildTool</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#unrealheadertool"><span class="nav-number">1.2.</span> <span class="nav-text"> UnrealHeaderTool</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text"> 编译类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text"> 总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text"> 参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Claude"
+      src="/images/profile_1.png">
+  <p class="site-author-name" itemprop="name">Claude</p>
+  <div class="site-description" itemprop="description">专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">61</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Claude-Jhin" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Claude-Jhin" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6321645600" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6321645600" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.csdn.net/xcinkey" title="https:&#x2F;&#x2F;blog.csdn.net&#x2F;xcinkey" rel="noopener" target="_blank">CSDN</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://claude-jhin.itch.io/" title="https:&#x2F;&#x2F;claude-jhin.itch.io&#x2F;" rel="noopener" target="_blank">Game Jam Profile</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="虚幻基础之编译 | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          虚幻基础之编译
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-25 18:11:21" itemprop="dateCreated datePublished" datetime="2022-04-25T18:11:21+08:00">2022-04-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-26 01:58:22" itemprop="dateModified" datetime="2022-04-26T01:58:22+08:00">2022-04-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>虽然不像Unity3D那样以多平台支持作为宣传点，虚幻本身依然是多平台支持的，如Windows，IOS，安卓等等。同时为了应对开发和部署的需要，编译的配置也是一个花样繁多的过程。</p>
+<p>本篇文章就初步得从概念和工具的角度对虚幻的编译做一定的总结。</p>
+<span id="more"></span>
+<p><ul class="markdownIt-TOC">
+<li><a href="#%E7%BC%96%E8%AF%91%E7%B3%BB%E7%BB%9F">编译系统</a>
+<ul>
+<li><a href="#unrealbuildtool">UnrealBuildTool</a></li>
+<li><a href="#unrealheadertool">UnrealHeaderTool</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BC%96%E8%AF%91%E7%B1%BB%E5%9E%8B">编译类型</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+</p>
+<p>本文使用的环境和工具为：</p>
+<ul>
+<li>Windows 10</li>
+<li>ue5</li>
+<li>Rider or Unreal Engine 2021.3</li>
+</ul>
+<h2 id="编译系统"><a class="markdownIt-Anchor" href="#编译系统"></a> 编译系统</h2>
+<p><code>编译</code>是指从源程序到产生目标程序的过程，是指从高级语言翻译成机器可以识读的二进制语言的过程，更通俗来讲，它可以是把我们编写的代码、资源，整合成一个可以运行的可以玩的游戏的过程。</p>
+<p>编译通常会涉及到一项强有力的工具——编译器，当然标准的编译流程中还会又预处理阶段（由预处理器负责，是和编译器分开的），现在各种功能强大的IDE通常会把这些工作整合到一起在后台做掉，我们一般只需要点一下<code>Build</code>或者<code>Debug</code>又或者<code>Run</code>即可。</p>
+<p>当然，虚幻引擎本身及其游戏内容都是由c<ins>写成，其项目编译当然也会遵循这个过程。只不过，虚幻引擎本身的代码量非常之巨大，属性和方法组成了类，类和类相互配合搭建起模块，模块和模块相互依赖构成了系统，而虚幻引擎中类和模块的数量已经难以计数，所以它也推出了自己的一套管理代码的工具（）：UnrealBuildTool（UBT，C#，编译虚幻的各个模块，处理依赖），和UnrealHeaderTool（UHT，C</ins>，头文件解析和代码生成，为反射系统提供支持）。</p>
+<h3 id="unrealbuildtool"><a class="markdownIt-Anchor" href="#unrealbuildtool"></a> UnrealBuildTool</h3>
+<p>UBT的源码位于：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE_5.0\Engine\Source\Programs\UnrealBuildTool</span><br></pre></td></tr></table></figure>
+<p>代码是用C#写成，完整开发的话需要安装相应的.Net桌面开发框架，需要的可以到相应位置查找（一般我们不会去动这个工具，但是相应的，如果需要做一些轻量的修改，可以到BuildConfiguration.cs中探索可供用户配置的编译选项）。而对应的可执行程序的位置在：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE_5.0\Engine\Binaries\DotNET\AutomationTool</span><br></pre></td></tr></table></figure>
+<p>这个才是真正编译好的，发挥作用的工具。</p>
+<p>对于UBT，我们需要知道的是，当我们去Build或者Rebuild项目时（以及右键点击项目的<code>.uproject</code>文件选择Generate Visual Studio project files时），就会去运行UnrealBuildTool.exe，并传入几个参数（Main函数的参数）：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">class</span> <span class="title">UnrealBuildTool</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="built_in">int</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] ArgumentsArray</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的ArgumentsArray即是通过采样C++构建系统NMake的Build Command Line来确定几个参数，主要是项目名称，编译的Target（目标），目标平台等等。</p>
+<p><img src="%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/Compile_BuildCommandLine.png" alt="" /></p>
+<p>然后读取build.cs，确定模块与模块之间的依赖关系（需要去编译哪些模块，需要忽略哪些模块的编译工作，模块的没有变动的话会跳过）。</p>
+<p>随后，UBT调用UHT执行头文件解析和代码生成的工作，UHT会根据反射标签生成相应的代码（如对应<code>GENERATED_BODY()</code>的宏替换代码就位于生成的<code>.generated.h</code>中，又如<code>UPROPERTY()</code>标记的属性被序列化到蓝图中，等等，详情参考讲解反射的相关文章）。</p>
+<p>最后，UBT通过确定好的依赖关系调用编译器编译变更模块的C++代码。</p>
+<h3 id="unrealheadertool"><a class="markdownIt-Anchor" href="#unrealheadertool"></a> UnrealHeaderTool</h3>
+<p>UHT的源码位于：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE_5.0\Engine\Source\Programs\UnrealHeaderTool</span><br></pre></td></tr></table></figure>
+<p>UHT工具与虚幻的反射机制息息相关，可以这样说，UHT是构建于虚幻UObject系统基础上的宏生成和替换工具（当然，还是用原文“头文件解析工具”更贴切）。</p>
+<p>反射是很多游戏引擎都依赖的特性，像Unity3D借用了C#的反射。当然不同的是，C<ins>本身并不支持反射（原生C</ins>有RTTI，Runtime Type Identification，即运行时类型识别），而是虚幻在普通C++上实现了这样的一套反射机制。这样，便使<strong>运行时</strong>获取类的元数据变得简单，从实现GC，序列化等一些引擎需要的功能。</p>
+<p>举个例子，用<code>UPROPERTY()</code>标记的属性，可以序列化在蓝图中，通过其中的说明符可以进一步定制该属性的特性（详情参阅说明符关键字相关文章）。</p>
+<h2 id="编译类型"><a class="markdownIt-Anchor" href="#编译类型"></a> 编译类型</h2>
+<p>编译虚幻项目时，可以是简单的选择项目，然后右键Build，然后运行Debug；但是此时可能就会遇到一些问题，为什么有些代码我打了断点，却无法进入断点呢？</p>
+<p>这个就是虚幻C++项目的一个小坑了，关键就在于编译的配置。</p>
+<p>我们可以发现在每个模块都有对应的<code>.Target.cs</code>，包括我们的游戏模块。其内容就是对该模块应该面向哪一种编译的目标。</p>
+<p>这里这个编译的Target，我们可以理解为我们出于什么目的来编译这个模块，是为了让别人在游戏中直接使用？还是别人可以在编辑器中应用调整该模块？等等。</p>
+<p>例如我们的游戏模块，我们知道这个游戏是冲着打成包给别人玩的，那么就有专门的<code>.Target.cs</code>：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Type = TargetType.Game;</span><br></pre></td></tr></table></figure>
+<p>这里的Target为[empty]</p>
+<p>此外，这个游戏模块还要供我们在编辑器内编辑使用，可能还会用到调试，那么还有另外一个<code>__Editor.Target.cs</code>：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Type = TargetType.Editor;</span><br></pre></td></tr></table></figure>
+<p>这里的Target为Editor。</p>
+<p>此外Target的可选项还有Client和Server，分别对应着客户端和服务器的编译目标。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Target</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">[empty]</td>
+<td style="text-align:center">不带编辑器的一个独立可执行版本，需要提前<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/packaging-unreal-engine-projects/">打包</a>烘培内容资源</td>
+</tr>
+<tr>
+<td style="text-align:center">Editor</td>
+<td style="text-align:center">在虚幻编辑器里打开并可编辑游戏项目，所有代码的更改也会反映到编辑器中</td>
+</tr>
+<tr>
+<td style="text-align:center">Client</td>
+<td style="text-align:center">多人联网功能中的客户端版本，需要在项目中提供<code>__Client.Target.cs</code>（参照<code>__Editor.Target.cs</code>的写法）</td>
+</tr>
+<tr>
+<td style="text-align:center">Server</td>
+<td style="text-align:center">多人联网功能中的服务器版本，需要在项目中提供<code>__Server.Target.cs</code>（参照<code>__Editor.Target.cs</code>的写法）</td>
+</tr>
+</tbody>
+</table>
+<p>除了Target外，还有另外一关键字需要注意——State（通常State在前，Target在后，即[State] [Target]）。</p>
+<p>State是用来描述我们当前引擎和游戏项目的状态，我们的游戏要准备打包发行了，就使用Shipping；我还处在游戏开发阶段，需要通过代码进行某些游戏代码的调试，就使用DebugGame；而若是只需要通过编辑器的反射来查看代码的更改的话，那么Development一般就可满足条件（这也是默认的状态，虚幻官方推荐新手以蓝图开发为主，代码开发为辅）。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">State</th>
+<th style="text-align:center">Engine</th>
+<th style="text-align:center">Game</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Debug</td>
+<td style="text-align:center">Debug</td>
+<td style="text-align:center">Debug</td>
+<td style="text-align:center">会同时去构建引擎和游戏两者的代码，是最全面的构建，但同时也会比较费时间</td>
+</tr>
+<tr>
+<td style="text-align:center">DebugGame</td>
+<td style="text-align:center">Release</td>
+<td style="text-align:center">Debug</td>
+<td style="text-align:center">以最优的方式构建引擎，同时保持游戏部分的代码支持调试，适用于仅调试代码的模式</td>
+</tr>
+<tr>
+<td style="text-align:center">Development</td>
+<td style="text-align:center">Release</td>
+<td style="text-align:center">Release</td>
+<td style="text-align:center">可以在编辑器内通过反射的方式查看代码所带来的更改，是开发和性能最平衡的模式</td>
+</tr>
+<tr>
+<td style="text-align:center">Shipping</td>
+<td style="text-align:center">Release</td>
+<td style="text-align:center">Release</td>
+<td style="text-align:center">最佳性能配置，用于交付游戏，无控制台命令、统计数据和性能分析工具</td>
+</tr>
+<tr>
+<td style="text-align:center">Test</td>
+<td style="text-align:center">Release</td>
+<td style="text-align:center">Release</td>
+<td style="text-align:center">同Shipping模式，但是启用了控制台命令、统计数据和性能分析工具</td>
+</tr>
+</tbody>
+</table>
+<p>这两个关键字大部分情况都可以组合使用，但是还是有一些例外情况。</p>
+<p>编译配置——编译解决方案（有引擎源码版），此时是将引擎源代码和游戏项目的源代码一同编译，其可选配置如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center">Debug</th>
+<th style="text-align:center">DebugGame</th>
+<th style="text-align:center">Development</th>
+<th style="text-align:center">Shipping</th>
+<th style="text-align:center">Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">[empty]</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+<tr>
+<td style="text-align:center">Editor</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td style="text-align:center">Client</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+<tr>
+<td style="text-align:center">Server</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+</tbody>
+</table>
+<p>编译配置——编译项目（无引擎源码版），此时是将游戏项目的源代码单独编译，其可选配置如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center">Debug</th>
+<th style="text-align:center">DebugGame</th>
+<th style="text-align:center">Development</th>
+<th style="text-align:center">Shipping</th>
+<th style="text-align:center">Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">[empty]</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td style="text-align:center">Editor</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td style="text-align:center">Client</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td style="text-align:center">Server</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<p>UBT也好，UHT也好，甚至于IDE也好，作为工具来说是他们都是非常强大可靠的，同时其强大的代价就是其内部项目的驳杂，会在我们希望深入内部时造成一定的阅读学习困难。</p>
+<p>好在，一方面，作为游戏开发者、引擎使用者来说，我们不是必须要把这些工具的内部代码理解通透，而是掌握其基本特性和工作流程已是不错，随着分工不断得细化，我们程序也会走向不同的分工，可能确实有一些同时需要切实掌握并且具备修改的能力，但是对于大部分Gameplay和System的编程者来说，能够完全掌握本文及链接所述内容已是不俗。</p>
+<p>另一方面，网络上也越来越多得出现技术和知识的共享者，本文的成文就是综合多方阅读资源进行总结的结果，这里也表达我的谢意。</p>
+<p>最后，如果文中有一些技术性或者表述性的错误，还请大家多予指点。</p>
+<h2 id="参考"><a class="markdownIt-Anchor" href="#参考"></a> 参考</h2>
+<p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/build-configurations-reference-for-unreal-engine/">虚幻 5.0 Documentation - Build Configurations Reference</a></p>
+<p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/compiling-game-projects-in-unreal-engine-using-cplusplus/">虚幻 5.0 Documentation - Compiling Game Projects</a></p>
+<p>知乎作者 大钊 的文章<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/22814098">《InsideUE4》</a></p>
+<p>知乎作者 雪流星 的文章<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/458435453">《虚幻编译系统总结》</a></p>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Claude
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://claude-jhin.github.io/2022/04/25/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E7%BC%96%E8%AF%91/" title="虚幻基础之编译">https://claude-jhin.github.io/2022/04/25/虚幻基础之编译/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://t.me/channel_name">
+          <span class="icon">
+            <i class="fab fa-telegram"></i>
+          </span>
+
+          <span class="label">Telegram</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/jin-yuan-60-21">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">Zhihu</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://blog.csdn.net/xcinkey">
+          <span class="icon">
+            <i class="fab fa-csdn"></i>
+          </span>
+
+          <span class="label">CSDN</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/ue5/" rel="tag"><i class="fa fa-tag"></i> ue5</a>
+              <a href="/tags/c/" rel="tag"><i class="fa fa-tag"></i> c++</a>
+              <a href="/tags/%E7%BC%96%E8%AF%91/" rel="tag"><i class="fa fa-tag"></i> 编译</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/04/19/%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BQuest-System/" rel="prev" title="虚幻插件之Quest System">
+                  <i class="fa fa-chevron-left"></i> 虚幻插件之Quest System
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/" rel="next" title="再读《C++ Primer》（更新中）">
+                  再读《C++ Primer》（更新中） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Claude</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">69k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><script color="0,0,0" opacity="1" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdn.jsdelivr.net/npm/pdfobject@2.2.7/pdfobject.min.js","integrity":"sha256-ph3Dk89VmuTVXG6x/RDzk53SU9LPdAh1tpv0UvnDZ2I="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" integrity="sha256-94CNZ/bJtwrBYZrXhCOBvpB4rZUzBnvAsirFv31TMGo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.css" integrity="sha256-+oItviPaTmqjDhk4y4fLLUIMgRQYDV/ZyrRNvQiebWM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/copy-tex.min.js","integrity":"sha256-etSqbSVF4+Lwe8MGk/Vanc1sR+mWv+qOG73fxWw9p94="}}</script>
+  <script src="/js/third-party/math/katex.js"></script>
+
+
+
+
+  
+     <canvas class="fireworks" style="position: fixed;left: 0;top: 0;z-index: 1; pointer-events: none;" ></canvas>
+     <script type="text/javascript" src="//cdn.bootcss.com/animejs/2.2.0/anime.min.js"></script>
+     <script type="text/javascript" src="/js/cursor/fireworks.js"></script>
+  
+
+</body>
+</html>
