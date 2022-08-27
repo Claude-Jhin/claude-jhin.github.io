@@ -134,18 +134,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">61</span>
+          <span class="site-state-item-count">66</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-count">39</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -476,7 +476,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-04-10 19:53:36" itemprop="dateModified" datetime="2022-04-10T19:53:36+08:00">2022-04-10</time>
+      <time title="修改时间：2022-05-05 19:00:56" itemprop="dateModified" datetime="2022-05-05T19:00:56+08:00">2022-05-05</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -485,6 +485,10 @@
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
           <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E5%B9%BB/GAS/" itemprop="url" rel="index"><span itemprop="name">GAS</span></a>
         </span>
     </span>
 
@@ -561,6 +565,481 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/08/27/bat%E6%89%B9%E5%A4%84%E7%90%86%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/08/27/bat%E6%89%B9%E5%A4%84%E7%90%86%E7%AC%94%E8%AE%B0/" class="post-title-link" itemprop="url">bat批处理笔记</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-08-27 23:11:16 / 修改时间：23:30:25" itemprop="dateCreated datePublished" datetime="2022-08-27T23:11:16+08:00">2022-08-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Tricks/" itemprop="url" rel="index"><span itemprop="name">Tricks</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>387</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><ul class="markdownIt-TOC">
+<li><a href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%89%B9%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8Fbat">什么是批处理程序（.bat）？</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E7%BC%96%E8%BE%91bat">如何编辑<code>.bat</code>？</a></li>
+<li><a href="#bat%E7%9A%84%E5%8A%9F%E7%94%A8"><code>.bat</code>的功用</a></li>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E7%9A%84bat%E6%96%87%E4%BB%B6">基本的<code>.bat</code>文件</a></li>
+<li><a href="#%E5%91%BD%E4%BB%A4%E5%88%86%E7%B1%BB">命令分类</a>
+<ul>
+<li><a href="#%E5%86%85%E9%83%A8%E5%91%BD%E4%BB%A4">内部命令</a></li>
+<li><a href="#%E5%A4%96%E9%83%A8%E5%91%BD%E4%BB%A4">外部命令</a></li>
+</ul>
+</li>
+</ul>
+</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/08/27/bat%E6%89%B9%E5%A4%84%E7%90%86%E7%AC%94%E8%AE%B0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">Http原理入门</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-08-25 22:59:41" itemprop="dateCreated datePublished" datetime="2022-08-25T22:59:41+08:00">2022-08-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-27 23:01:24" itemprop="dateModified" datetime="2022-08-27T23:01:24+08:00">2022-08-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">网络编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><ul class="markdownIt-TOC">
+<li><a href="#%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87">请求报文</a>
+<ul>
+<li><a href="#%E8%AF%B7%E6%B1%82%E8%A1%8Crequestline">请求行（requestline）</a></li>
+<li><a href="#%E8%AF%B7%E6%B1%82%E5%A4%B4%E9%83%A8header">请求头部（header）</a></li>
+<li><a href="#%E7%A9%BA%E8%A1%8C">空行</a></li>
+<li><a href="#%E8%AF%B7%E6%B1%82%E4%BD%93">请求体</a></li>
+</ul>
+</li>
+<li><a href="#%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87">响应报文</a>
+<ul>
+<li><a href="#%E7%8A%B6%E6%80%81%E8%A1%8C">状态行</a></li>
+</ul>
+</li>
+<li><a href="#%E5%93%8D%E5%BA%94%E5%A4%B4%E9%83%A8">响应头部</a></li>
+<li><a href="#%E7%A9%BA%E8%A1%8C-2">空行</a></li>
+<li><a href="#%E5%93%8D%E5%BA%94%E4%BD%93">响应体</a></li>
+</ul>
+</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/05/05/%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BGameplay-Ability-System/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/05/05/%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BGameplay-Ability-System/" class="post-title-link" itemprop="url">虚幻插件之Gameplay Ability System</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-05 18:59:25" itemprop="dateCreated datePublished" datetime="2022-05-05T18:59:25+08:00">2022-05-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-05-09 20:44:19" itemprop="dateModified" datetime="2022-05-09T20:44:19+08:00">2022-05-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%99%9A%E5%B9%BB/GAS/" itemprop="url" rel="index"><span itemprop="name">GAS</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>789</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="参考"><a class="markdownIt-Anchor" href="#参考"></a> 参考</h2>
+<p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/gameplay-ability-system-for-unreal-engine/">虚幻 5.0 Documentation - Gameplay Ability System</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/tranek/GASDocumentation">Github tranek 的仓库 - GASDocumentation</a></p>
+<p><a target="_blank" rel="noopener" href="https://vorixo.github.io/devtricks/gas/">Devtricks -  Unreal Engine 5 - The truth of the Gameplay Ability System</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1X5411V7jh">b站 虚幻引擎官方 - 第31期｜GAS插件介绍（入门篇）</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Wy4y1j7RB">b站 虚幻引擎官方 - A Guided Tour of Gameplay Abilities</a></p>
+<p>[UnrealOpenDay2020]深入GAS架构设计 | EpicGames 大钊 <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1zD4y1X77M">https://www.bilibili.com/video/BV1zD4y1X77M</a></p>
+<p>动作RPG：Gameplay Abilities System <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Ub411S71W">https://www.bilibili.com/video/BV1Ub411S71W</a></p>
+<p>[真实字幕组]Action RPG Gameplay Abilities System <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV18J411M7jg">https://www.bilibili.com/video/BV18J411M7jg</a></p>
+<p>[FestEurope2019]使用游戏玩法技能系统 | Using the Gameplay Ability System(官方汉化) <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1gJ411J7AM">https://www.bilibili.com/video/BV1gJ411J7AM</a></p>
+<p>[UnrealFestOnline2020]Gameplay Abilities Framework的优缺点(官方字幕) <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Y54y1e7VJ">https://www.bilibili.com/video/BV1Y54y1e7VJ</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1vB4y1w7q6">https://www.bilibili.com/video/BV1vB4y1w7q6</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/pirate310/article/details/106311256">https://blog.csdn.net/pirate310/article/details/106311256</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/JackSamuel/p/7155500.html">https://www.cnblogs.com/JackSamuel/p/7155500.html</a></p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/05/05/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BLevel-Streaming%E5%92%8CWorld-Composition/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/profile_1.png">
+      <meta itemprop="name" content="Claude">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Claude的游戏之路">
+      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Claude的游戏之路">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/05/05/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BLevel-Streaming%E5%92%8CWorld-Composition/" class="post-title-link" itemprop="url">虚幻基础之Level Streaming和World Composition</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-05 18:12:45" itemprop="dateCreated datePublished" datetime="2022-05-05T18:12:45+08:00">2022-05-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/default/" itemprop="url" rel="index"><span itemprop="name">default</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>0</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+
+          <div class="theme-info">
+            <div class="powered-by"></div>
+
+
+            </span>
+          </div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -597,7 +1076,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-05-02 13:52:26" itemprop="dateModified" datetime="2022-05-02T13:52:26+08:00">2022-05-02</time>
+      <time title="修改时间：2022-08-14 13:04:40" itemprop="dateModified" datetime="2022-08-14T13:04:40+08:00">2022-08-14</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -616,14 +1095,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4.3k</span>
+      <span>17k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>4 分钟</span>
+      <span>15 分钟</span>
     </span>
 </div>
 
@@ -642,9 +1121,9 @@
     
     <div class="post-body" itemprop="articleBody">
           <p>我的程序学习之路是自大学就开始了，但是真正第一次拜读《C++ Primer》这部公认的必读书籍却是从研究生阶段才开始的，当时我身在法国，从网上找了一本像模像样的电子版就开始了阅读学习。</p>
-<p>其实第一次读完（其实也并没有读完，只是将学业要求内的知识点相关看完了），并没有感到什么所谓脱胎换骨的感觉，其中的很多知识点我从前就接触过，而一些新的细节的地方当时也没有仔细去做记录和研究，所以当时心中也并没有像其他读者那样将之封为神作。当然这段读书经历还是在很长一段时间作为了我自我炫耀的其中一项谈资，因为毕竟是耐着性子读完了一本七八百页的理论书，现在想想也是颇为幼稚。</p>
+<p>其实第一次读完（其实也并没有读完，只是将学业要求内的知识点相关看完了），并没有感到什么所谓脱胎换骨的感觉，其中的很多知识点我从前就接触过，而一些新的细节的地方当时也没有仔细去做记录和研究，所以当时心中也并没有像其他读者那样将之封为神作。当然这段读书经历还是在很长一段时间作为了我自我炫耀的其中一项谈资，因为毕竟是耐着性子读完了一本七八百页的理论书，现在想想有这种炫耀的想法也说明了自己的不成熟。</p>
 <p>但是随着学业和工作的不断深入，我愈发得感觉到自己对于某些内容、对于人生和学习等，产生了一些不同的理解，关于类，关于内存，关于对细节的执着，关于读书的习惯。我发觉这本书给我的影响比想象中要大的多。</p>
-<p>彼时我使用C<ins>仅限于对图形图像的研究学习，此外的同时，还学习了Python以及更多的，使用C#进行Unity相关内容的开发。此刻，我也在虚幻研究中探索了一段时间，虚幻引擎内对C</ins>的使用使我对这门语言又产生了一些不一样的理解。我觉得是时候了，去再翻开这本书，将第一遍阅读时未竟的遗憾完成，也希望这个自己能够再次借着这本书，蜕变。</p>
+<p>彼时我使用C<ins>仅限于对图形图像的研究学习，同时，还学习了Python以及更多的，使用C#进行Unity相关内容的开发。此刻，我也在虚幻研究中探索了一段时间，虚幻引擎内对C</ins>的使用使我对这门语言又产生了一些不一样的理解。我觉得是时候了，去再翻开这本书，将初时阅读未竟的遗憾完成，也希望这个自己能够再次借着这本书，产生某种蜕变。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/29/%E5%86%8D%E8%AF%BBC-Primer/#more" rel="contents">
@@ -714,7 +1193,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-04-26 01:58:22" itemprop="dateModified" datetime="2022-04-26T01:58:22+08:00">2022-04-26</time>
+      <time title="修改时间：2022-05-05 13:43:56" itemprop="dateModified" datetime="2022-05-05T13:43:56+08:00">2022-05-05</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -902,442 +1381,6 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/15/LeetCode-119-%E6%9D%A8%E8%BE%89%E4%B8%89%E8%A7%92-II/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/profile_1.png">
-      <meta itemprop="name" content="Claude">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Claude的游戏之路">
-      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Claude的游戏之路">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/15/LeetCode-119-%E6%9D%A8%E8%BE%89%E4%B8%89%E8%A7%92-II/" class="post-title-link" itemprop="url">LeetCode 119 杨辉三角 II</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-04-15 00:31:37 / 修改时间：00:35:36" itemprop="dateCreated datePublished" datetime="2022-04-15T00:31:37+08:00">2022-04-15</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/" itemprop="url" rel="index"><span itemprop="name">LeetCode</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/easy/" itemprop="url" rel="index"><span itemprop="name">easy</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>840</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-
-          <div class="theme-info">
-            <div class="powered-by"></div>
-
-
-            </span>
-          </div>
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><ul class="markdownIt-TOC">
-<li><a href="#%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92">动态规划</a></li>
-</ul>
-</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/15/LeetCode-119-%E6%9D%A8%E8%BE%89%E4%B8%89%E8%A7%92-II/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94USTRUCT%E7%AF%87/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/profile_1.png">
-      <meta itemprop="name" content="Claude">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Claude的游戏之路">
-      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Claude的游戏之路">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94USTRUCT%E7%AF%87/" class="post-title-link" itemprop="url">虚幻代码中支持反射的说明符关键字——USTRUCT篇</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2022-04-13 18:23:45" itemprop="dateCreated datePublished" datetime="2022-04-13T18:23:45+08:00">2022-04-13</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/default/" itemprop="url" rel="index"><span itemprop="name">default</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>0</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-
-          <div class="theme-info">
-            <div class="powered-by"></div>
-
-
-            </span>
-          </div>
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94UFUNCTION%E7%AF%87/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/profile_1.png">
-      <meta itemprop="name" content="Claude">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Claude的游戏之路">
-      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Claude的游戏之路">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94UFUNCTION%E7%AF%87/" class="post-title-link" itemprop="url">虚幻代码中支持反射的说明符关键字——UFUNCTION篇（更新中）</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-04-13 18:11:23 / 修改时间：19:36:45" itemprop="dateCreated datePublished" datetime="2022-04-13T18:11:23+08:00">2022-04-13</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>204</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-
-          <div class="theme-info">
-            <div class="powered-by"></div>
-
-
-            </span>
-          </div>
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>虚幻引擎代码纷繁复杂，一定程度上就是因为从UObject开始架构的这套反射系统，<br />
-它在带给我们优秀的反射机制的同时，也让代码的阅读及编写有了一定的门槛。</p>
-<p>本篇文章的目的，就希望通过拆解虚幻中说明符关键字的这一环，帮助更多人逐步消解跨过这一道门槛。</p>
-<p>本文是系列文章中针对UFUNCTION中涉及到的说明符关键字的解释。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94UFUNCTION%E7%AF%87/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94UCLASS%E7%AF%87/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/profile_1.png">
-      <meta itemprop="name" content="Claude">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Claude的游戏之路">
-      <meta itemprop="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Claude的游戏之路">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94UCLASS%E7%AF%87/" class="post-title-link" itemprop="url">虚幻代码中支持反射的说明符关键字——UCLASS篇（更新中）</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-04-13 18:02:00 / 修改时间：19:35:55" itemprop="dateCreated datePublished" datetime="2022-04-13T18:02:00+08:00">2022-04-13</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E8%99%9A%E5%B9%BB/" itemprop="url" rel="index"><span itemprop="name">虚幻</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1.3k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-
-          <div class="theme-info">
-            <div class="powered-by"></div>
-
-
-            </span>
-          </div>
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>虚幻引擎代码纷繁复杂，一定程度上就是因为从UObject开始架构的这套反射系统，<br />
-它在带给我们优秀的反射机制的同时，也让代码的阅读及编写有了一定的门槛。</p>
-<p>本篇文章的目的，就希望通过拆解虚幻中说明符关键字的这一环，帮助更多人逐步消解跨过这一道门槛。</p>
-<p>本文是系列文章中针对UCLASS中涉及到的说明符关键字的解释。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/13/%E8%99%9A%E5%B9%BB%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%94%AF%E6%8C%81%E5%8F%8D%E5%B0%84%E7%9A%84%E8%AF%B4%E6%98%8E%E7%AC%A6%E5%85%B3%E9%94%AE%E5%AD%97%E2%80%94%E2%80%94UCLASS%E7%AF%87/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
     <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
@@ -1363,14 +1406,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">69k</span>
+    <span title="站点总字数">93k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">1:03</span>
+    <span title="站点阅读时长">1:25</span>
   </span>
 </div>
 <div class="busuanzi-count">

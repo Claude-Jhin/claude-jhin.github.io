@@ -25,28 +25,32 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"claude-jhin.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.10.1","exturl":false,"sidebar":{"position":"right","width":260,"display":"post","padding":18,"offset":54},"copycode":true,"bookmark":{"enable":true,"color":"#222","save":"manual"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+    <meta name="description" content="请求报文  请求行（requestline） 请求头部（header） 空行 请求体   响应报文  状态行   响应头部 空行 响应体">
 <meta property="og:type" content="article">
-<meta property="og:title" content="虚幻5新特性之世界分区">
-<meta property="og:url" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8B%E4%B8%96%E7%95%8C%E5%88%86%E5%8C%BA/index.html">
+<meta property="og:title" content="Http原理入门">
+<meta property="og:url" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/index.html">
 <meta property="og:site_name" content="Claude的游戏之路">
-<meta property="og:description" content="专注于游戏开发中设计到的种种技术，主要包括虚幻引擎unreal engine相关，gameplay相关，c++编程相关，实时渲染相关">
+<meta property="og:description" content="请求报文  请求行（requestline） 请求头部（header） 空行 请求体   响应报文  状态行   响应头部 空行 响应体">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-04-12T13:28:48.000Z">
-<meta property="article:modified_time" content="2022-04-12T13:28:48.140Z">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87.jpg">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87%E7%A4%BA%E4%BE%8B.jpg">
+<meta property="article:published_time" content="2022-08-25T14:59:41.000Z">
+<meta property="article:modified_time" content="2022-08-27T15:01:24.741Z">
 <meta property="article:author" content="Claude">
-<meta property="article:tag" content="default">
+<meta property="article:tag" content="Http">
+<meta property="article:tag" content="网络">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87.jpg">
 
 
-<link rel="canonical" href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8B%E4%B8%96%E7%95%8C%E5%88%86%E5%8C%BA/">
+<link rel="canonical" href="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8B%E4%B8%96%E7%95%8C%E5%88%86%E5%8C%BA/","path":"2022/04/12/虚幻5新特性之世界分区/","title":"虚幻5新特性之世界分区"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/","path":"2022/08/25/Http原理入门/","title":"Http原理入门"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>虚幻5新特性之世界分区 | Claude的游戏之路</title>
+<title>Http原理入门 | Claude的游戏之路</title>
   
 
 
@@ -109,7 +113,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           文章目录
@@ -122,6 +126,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#http%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%94%A8%E9%80%94"><span class="nav-number">1.</span> <span class="nav-text"> Http服务器用途</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#http%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text"> Http工作原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#url"><span class="nav-number">3.</span> <span class="nav-text"> URL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8A%A5%E6%96%87"><span class="nav-number">4.</span> <span class="nav-text"> 报文</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87"><span class="nav-number">4.1.</span> <span class="nav-text"> 请求报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E8%A1%8Crequestline"><span class="nav-number">4.1.1.</span> <span class="nav-text"> 请求行（requestline）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%A4%B4%E9%83%A8header"><span class="nav-number">4.1.2.</span> <span class="nav-text"> 请求头部（header）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E8%A1%8C"><span class="nav-number">4.1.3.</span> <span class="nav-text"> 空行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E4%BD%93"><span class="nav-number">4.1.4.</span> <span class="nav-text"> 请求体</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87"><span class="nav-number">4.2.</span> <span class="nav-text"> 响应报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E8%A1%8C"><span class="nav-number">4.2.1.</span> <span class="nav-text"> 状态行</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E5%A4%B4%E9%83%A8"><span class="nav-number">4.3.</span> <span class="nav-text"> 响应头部</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A9%BA%E8%A1%8C-2"><span class="nav-number">4.4.</span> <span class="nav-text"> 空行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E4%BD%93"><span class="nav-number">4.5.</span> <span class="nav-text"> 响应体</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -136,18 +141,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">61</span>
+          <span class="site-state-item-count">66</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-count">39</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -209,7 +214,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8B%E4%B8%96%E7%95%8C%E5%88%86%E5%8C%BA/">
+    <link itemprop="mainEntityOfPage" href="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/profile_1.png">
@@ -222,12 +227,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="虚幻5新特性之世界分区 | Claude的游戏之路">
+      <meta itemprop="name" content="Http原理入门 | Claude的游戏之路">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          虚幻5新特性之世界分区
+          Http原理入门
         </h1>
 
         <div class="post-meta-container">
@@ -238,7 +243,14 @@
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2022-04-12 21:28:48" itemprop="dateCreated datePublished" datetime="2022-04-12T21:28:48+08:00">2022-04-12</time>
+      <time title="创建时间：2022-08-25 22:59:41" itemprop="dateCreated datePublished" datetime="2022-08-25T22:59:41+08:00">2022-08-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-27 23:01:24" itemprop="dateModified" datetime="2022-08-27T23:01:24+08:00">2022-08-27</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -246,7 +258,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/default/" itemprop="url" rel="index"><span itemprop="name">default</span></a>
+          <a href="/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">网络编程</span></a>
         </span>
     </span>
 
@@ -264,7 +276,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>0</span>
+      <span>1.4k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -289,7 +301,106 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        
+        <p><ul class="markdownIt-TOC">
+<li><a href="#%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87">请求报文</a>
+<ul>
+<li><a href="#%E8%AF%B7%E6%B1%82%E8%A1%8Crequestline">请求行（requestline）</a></li>
+<li><a href="#%E8%AF%B7%E6%B1%82%E5%A4%B4%E9%83%A8header">请求头部（header）</a></li>
+<li><a href="#%E7%A9%BA%E8%A1%8C">空行</a></li>
+<li><a href="#%E8%AF%B7%E6%B1%82%E4%BD%93">请求体</a></li>
+</ul>
+</li>
+<li><a href="#%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87">响应报文</a>
+<ul>
+<li><a href="#%E7%8A%B6%E6%80%81%E8%A1%8C">状态行</a></li>
+</ul>
+</li>
+<li><a href="#%E5%93%8D%E5%BA%94%E5%A4%B4%E9%83%A8">响应头部</a></li>
+<li><a href="#%E7%A9%BA%E8%A1%8C-2">空行</a></li>
+<li><a href="#%E5%93%8D%E5%BA%94%E4%BD%93">响应体</a></li>
+</ul>
+</p>
+<span id="more"></span>
+<h1 id="http服务器用途"><a class="markdownIt-Anchor" href="#http服务器用途"></a> Http服务器用途</h1>
+<ul>
+<li>用于Web服务器访问网站</li>
+<li>上传，下载</li>
+<li>注册，登录，数据请求交互操作</li>
+<li>服务器GM封号，限制登录，发放道具，后台充值</li>
+<li>其他企业级应用的数据获取</li>
+</ul>
+<h1 id="http工作原理"><a class="markdownIt-Anchor" href="#http工作原理"></a> Http工作原理</h1>
+<p>Http协议采用请求/响应模型——客户端向服务器发送请求报文，服务器以一个状态作为响应。</p>
+<p>客户端和服务器进行一次交互的过程主要可以拆解为一下5步：</p>
+<ol>
+<li>客户端连接到Http服务器：Http客户端与Web服务器建立一个TCP连接</li>
+<li>客户端向服务器发起Http请求：客户端通过已建立的TCP连接向服务器发送一个请求报文</li>
+<li>服务器受到Http请求，并返回Http响应：服务器解析请求，定位请求资源，服务器将资源副本写道TCP连接，由客户端进行读取</li>
+<li>释放TCP连接：若connection模式为close，则服务器主动关闭TCP连接，客户端被动关闭连接，释放TCP连接；若connection模式为keep-alive，则该连接会保持一段时间，在该时间内可以继续接收请求</li>
+<li>客户端浏览器解析html内容：客户端将服务器响应的信息进行解析</li>
+</ol>
+<h1 id="url"><a class="markdownIt-Anchor" href="#url"></a> URL</h1>
+<p>何为URL？URL全拼Uniform Resource Locator，即统一资源定位符，我们俗称的网址一般就是指它。</p>
+<p>组成：</p>
+<ul>
+<li>传送协议、层级URL标记符号（“//”）</li>
+<li>传送资源需要的凭证信息（可省略）</li>
+<li>服务器（通常为域名，有时为IP地址）</li>
+<li>端口号（以数字方式表示，若为Http的默认值“：80”可省略）</li>
+<li>路径（以“/”区分路径中的各级目录）</li>
+<li>查询（GET模式的窗体参数，以“?”字符为起点，每个参数以“&amp;”隔开，再以“=”分开参数名称与数据，通常以UTF8的URL编码，避开字符冲突）</li>
+</ul>
+<p>在浏览器内键入某个URL，其内部一般具体会有以下的流程：</p>
+<ol>
+<li>浏览器向DNS服务器请求解析该URL中的域名所对应的IP地址</li>
+<li>之后，根据IP地址和默认端口80，和服务器建立TCP连接</li>
+<li>浏览器发送出读取文件的Http请求</li>
+<li>服务器对浏览器请求做出响应，将对应的请求数据发送给浏览器</li>
+<li>释放TCP连接</li>
+<li>浏览器将对应数据进行显示</li>
+</ol>
+<h1 id="报文"><a class="markdownIt-Anchor" href="#报文"></a> 报文</h1>
+<h2 id="请求报文"><a class="markdownIt-Anchor" href="#请求报文"></a> 请求报文</h2>
+<p>请求报文的结构：</p>
+<p><img src="Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87.jpg" alt="" /></p>
+<h3 id="请求行requestline"><a class="markdownIt-Anchor" href="#请求行requestline"></a> 请求行（requestline）</h3>
+<ul>
+<li>请求方法</li>
+</ul>
+<p><code>GET</code>方法主要用于查询和下载，参数直接显示在地址栏中，不适合传递私密数据，也不适合传递大量数据；<br />
+<code>POST</code>方法常用于游戏行业，将数据封装在请求数据中，对数据量没有限制，不会显示在地址栏中；<br />
+<code>PUT</code>方法主要用于上传，将资源存放到指定位置，与<code>POST</code>的区别主要体现在是否指定存放位置（<code>POST</code>是服务器自己决定位置）；<br />
+<code>HEAD</code><br />
+<code>DELETE</code><br />
+<code>OPTIONS</code><br />
+<code>TRACE</code><br />
+<code>CONNECT</code></p>
+<ul>
+<li>请求URL（不包括域名）</li>
+<li>HTTP协议版本</li>
+</ul>
+<figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST /user HTTP/1.1 \r\n</span><br></pre></td></tr></table></figure>
+<h3 id="请求头部header"><a class="markdownIt-Anchor" href="#请求头部header"></a> 请求头部（header）</h3>
+<ul>
+<li>Content-Type</li>
+</ul>
+<figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">HOST</span><span class="punctuation">: </span>www.user.com \r\n</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/json \r\n</span><br><span class="line"><span class="attribute">Content-Length</span><span class="punctuation">: </span>11 \r\n</span><br><span class="line"><span class="attribute">Connection</span><span class="punctuation">: </span>Keep-Alive \r\n</span><br><span class="line"><span class="attribute">User-Agent</span><span class="punctuation">: </span>Mozilla/5.0. \r\n</span><br></pre></td></tr></table></figure>
+<h3 id="空行"><a class="markdownIt-Anchor" href="#空行"></a> 空行</h3>
+<figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\r\n</span><br></pre></td></tr></table></figure>
+<h3 id="请求体"><a class="markdownIt-Anchor" href="#请求体"></a> 请求体</h3>
+<p>待发送的数据</p>
+<figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">name=world</span><br></pre></td></tr></table></figure>
+<h2 id="响应报文"><a class="markdownIt-Anchor" href="#响应报文"></a> 响应报文</h2>
+<h3 id="状态行"><a class="markdownIt-Anchor" href="#状态行"></a> 状态行</h3>
+<ul>
+<li>状态码</li>
+</ul>
+<h2 id="响应头部"><a class="markdownIt-Anchor" href="#响应头部"></a> 响应头部</h2>
+<h2 id="空行-2"><a class="markdownIt-Anchor" href="#空行-2"></a> 空行</h2>
+<h2 id="响应体"><a class="markdownIt-Anchor" href="#响应体"></a> 响应体</h2>
+<p>请求报文的实体举例：</p>
+<p><img src="Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87%E7%A4%BA%E4%BE%8B.jpg" alt="" /></p>
+
     </div>
 
     
@@ -308,7 +419,7 @@
   </li>
   <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8B%E4%B8%96%E7%95%8C%E5%88%86%E5%8C%BA/" title="虚幻5新特性之世界分区">https://claude-jhin.github.io/2022/04/12/虚幻5新特性之世界分区/</a>
+      <a href="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="Http原理入门">https://claude-jhin.github.io/2022/08/25/Http原理入门/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -354,20 +465,21 @@
 </div>
 
           <div class="post-tags">
-              <a href="/tags/default/" rel="tag"><i class="fa fa-tag"></i> default</a>
+              <a href="/tags/Http/" rel="tag"><i class="fa fa-tag"></i> Http</a>
+              <a href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag"><i class="fa fa-tag"></i> 网络</a>
           </div>
 
         
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8B%E8%B5%84%E6%BA%90%E5%A4%84%E7%90%86/" rel="prev" title="虚幻基础之资源处理">
-                  <i class="fa fa-chevron-left"></i> 虚幻基础之资源处理
+                <a href="/2022/05/05/%E8%99%9A%E5%B9%BB%E6%8F%92%E4%BB%B6%E4%B9%8BGameplay-Ability-System/" rel="prev" title="虚幻插件之Gameplay Ability System">
+                  <i class="fa fa-chevron-left"></i> 虚幻插件之Gameplay Ability System
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2022/04/12/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8BAbilitySystemGameFeatureActions/" rel="next" title="虚幻5新特性之AbilitySystemGameFeatureActions">
-                  虚幻5新特性之AbilitySystemGameFeatureActions <i class="fa fa-chevron-right"></i>
+                <a href="/2022/08/27/bat%E6%89%B9%E5%A4%84%E7%90%86%E7%AC%94%E8%AE%B0/" rel="next" title="bat批处理笔记">
+                  bat批处理笔记 <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>
@@ -401,14 +513,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">69k</span>
+    <span title="站点总字数">93k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">1:03</span>
+    <span title="站点阅读时长">1:25</span>
   </span>
 </div>
 <div class="busuanzi-count">

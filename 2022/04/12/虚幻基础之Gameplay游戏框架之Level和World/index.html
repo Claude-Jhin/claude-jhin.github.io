@@ -27,7 +27,7 @@
 
     <meta name="description" content="游戏中的虚拟世界是如何组织的呢？ 这里，在玩家中流行使用一个词——关卡。玩家们进入关卡，探索关卡内的迷宫，击败关底boss，然后进入下一个关卡，周而复始。 在Unity3D里，这个关卡被称为是Scene，作为游戏内的一项项单独的资产而存在。这些Scene可以单独存在，也可以和其他Scene组合使用（多场景加载），同时，Scene和Scene之间又可以用SceneManager来做跳转（加载和卸载）">
 <meta property="og:type" content="article">
-<meta property="og:title" content="虚幻基础之Gameplay游戏框架之Level和World（更新中）">
+<meta property="og:title" content="虚幻基础之Gameplay游戏框架之Level和World">
 <meta property="og:url" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/index.html">
 <meta property="og:site_name" content="Claude的游戏之路">
 <meta property="og:description" content="游戏中的虚拟世界是如何组织的呢？ 这里，在玩家中流行使用一个词——关卡。玩家们进入关卡，探索关卡内的迷宫，击败关底boss，然后进入下一个关卡，周而复始。 在Unity3D里，这个关卡被称为是Scene，作为游戏内的一项项单独的资产而存在。这些Scene可以单独存在，也可以和其他Scene组合使用（多场景加载），同时，Scene和Scene之间又可以用SceneManager来做跳转（加载和卸载）">
@@ -38,12 +38,14 @@
 <meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_DefaultLevel.png">
 <meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_TriggerBox.png">
 <meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_WorldSetting.png">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_ULevelStructure.png">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_WolrdLevelRelation.png">
 <meta property="article:published_time" content="2022-04-12T13:17:26.000Z">
-<meta property="article:modified_time" content="2022-05-01T12:07:28.213Z">
+<meta property="article:modified_time" content="2022-05-05T10:39:48.247Z">
 <meta property="article:author" content="Claude">
-<meta property="article:tag" content="ue5">
-<meta property="article:tag" content="c++">
-<meta property="article:tag" content="level">
+<meta property="article:tag" content="UE5">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="Level">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_CreateLevel.png">
 
@@ -52,10 +54,10 @@
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/","path":"2022/04/12/虚幻基础之Gameplay游戏框架之Level和World/","title":"虚幻基础之Gameplay游戏框架之Level和World（更新中）"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/","path":"2022/04/12/虚幻基础之Gameplay游戏框架之Level和World/","title":"虚幻基础之Gameplay游戏框架之Level和World"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>虚幻基础之Gameplay游戏框架之Level和World（更新中） | Claude的游戏之路</title>
+<title>虚幻基础之Gameplay游戏框架之Level和World | Claude的游戏之路</title>
   
 
 
@@ -131,11 +133,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E5%86%85%E7%9A%84level"><span class="nav-number">1.</span> <span class="nav-text"> 编辑器内的Level</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="nav-number">1.1.</span> <span class="nav-text"> Level的创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E4%BF%9D%E5%AD%98"><span class="nav-number">1.2.</span> <span class="nav-text"> Level的保存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E6%89%93%E5%BC%80"><span class="nav-number">1.3.</span> <span class="nav-text"> Level的打开</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E6%B8%B8%E6%88%8F%E7%9A%84%E9%BB%98%E8%AE%A4level"><span class="nav-number">1.4.</span> <span class="nav-text"> 设置游戏的默认Level</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E8%B7%B3%E8%BD%AC"><span class="nav-number">1.5.</span> <span class="nav-text"> Level的跳转</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#world%E5%A4%9Alevel%E7%9A%84%E7%AE%A1%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text"> World——多Level的管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#world-setting"><span class="nav-number">2.1.</span> <span class="nav-text"> World Setting</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ulevel%E5%92%8Cuworld"><span class="nav-number">2.2.</span> <span class="nav-text"> ULevel和UWorld</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#level%E5%85%B3%E5%8D%A1%E5%9C%B0%E5%9B%BE%E5%9C%BA%E6%99%AF"><span class="nav-number">3.</span> <span class="nav-text"> Level关卡？地图？场景？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#world%E4%B8%96%E7%95%8C%E5%A4%9A%E5%9C%BA%E6%99%AF"><span class="nav-number">4.</span> <span class="nav-text"> World世界？多场景？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#worldcompositionpersistant-level-%E7%9B%B8%E5%BD%93%E4%BA%8E%E7%BB%84%E5%90%88%E6%89%80%E6%9C%89level%E7%9A%84%E5%9F%BA%E5%87%86sublevel"><span class="nav-number">5.</span> <span class="nav-text"> WorldComposition
-
-Persistant Level 相当于组合所有level的基准
-
-SubLevel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text"> 参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E5%86%85%E7%9A%84level"><span class="nav-number">1.</span> <span class="nav-text"> 编辑器内的Level</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="nav-number">1.1.</span> <span class="nav-text"> Level的创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E4%BF%9D%E5%AD%98"><span class="nav-number">1.2.</span> <span class="nav-text"> Level的保存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E6%89%93%E5%BC%80"><span class="nav-number">1.3.</span> <span class="nav-text"> Level的打开</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E6%B8%B8%E6%88%8F%E7%9A%84%E9%BB%98%E8%AE%A4level"><span class="nav-number">1.4.</span> <span class="nav-text"> 设置游戏的默认Level</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#level%E7%9A%84%E8%B7%B3%E8%BD%AC"><span class="nav-number">1.5.</span> <span class="nav-text"> Level的跳转</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#world%E5%A4%9Alevel%E7%9A%84%E7%AE%A1%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text"> World——多Level的管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#world-setting"><span class="nav-number">2.1.</span> <span class="nav-text"> World Setting</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ulevel%E5%92%8Cuworld"><span class="nav-number">2.2.</span> <span class="nav-text"> ULevel和UWorld</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%E4%B8%8E%E6%9C%AA%E6%9D%A5%E7%9A%84%E5%B7%A5%E4%BD%9C%E8%A7%84%E5%88%92"><span class="nav-number">3.</span> <span class="nav-text"> 总结与未来的工作规划</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text"> 参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -150,18 +148,18 @@ SubLevel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" hre
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">61</span>
+          <span class="site-state-item-count">66</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-count">39</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -236,12 +234,12 @@ SubLevel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" hre
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="虚幻基础之Gameplay游戏框架之Level和World（更新中） | Claude的游戏之路">
+      <meta itemprop="name" content="虚幻基础之Gameplay游戏框架之Level和World | Claude的游戏之路">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          虚幻基础之Gameplay游戏框架之Level和World（更新中）
+          虚幻基础之Gameplay游戏框架之Level和World
         </h1>
 
         <div class="post-meta-container">
@@ -259,7 +257,7 @@ SubLevel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" hre
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-05-01 20:07:28" itemprop="dateModified" datetime="2022-05-01T20:07:28+08:00">2022-05-01</time>
+      <time title="修改时间：2022-05-05 18:39:48" itemprop="dateModified" datetime="2022-05-05T18:39:48+08:00">2022-05-05</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -285,14 +283,14 @@ SubLevel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" hre
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>7.8k</span>
+      <span>8.5k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>7 分钟</span>
+      <span>8 分钟</span>
     </span>
 </div>
 
@@ -333,11 +331,7 @@ SubLevel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" hre
 <li><a href="#ulevel%E5%92%8Cuworld">ULevel和UWorld</a></li>
 </ul>
 </li>
-<li><a href="#level%E5%85%B3%E5%8D%A1%E5%9C%B0%E5%9B%BE%E5%9C%BA%E6%99%AF">Level关卡？地图？场景？</a></li>
-<li><a href="#world%E4%B8%96%E7%95%8C%E5%A4%9A%E5%9C%BA%E6%99%AF">World世界？多场景？</a></li>
-<li><a href="#worldcompositionpersistant-level-%E7%9B%B8%E5%BD%93%E4%BA%8E%E7%BB%84%E5%90%88%E6%89%80%E6%9C%89level%E7%9A%84%E5%9F%BA%E5%87%86sublevel">WorldComposition<br />
-Persistant Level 相当于组合所有level的基准<br />
-SubLevel</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93%E4%B8%8E%E6%9C%AA%E6%9D%A5%E7%9A%84%E5%B7%A5%E4%BD%9C%E8%A7%84%E5%88%92">总结与未来的工作规划</a></li>
 <li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
 </ul>
 </p>
@@ -404,23 +398,28 @@ SubLevel</a></li>
 <h3 id="ulevel和uworld"><a class="markdownIt-Anchor" href="#ulevel和uworld"></a> ULevel和UWorld</h3>
 <p>ULevel的部分核心属性：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// ULevel本身直接继承于UObject，所以本身也具备垃圾回收，反射，支持序列化，等等</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// The level object.  Contains the level&#x27;s actor list, BSP information, and brush list.</span></span><br><span class="line"><span class="comment">// Every Level has a World as its Outer and can be used as the PersistentLevel, however,</span></span><br><span class="line"><span class="comment">// when a Level has been streamed in the OwningWorld represents the World that it is a part of.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * A Level is a collection of Actors (lights, volumes, mesh instances etc.).</span></span><br><span class="line"><span class="comment"> * Multiple Levels can be loaded and unloaded into the World to create a streaming experience.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="built_in">UCLASS</span>(MinimalAPI)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ULevel</span> : <span class="keyword">public</span> UObject, <span class="keyword">public</span> IInterface_AssetUserData, <span class="keyword">public</span> ITextureStreamingContainer</span><br><span class="line">&#123;</span><br><span class="line">	...</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 前面提到了GameStatics里的OpenLevel方法，该方法的参数虽然是关卡名，</span></span><br><span class="line">	<span class="comment">// 但实际底层的SetClientTravel函数的接收的确是一个FURL类型的参数，而ULevel也维护着这样一个变量</span></span><br><span class="line">	<span class="comment">/** URL associated with this level. */</span></span><br><span class="line">	FURL					URL;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 关卡本身算是Actor们的载体（集合），这里用一个容器来容纳所有的Actor元素</span></span><br><span class="line">	<span class="comment">/** Array of all actors in this level, used by FActorIteratorBase and derived classes */</span></span><br><span class="line">	TArray&lt;AActor*&gt; Actors;</span><br><span class="line">		</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 关卡也存着一枚指向所在世界的指针</span></span><br><span class="line">	<span class="comment">/** </span></span><br><span class="line"><span class="comment">	 * The World that has this level in its Levels array. </span></span><br><span class="line"><span class="comment">	 * This is not the same as GetOuter(), because GetOuter() for a streaming level is a vestigial world that is not used. </span></span><br><span class="line"><span class="comment">	 * It should not be accessed during BeginDestroy(), just like any other UObject references, since GC may occur in any order.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TObjectPtr&lt;UWorld&gt; OwningWorld;</span><br><span class="line">			</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 关卡蓝图（level blueprint），也对应着我们可以在编辑器内打开的那个关卡蓝图，</span></span><br><span class="line">	<span class="comment">// 它本身是一个ALevelScriptActor，继承自Actor，所以拥有着Actor的大部分特性（包括接收输入等）</span></span><br><span class="line">	<span class="comment">// 自然地，既然是Actor，LevelScriptActor也包含在上面Actors数组里</span></span><br><span class="line">	<span class="comment">/** The level scripting actor, created by instantiating the class from LevelScriptBlueprint.  This handles all level scripting */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(NonTransactional)</span><br><span class="line">	TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">ALevelScriptActor</span>&gt; LevelScriptActor;</span><br><span class="line">			</span><br><span class="line">	...</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="comment">// 关卡中保存着WorldSettings的一枚指针，正是前面编辑器中的那个World Setting</span></span><br><span class="line">	<span class="comment">// 自然地，既然是Actor，WorldSettings也包含在上面Actors数组里</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>()</span><br><span class="line">	TObjectPtr&lt;AWorldSettings&gt; WorldSettings;</span><br><span class="line">				</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Actor是我们已经比较熟悉的类，现在我们知道LevelBlueprint本身也是Actor，这也是属于“不可见的”Actor之一。</p>
+<p>而LevelScriptActor直接继承自Actor，当然在Actor基础上，做了一定的补充和修改，比如说关于渲染和碰撞等，但是又允许继承自Actor的输入相关的接收等，我们在蓝图中使用时基本上就按Actor的理解来写即可。</p>
+<p>WorldSetting则是继承自AInfo（也就是常见的允许存在于），不同于那些可以拖进编辑器场景中的，AInfo就是那类为场景做贡献但是不需要进入到场景中的Actor。</p>
+<p>这一部分代码的阅读也着重参考了大钊的文章（参考文底连接）：</p>
+<p><img src="%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_ULevelStructure.png" alt="" /></p>
+<p>除了其他零零碎碎的成员，还有一个比较关键的就是OwningWorld指针，它指向该关卡所属的UWorld对象。</p>
 <p>UWorld的部分核心属性：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 相较于Level，World更像是一个管理者，Level的管理者</span></span><br><span class="line"><span class="comment">// Level在它上面可以自由组合，可以流式加载，从而作为更庞大的世界的基础</span></span><br><span class="line"><span class="comment">// 而且最重要的，World同样可以不只有一个，游戏的世界，编辑器的世界，PIE实例世界等等</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// </span></span><br><span class="line"></span><br><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * The World is the top level object representing a map or a sandbox in which Actors and Components will exist and be rendered.  </span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * A World can be a single Persistent Level with an optional list of streaming levels that are loaded and unloaded via volumes and blueprint functions</span></span><br><span class="line"><span class="comment"> * or it can be a collection of levels organized with a World Composition.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * In a standalone game, generally only a single World exists except during seamless area transitions when both a destination and current world exists.</span></span><br><span class="line"><span class="comment"> * In the editor many Worlds exist: The level being edited, each PIE instance, each editor tool which has an interactive rendered viewport, and many more.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">UCLASS</span>(customConstructor, config=Engine)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ENGINE_API</span> UWorld <span class="keyword">final</span> : <span class="keyword">public</span> UObject, <span class="keyword">public</span> FNetworkNotify</span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">// PersistantLevel将是我们后面一个小节的核心内容之一，也可以看作所谓的主关卡</span></span><br><span class="line">	<span class="comment">// 其主要作用体现在关卡的流式管理（Level Streaming）中</span></span><br><span class="line">	<span class="comment">// 它本身的话代表了当前世界中的核心关卡（代表着当多关卡之间的设置有冲突时，优先以PersistantLevel为依据）</span></span><br><span class="line">	<span class="comment">/** Persistent level containing the world info, default brush and actors spawned during gameplay among other things			*/</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">ULevel</span>&gt;								PersistentLevel; </span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 相对于PersistantLevel，就会有StreamingLevels，表示那些动态加载和卸载的关卡们</span></span><br><span class="line">	<span class="comment">// PersistantLevel只有一个，而StreamingLevels的数量就很灵活了</span></span><br><span class="line">	<span class="comment">/** Level collection. ULevels are referenced by FName (Package name) to avoid serialized references. Also contains offsets in world units */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TArray&lt;TObjectPtr&lt;ULevelStreaming&gt;&gt; StreamingLevels;</span><br><span class="line">		</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 世界的类型</span></span><br><span class="line">	<span class="comment">/** The type of world this is. Describes the context in which it is being used (Editor, Game, Preview etc.) */</span></span><br><span class="line">	TEnumAsByte&lt;EWorldType::Type&gt; WorldType;</span><br><span class="line">		</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 当前的GameMode，当有多个关卡加载到世界中时，对应也会有多个World Setting</span></span><br><span class="line">	<span class="comment">// 那么以哪个配置为准呢，这里负责维护着对应的指针</span></span><br><span class="line">	<span class="comment">/** The current GameMode, valid only on the server */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">AGameModeBase</span>&gt;						AuthorityGameMode;</span><br><span class="line">			</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 同上</span></span><br><span class="line">	<span class="comment">/** The replicated actor which contains game state information that can be accessible to clients. Direct access is not allowed, use GetGameState&lt;&gt;() */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">AGameStateBase</span>&gt;						GameState;</span><br><span class="line">				</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 世界就是关卡的集合，这里就是关卡们组成的数组</span></span><br><span class="line">	<span class="comment">/** Array of levels currently in this world. Not serialized to disk to avoid hard references. */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TArray&lt;TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">ULevel</span>&gt;&gt;						Levels;</span><br><span class="line">				</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// PersistentLevel和CurrentLevel只是个快速引用。</span></span><br><span class="line">	<span class="comment">// 在编辑器里编辑的时候，CurrentLevel可以指向其他Level，但运行时CurrentLevel只能是指向PersistentLevel。</span></span><br><span class="line">	<span class="comment">/** Pointer to the current level being edited. Level has to be in the Levels array and == PersistentLevel in the game. */</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">ULevel</span>&gt;								CurrentLevel;</span><br><span class="line">					</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 该World所从属的GameInstance</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(Transient)</span><br><span class="line">	TObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">UGameInstance</span>&gt;						OwningGameInstance;</span><br></pre></td></tr></table></figure>
-<h2 id="level关卡地图场景"><a class="markdownIt-Anchor" href="#level关卡地图场景"></a> Level关卡？地图？场景？</h2>
-<ul>
-<li>Level中Actor集合的顺序问题</li>
-<li>LevelScriptActor响应输入事件</li>
-</ul>
-<h2 id="world世界多场景"><a class="markdownIt-Anchor" href="#world世界多场景"></a> World世界？多场景？</h2>
-<h2 id="worldcompositionpersistant-level-相当于组合所有level的基准sublevel"><a class="markdownIt-Anchor" href="#worldcompositionpersistant-level-相当于组合所有level的基准sublevel"></a> WorldComposition<br />
-Persistant Level 相当于组合所有level的基准<br />
-SubLevel</h2>
+<p>这部分代码的阅读同样参考了大钊的文章：</p>
+<p><img src="%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/LevelWorld_WolrdLevelRelation.png" alt="" /></p>
+<h2 id="总结与未来的工作规划"><a class="markdownIt-Anchor" href="#总结与未来的工作规划"></a> 总结与未来的工作规划</h2>
+<p>本文从使用层面总结了Level的基础用法，从编辑器层面罗列了Level和World相关的配置选项，还从代码层面了解几个核心类（Level，World等）之间的架构关系。</p>
+<p>其中尤其，从Level和World的代码中，可以清晰得看到Level是如何承载Actor的（包括一些看不见的Actor），看到World的组成又是怎样的。当然虚幻中这两者的应用远不止于此，这篇文章仅仅算是将Level和World相关内容破了个题，相关的内容还有World是如何组织Level的——Level Streaming相关内容，大世界相关的优化问题——World Composition和World Partition相关的配置，等等。</p>
+<p>本文更多的是对几个基本概念进行拆解，对代码结构有一个基本的认识，在此基础之上，还会再跟进Level Streaming、World Composition和World Partition相关的内容和文章。</p>
 <h2 id="参考"><a class="markdownIt-Anchor" href="#参考"></a> 参考</h2>
 <p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/levels-in-unreal-engine/">虚幻 5.0 Documentation - Levels</a></p>
 <p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/level-streaming-in-unreal-engine/">虚幻 5.0 Documentation - Level Streaming</a></p>
 <p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/world-partition-in-unreal-engine/">虚幻 5.0 Documentation - World Partition</a></p>
 <p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/gameplay-framework-in-unreal-engine/">虚幻 5.0 Documentation - Gameplay Framework</a></p>
 <p>知乎作者 大钊 的文章<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/22924838">《InsideUE4 GamePlay架构（二）Level和World》</a></p>
+<p>b站虚幻引擎官方视频<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1xx411h7Aa">《Getting Started with World Composition》</a></p>
+<p>虚幻英文直播<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Py4y177ZS">《世界构建新功能 | New World Building Features》</a></p>
 
     </div>
 
@@ -440,7 +439,7 @@ SubLevel</h2>
   </li>
   <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/" title="虚幻基础之Gameplay游戏框架之Level和World（更新中）">https://claude-jhin.github.io/2022/04/12/虚幻基础之Gameplay游戏框架之Level和World/</a>
+      <a href="https://claude-jhin.github.io/2022/04/12/%E8%99%9A%E5%B9%BB%E5%9F%BA%E7%A1%80%E4%B9%8BGameplay%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6%E4%B9%8BLevel%E5%92%8CWorld/" title="虚幻基础之Gameplay游戏框架之Level和World">https://claude-jhin.github.io/2022/04/12/虚幻基础之Gameplay游戏框架之Level和World/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -486,17 +485,17 @@ SubLevel</h2>
 </div>
 
           <div class="post-tags">
-              <a href="/tags/ue5/" rel="tag"><i class="fa fa-tag"></i> ue5</a>
-              <a href="/tags/c/" rel="tag"><i class="fa fa-tag"></i> c++</a>
-              <a href="/tags/level/" rel="tag"><i class="fa fa-tag"></i> level</a>
+              <a href="/tags/UE5/" rel="tag"><i class="fa fa-tag"></i> UE5</a>
+              <a href="/tags/C/" rel="tag"><i class="fa fa-tag"></i> C++</a>
+              <a href="/tags/Level/" rel="tag"><i class="fa fa-tag"></i> Level</a>
           </div>
 
         
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2022/04/12/LeetCode-112-%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8C/" rel="prev" title="LeetCode 112 路径总和">
-                  <i class="fa fa-chevron-left"></i> LeetCode 112 路径总和
+                <a href="/2022/04/12/%E8%99%9A%E5%B9%BB5%E6%96%B0%E7%89%B9%E6%80%A7%E4%B9%8BEnhancedInput/" rel="prev" title="虚幻5新特性之EnhancedInput">
+                  <i class="fa fa-chevron-left"></i> 虚幻5新特性之EnhancedInput
                 </a>
             </div>
             <div class="post-nav-item">
@@ -535,14 +534,14 @@ SubLevel</h2>
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">69k</span>
+    <span title="站点总字数">93k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">1:03</span>
+    <span title="站点阅读时长">1:25</span>
   </span>
 </div>
 <div class="busuanzi-count">
