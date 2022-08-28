@@ -27,15 +27,17 @@
 
     <meta name="description" content="请求报文  请求行（requestline） 请求头部（header） 空行 请求体   响应报文  状态行   响应头部 空行 响应体">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Http原理入门">
+<meta property="og:title" content="HTTP原理入门">
 <meta property="og:url" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/index.html">
 <meta property="og:site_name" content="Claude的游戏之路">
 <meta property="og:description" content="请求报文  请求行（requestline） 请求头部（header） 空行 请求体   响应报文  状态行   响应头部 空行 响应体">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87.jpg">
 <meta property="og:image" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87%E7%A4%BA%E4%BE%8B.jpg">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87.jpg">
+<meta property="og:image" content="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87%E7%A4%BA%E4%BE%8B.jpg">
 <meta property="article:published_time" content="2022-08-25T14:59:41.000Z">
-<meta property="article:modified_time" content="2022-08-27T15:01:24.741Z">
+<meta property="article:modified_time" content="2022-08-28T14:24:04.643Z">
 <meta property="article:author" content="Claude">
 <meta property="article:tag" content="Http">
 <meta property="article:tag" content="网络">
@@ -47,10 +49,10 @@
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/","path":"2022/08/25/Http原理入门/","title":"Http原理入门"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/","path":"2022/08/25/Http原理入门/","title":"HTTP原理入门"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Http原理入门 | Claude的游戏之路</title>
+<title>HTTP原理入门 | Claude的游戏之路</title>
   
 
 
@@ -126,7 +128,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#http%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%94%A8%E9%80%94"><span class="nav-number">1.</span> <span class="nav-text"> Http服务器用途</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#http%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text"> Http工作原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#url"><span class="nav-number">3.</span> <span class="nav-text"> URL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8A%A5%E6%96%87"><span class="nav-number">4.</span> <span class="nav-text"> 报文</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87"><span class="nav-number">4.1.</span> <span class="nav-text"> 请求报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E8%A1%8Crequestline"><span class="nav-number">4.1.1.</span> <span class="nav-text"> 请求行（requestline）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%A4%B4%E9%83%A8header"><span class="nav-number">4.1.2.</span> <span class="nav-text"> 请求头部（header）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E8%A1%8C"><span class="nav-number">4.1.3.</span> <span class="nav-text"> 空行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E4%BD%93"><span class="nav-number">4.1.4.</span> <span class="nav-text"> 请求体</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87"><span class="nav-number">4.2.</span> <span class="nav-text"> 响应报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E8%A1%8C"><span class="nav-number">4.2.1.</span> <span class="nav-text"> 状态行</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E5%A4%B4%E9%83%A8"><span class="nav-number">4.3.</span> <span class="nav-text"> 响应头部</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A9%BA%E8%A1%8C-2"><span class="nav-number">4.4.</span> <span class="nav-text"> 空行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E4%BD%93"><span class="nav-number">4.5.</span> <span class="nav-text"> 响应体</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#http%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%94%A8%E9%80%94"><span class="nav-number">1.</span> <span class="nav-text"> HTTP服务器用途</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#http%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text"> HTTP工作原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#url"><span class="nav-number">3.</span> <span class="nav-text"> URL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8A%A5%E6%96%87"><span class="nav-number">4.</span> <span class="nav-text"> 报文</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87"><span class="nav-number">4.1.</span> <span class="nav-text"> 请求报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E8%A1%8Crequestline"><span class="nav-number">4.1.1.</span> <span class="nav-text"> 请求行（requestline）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%A4%B4%E9%83%A8header"><span class="nav-number">4.1.2.</span> <span class="nav-text"> 请求头部（header）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E8%A1%8C"><span class="nav-number">4.1.3.</span> <span class="nav-text"> 空行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E4%BD%93"><span class="nav-number">4.1.4.</span> <span class="nav-text"> 请求体</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87"><span class="nav-number">4.2.</span> <span class="nav-text"> 响应报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E8%A1%8C"><span class="nav-number">4.2.1.</span> <span class="nav-text"> 状态行</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E5%A4%B4%E9%83%A8"><span class="nav-number">4.3.</span> <span class="nav-text"> 响应头部</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A9%BA%E8%A1%8C-2"><span class="nav-number">4.4.</span> <span class="nav-text"> 空行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E4%BD%93"><span class="nav-number">4.5.</span> <span class="nav-text"> 响应体</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -227,12 +229,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="Http原理入门 | Claude的游戏之路">
+      <meta itemprop="name" content="HTTP原理入门 | Claude的游戏之路">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Http原理入门
+          HTTP原理入门
         </h1>
 
         <div class="post-meta-container">
@@ -250,7 +252,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-08-27 23:01:24" itemprop="dateModified" datetime="2022-08-27T23:01:24+08:00">2022-08-27</time>
+      <time title="修改时间：2022-08-28 22:24:04" itemprop="dateModified" datetime="2022-08-28T22:24:04+08:00">2022-08-28</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -276,14 +278,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>1.4k</span>
+      <span>2.6k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
+      <span>2 分钟</span>
     </span>
 </div>
 
@@ -321,7 +323,7 @@
 </ul>
 </p>
 <span id="more"></span>
-<h1 id="http服务器用途"><a class="markdownIt-Anchor" href="#http服务器用途"></a> Http服务器用途</h1>
+<h1 id="http服务器用途"><a class="markdownIt-Anchor" href="#http服务器用途"></a> HTTP服务器用途</h1>
 <ul>
 <li>用于Web服务器访问网站</li>
 <li>上传，下载</li>
@@ -329,7 +331,7 @@
 <li>服务器GM封号，限制登录，发放道具，后台充值</li>
 <li>其他企业级应用的数据获取</li>
 </ul>
-<h1 id="http工作原理"><a class="markdownIt-Anchor" href="#http工作原理"></a> Http工作原理</h1>
+<h1 id="http工作原理"><a class="markdownIt-Anchor" href="#http工作原理"></a> HTTP工作原理</h1>
 <p>Http协议采用请求/响应模型——客户端向服务器发送请求报文，服务器以一个状态作为响应。</p>
 <p>客户端和服务器进行一次交互的过程主要可以拆解为一下5步：</p>
 <ol>
@@ -381,25 +383,76 @@
 </ul>
 <figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST /user HTTP/1.1 \r\n</span><br></pre></td></tr></table></figure>
 <h3 id="请求头部header"><a class="markdownIt-Anchor" href="#请求头部header"></a> 请求头部（header）</h3>
+<p>请求头部由关键字/值对组成，每行一对。</p>
+<figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">HOST</span><span class="punctuation">: </span>127.0.0.1：8080 \r\n</span><br><span class="line"><span class="attribute">User-Agent</span><span class="punctuation">: </span>Mozilla/5.0 \r\n</span><br><span class="line"><span class="attribute">Accept</span><span class="punctuation">: </span>text/xml, application/xml, text/html \r\n</span><br><span class="line"><span class="attribute">Accept-Language</span><span class="punctuation">: </span>zh-cn,zh;q=0.5 \r\n</span><br><span class="line"><span class="attribute">Accept-Encoding</span><span class="punctuation">: </span>gzip,deflate \r\n</span><br><span class="line"><span class="attribute">Accept-Charset</span><span class="punctuation">: </span>gb2312,urf-8;q=0.7,*;q=0.7</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/x-www-form-urlencoded;charset=:UTF-8 \r\n</span><br><span class="line"><span class="attribute">Content-Length</span><span class="punctuation">: </span>12</span><br><span class="line"><span class="attribute">Connection</span><span class="punctuation">: </span>keep-alive/close</span><br><span class="line"><span class="attribute">Keep-Alive</span><span class="punctuation">: </span>300</span><br></pre></td></tr></table></figure>
 <ul>
-<li>Content-Type</li>
+<li>客户端告诉服务器，其想要访问的主机名；</li>
+<li>HTTP客户端运行的浏览器类型的详细信息；</li>
+<li>客户端希望接收的数据类型；</li>
+<li>指定HTTP客户端浏览器用来展示返回信息所优先选择的语言；</li>
+<li>浏览器能够进行解码的数据编码方式；</li>
+<li>请求头用来告诉服务器客户端所能够处理的字符集类型；</li>
+<li>显示此HTTP请求提交的内容类型；</li>
+<li>表示请求消息正文的长度；</li>
+<li>表示是否需要持久连接；</li>
+<li>显示此HTTP连接的Keep-Alive时间；</li>
 </ul>
-<figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">HOST</span><span class="punctuation">: </span>www.user.com \r\n</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/json \r\n</span><br><span class="line"><span class="attribute">Content-Length</span><span class="punctuation">: </span>11 \r\n</span><br><span class="line"><span class="attribute">Connection</span><span class="punctuation">: </span>Keep-Alive \r\n</span><br><span class="line"><span class="attribute">User-Agent</span><span class="punctuation">: </span>Mozilla/5.0. \r\n</span><br></pre></td></tr></table></figure>
 <h3 id="空行"><a class="markdownIt-Anchor" href="#空行"></a> 空行</h3>
+<p>请求头之后是一个空行，通知服务器以下不再有其他的请求头的内容。</p>
 <figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\r\n</span><br></pre></td></tr></table></figure>
 <h3 id="请求体"><a class="markdownIt-Anchor" href="#请求体"></a> 请求体</h3>
-<p>待发送的数据</p>
+<p>待发送的数据。</p>
+<p><code>GET</code>没有请求数据，<code>POST</code>有。相关的请求头内容有<code>Content-Type</code>和<code>Content-Length</code>。</p>
 <figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">name=world</span><br></pre></td></tr></table></figure>
-<h2 id="响应报文"><a class="markdownIt-Anchor" href="#响应报文"></a> 响应报文</h2>
-<h3 id="状态行"><a class="markdownIt-Anchor" href="#状态行"></a> 状态行</h3>
-<ul>
-<li>状态码</li>
-</ul>
-<h2 id="响应头部"><a class="markdownIt-Anchor" href="#响应头部"></a> 响应头部</h2>
-<h2 id="空行-2"><a class="markdownIt-Anchor" href="#空行-2"></a> 空行</h2>
-<h2 id="响应体"><a class="markdownIt-Anchor" href="#响应体"></a> 响应体</h2>
 <p>请求报文的实体举例：</p>
 <p><img src="Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87%E7%A4%BA%E4%BE%8B.jpg" alt="" /></p>
+<h2 id="响应报文"><a class="markdownIt-Anchor" href="#响应报文"></a> 响应报文</h2>
+<p>响应报文的结构：</p>
+<p><img src="Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87.jpg" alt="" /></p>
+<h3 id="状态行"><a class="markdownIt-Anchor" href="#状态行"></a> 状态行</h3>
+<figure class="highlight http"><figcaption><span>request</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">HTTP/1.1</span> <span class="number">200</span> OK</span><br></pre></td></tr></table></figure>
+<ul>
+<li>服务器HTTP协议版本</li>
+<li>响应状态码</li>
+</ul>
+<p>由3位数字组成，第一个数字定义了响应的类别：</p>
+<p>1xx消息——表示成功接收请求，要求客户端继续提交下一次请求才能完成整个处理过程；<br />
+2xx成功——表示成功接收请求并已完成整个处理过程，常用200；<br />
+3xx重定向——需要后续操作才能完成这一请求；<br />
+4xx请求错误——客户端的请求有错误，常用404，403；<br />
+5xx服务器错误——服务端出现错误，常用500；</p>
+<ul>
+<li>状态码的文本描述</li>
+</ul>
+<p>取值举例：</p>
+<p>200 OK：表示客户端请求成功；<br />
+400 Bad Request：表示客户端请求有语法错误，不能被服务器理解；<br />
+401 Unauthorized：表示请求未经授权；<br />
+403 Forbidden<br />
+404 Not Found</p>
+<h2 id="响应头部"><a class="markdownIt-Anchor" href="#响应头部"></a> 响应头部</h2>
+<p>用于描述服务器的基本信息以及数据的描述，服务器通过返回这些数据的描述信息，可以通知客户端如何处理它返回的信息。</p>
+<ul>
+<li>Allow：服务器支持哪些请求方法</li>
+<li>Content-Encoding：文档的编码方式</li>
+<li>Content-Length：内容长度</li>
+<li>Content-Type：后续文档属于什么类型</li>
+<li>Date：当前的GMT时间</li>
+<li>Expires：告知浏览器把回送的资源缓存多长的时间，-1或0表示不缓存</li>
+<li>Last-Modified：文档的最后改动时间</li>
+<li>Location：配合302状态码使用，用于重定向接收者到一个新的URL地址</li>
+<li>Refresh：告诉浏览器隔多久刷新一次，以秒计</li>
+<li>Server：服务器通过这个头告诉浏览器服务器的类型</li>
+<li>Set-Cookie：设置和页面关联的Cookie</li>
+<li>Transfer-Encoding：数据的传送格式</li>
+<li>WWW-Authenticate：客户应该在Authorization头中提供什么类型的授权信息</li>
+</ul>
+<h2 id="空行-2"><a class="markdownIt-Anchor" href="#空行-2"></a> 空行</h2>
+<p>通过客户端以下不再有其他的响应头</p>
+<h2 id="响应体"><a class="markdownIt-Anchor" href="#响应体"></a> 响应体</h2>
+<p>响应的消息体。</p>
+<p>响应报文的实体举例：</p>
+<p><img src="Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/Http_%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87%E7%A4%BA%E4%BE%8B.jpg" alt="" /></p>
 
     </div>
 
@@ -419,7 +472,7 @@
   </li>
   <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="Http原理入门">https://claude-jhin.github.io/2022/08/25/Http原理入门/</a>
+      <a href="https://claude-jhin.github.io/2022/08/25/Http%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="HTTP原理入门">https://claude-jhin.github.io/2022/08/25/Http原理入门/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -513,14 +566,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">93k</span>
+    <span title="站点总字数">95k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">1:25</span>
+    <span title="站点阅读时长">1:26</span>
   </span>
 </div>
 <div class="busuanzi-count">
