@@ -1,0 +1,23 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	entry: CollectionEntry<'blog'>;
+}
+
+const { entry } = Astro.props;
+---
+
+<article class="content-card panel">
+	<div class="card-meta">
+		<span>{entry.data.publishDate.toLocaleDateString('zh-CN')}</span>
+		<span>{entry.data.readingTime}</span>
+	</div>
+	<h3 class="card-title">
+		<a href={`/devlog/${entry.id}/`}>{entry.data.title}</a>
+	</h3>
+	<p class="card-description">{entry.data.description}</p>
+	<div class="tag-row">
+		{entry.data.tags.map((tag) => <span class="tag-chip">{tag}</span>)}
+	</div>
+</article>

@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import GameCard from '../../components/GameCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const games = (await getCollection('games')).sort((a, b) => Number(b.data.year) - Number(a.data.year));
+---
+
+<BaseLayout title="游戏项目 | Claude Jhin 开发日志" description="展示我制作中的游戏原型、实验项目和开发方向。">
+	<section class="page-hero panel">
+		<p class="eyebrow">GAME ARCHIVE</p>
+		<h1 class="page-title">游戏项目 / 原型展示</h1>
+		<p class="page-intro">
+			除了写博客，我也会把自己做过或正在推进的游戏项目放在这里。这里更像是一个持续更新的作品存档区。
+		</p>
+	</section>
+
+	<section class="section-grid panel">
+		<div class="content-grid">
+			{games.map((game) => <GameCard entry={game} />)}
+		</div>
+	</section>
+</BaseLayout>

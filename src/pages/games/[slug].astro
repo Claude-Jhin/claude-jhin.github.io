@@ -1,0 +1,53 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+	const games = await getCollection('games');
+
+	return games.map((game) => ({
+		params: { slug: game.id },
+		props: { game },
+	}));
+}
+
+const { game } = Astro.props;
+const { Content } = await render(game);
+---
+
+<BaseLayout title={`${game.data.title} | Claude Jhin 开发日志`} description={game.data.summary}>
+	<article class="article-shell panel">
+		<a class="back-link" href="/games">返回项目列表</a>
+		<div class="article-grid">
+			<div class="prose">
+				<p class="eyebrow">PROJECT FILE</p>
+				<h1 class="article-title">{game.data.title}</h1>
+				<p class="article-intro">{game.data.summary}</p>
+				<div class="article-meta">
+					<span class="inline-stat">{game.data.year}</span>
+					<span class="inline-stat">{game.data.engine}</span>
+					<span class="inline-stat">{game.data.status}</span>
+				</div>
+				<Content />
+			</div>
+
+			<aside class="side-panel panel">
+				<p class="eyebrow">SPEC</p>
+				<ul class="hud-list">
+					<li>
+						<span class="hud-label">角色</span>
+						<strong>{game.data.role}</strong>
+					</li>
+					<li>
+						<span class="hud-label">类型</span>
+						<strong>{game.data.genre}</strong>
+					</li>
+					<li>
+						<span class="hud-label">平台</span>
+						<strong>{game.data.platforms.join(' / ')}</strong>
+					</li>
+				</ul>
+			</aside>
+		</div>
+	</article>
+</BaseLayout>

@@ -1,0 +1,25 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	entry: CollectionEntry<'games'>;
+}
+
+const { entry } = Astro.props;
+---
+
+<article class="content-card panel game-card">
+	<div class="card-meta">
+		<span>{entry.data.year}</span>
+		<span>{entry.data.status}</span>
+	</div>
+	<h3 class="card-title">
+		<a href={`/games/${entry.id}/`}>{entry.data.title}</a>
+	</h3>
+	<p class="card-description">{entry.data.summary}</p>
+	<ul class="info-list">
+		<li><strong>引擎</strong>{entry.data.engine}</li>
+		<li><strong>角色</strong>{entry.data.role}</li>
+		<li><strong>类型</strong>{entry.data.genre}</li>
+	</ul>
+</article>

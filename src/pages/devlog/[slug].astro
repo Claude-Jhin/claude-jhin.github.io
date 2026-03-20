@@ -1,0 +1,42 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('blog');
+
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<BaseLayout title={`${post.data.title} | Claude Jhin 开发日志`} description={post.data.description}>
+	<article class="article-shell panel">
+		<a class="back-link" href="/devlog">返回博文列表</a>
+		<div class="article-grid">
+			<div class="prose">
+				<p class="eyebrow">ARTICLE DATA</p>
+				<h1 class="article-title">{post.data.title}</h1>
+				<p class="article-intro">{post.data.description}</p>
+				<div class="article-meta">
+					<span class="inline-stat">{post.data.publishDate.toLocaleDateString('zh-CN')}</span>
+					<span class="inline-stat">{post.data.readingTime}</span>
+					{post.data.level && <span class="inline-stat">{post.data.level}</span>}
+				</div>
+				<Content />
+			</div>
+
+			<aside class="side-panel panel">
+				<p class="eyebrow">TAGS</p>
+				<div class="tag-row">
+					{post.data.tags.map((tag) => <span class="tag-chip">{tag}</span>)}
+				</div>
+			</aside>
+		</div>
+	</article>
+</BaseLayout>

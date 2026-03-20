@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const timeline = [
+	{
+		title: '博客目标',
+		text: '持续记录 Unreal Engine、图形渲染、C++ 和游戏开发中的经验、问题与思考。',
+	},
+	{
+		title: '内容类型',
+		text: '开发日志、图形学习笔记、玩法架构总结、项目复盘与作品展示。',
+	},
+	{
+		title: '站点风格',
+		text: '像素风 RPG 菜单感界面，让博客既像知识库，也像一份游戏开发者的个人存档。',
+	},
+];
+---
+
+<BaseLayout title="关于 | Claude Jhin 开发日志" description="关于这个像素风游戏开发博客，以及它会持续记录的内容。">
+	<section class="page-hero panel">
+		<p class="eyebrow">PLAYER DATA</p>
+		<h1 class="page-title">关于这个站点</h1>
+		<p class="page-intro">
+			这个网站会以博客为主，围绕 Unreal Engine、图形渲染、C++ 与游戏开发展开，同时留出一个项目区来展示我做过或正在制作的游戏。
+		</p>
+	</section>
+
+	<section class="two-column">
+		<div class="panel panel-block">
+			<p class="eyebrow">MISSION NOTE</p>
+			<h2 class="section-title">我想把这里做成什么</h2>
+			<p class="about-text">
+				我希望这里不是一个只放简历信息的主页，而是一个可以长期积累内容的开发基地。它既能记录技术成长，也能逐步展示作品方向。
+			</p>
+			<p class="about-text">
+				对我来说，写博客不是简单归档，而是把零散经验整理成可复用的理解方式。尤其是图形、C++ 架构和项目开发过程，这些内容很适合长期沉淀。
+			</p>
+		</div>
+
+		<div class="panel panel-block">
+			<p class="eyebrow">TIMELINE</p>
+			<ul class="timeline-list">
+				{
+					timeline.map((item) => (
+						<li>
+							<strong>{item.title}</strong>
+							<p>{item.text}</p>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</section>
+</BaseLayout>

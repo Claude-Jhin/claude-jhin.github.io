@@ -1,0 +1,78 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const {
+	title,
+	description = '一个聚焦 Unreal Engine、图形渲染、C++ 与游戏开发的中文像素风博客。',
+} = Astro.props;
+
+const navItems = [
+	{ href: '/', label: '首页', code: 'HOME' },
+	{ href: '/devlog', label: '博文', code: 'DEVLOG' },
+	{ href: '/games', label: '游戏', code: 'GAMES' },
+	{ href: '/about', label: '关于', code: 'ABOUT' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<div class="background-grid" aria-hidden="true"></div>
+		<div class="scanline-overlay" aria-hidden="true"></div>
+		<div class="site-frame">
+			<header class="topbar panel">
+				<div>
+					<p class="eyebrow">SAVE SLOT A1</p>
+					<a class="brand" href="/">Claude Jhin 开发日志</a>
+				</div>
+				<div class="status-box">
+					<span class="status-pill online"></span>
+					<span>System Online</span>
+				</div>
+			</header>
+
+			<nav class="main-nav panel" aria-label="主导航">
+				{
+					navItems.map((item) => {
+						const isActive =
+							item.href === '/'
+								? currentPath === item.href
+								: currentPath.startsWith(item.href);
+
+						return (
+							<a class:list={['nav-link', { active: isActive }]} href={item.href}>
+								<span class="nav-code">{item.code}</span>
+								<span>{item.label}</span>
+							</a>
+						);
+					})
+				}
+			</nav>
+
+			<main class="content-shell">
+				<slot />
+			</main>
+
+			<footer class="site-footer panel">
+				<p>Pixel Build v0.1</p>
+				<p>中文博客 · Unreal Engine · Rendering · C++ · Game Dev</p>
+			</footer>
+		</div>
+	</body>
+</html>

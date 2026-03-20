@@ -1,17 +1,134 @@
 ---
+import { getCollection } from 'astro:content';
+import GameCard from '../components/GameCard.astro';
+import PostCard from '../components/PostCard.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf(),
+);
+const featuredPosts = posts.filter((post) => post.data.featured).slice(0, 2);
+
+const games = (await getCollection('games')).filter((game) => game.data.featured);
+
+const focusAreas = [
+	{
+		label: '虚幻引擎',
+		value: 'Gameplay Framework、工具链整理、原型迭代',
+	},
+	{
+		label: '图形渲染',
+		value: 'Lumen、后处理、实时画面分析与调试',
+	},
+	{
+		label: 'C++',
+		value: '玩法系统拆分、运行时状态管理、工程结构',
+	},
+	{
+		label: '游戏开发',
+		value: '独立项目原型、体验验证、开发日志沉淀',
+	},
+];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout title="Claude Jhin 开发日志" description="一个像素风的中文游戏开发博客，记录 Unreal Engine、渲染、C++ 与游戏制作。">
+	<section class="hero-layout">
+		<div class="hero panel">
+			<p class="eyebrow">PIXEL DEVLOG / CHN BUILD</p>
+			<h1 class="hero-title">Claude Jhin 开发日志</h1>
+			<p class="hero-copy">
+				这里主要记录我和 <strong>虚幻引擎</strong>、<strong>图形渲染</strong>、
+				<strong>C++</strong> 以及 <strong>游戏开发</strong> 相关的思考、踩坑、实验与项目过程。
+			</p>
+			<div class="cta-row">
+				<a class="pixel-button" href="/devlog">进入博文区</a>
+				<a class="pixel-button secondary" href="/games">查看游戏项目</a>
+			</div>
+			<div class="hero-stats">
+				<div class="stat-card">
+					<span class="mini-label">Main Engine</span>
+					<strong>Unreal Engine 5</strong>
+				</div>
+				<div class="stat-card">
+					<span class="mini-label">Primary Stack</span>
+					<strong>C++ / Rendering / Gameplay</strong>
+				</div>
+				<div class="stat-card">
+					<span class="mini-label">Writing Style</span>
+					<strong>中文开发日志</strong>
+				</div>
+				<div class="stat-card">
+					<span class="mini-label">Current Quest</span>
+					<strong>搭建长期可写的个人技术博客</strong>
+				</div>
+			</div>
+		</div>
+
+		<aside class="side-panel panel">
+			<p class="eyebrow">PLAYER PROFILE</p>
+			<ul class="hud-list">
+				<li>
+					<span class="hud-label">职业</span>
+					<strong>游戏开发者</strong>
+				</li>
+				<li>
+					<span class="hud-label">研究方向</span>
+					<strong>UE / Rendering / C++ / Gameplay</strong>
+				</li>
+				<li>
+					<span class="hud-label">博客用途</span>
+					<strong>记录知识沉淀与作品过程</strong>
+				</li>
+				<li>
+					<span class="hud-label">长期目标</span>
+					<strong>把技术积累和游戏作品串成一个可持续更新的站点</strong>
+				</li>
+			</ul>
+		</aside>
+	</section>
+
+	<section class="section-grid panel">
+		<div class="section-header">
+			<div>
+				<p class="eyebrow">FOCUS TREE</p>
+				<h2 class="section-title">当前关注方向</h2>
+			</div>
+		</div>
+		<div class="focus-grid">
+			{
+				focusAreas.map((item) => (
+					<div class="focus-item">
+						<span class="mini-label">{item.label}</span>
+						<strong>{item.value}</strong>
+					</div>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="section-grid panel">
+		<div class="section-header">
+			<div>
+				<p class="eyebrow">LATEST POSTS</p>
+				<h2 class="section-title">精选博文</h2>
+			</div>
+			<a class="section-link" href="/devlog">查看全部文章</a>
+		</div>
+		<div class="content-grid">
+			{featuredPosts.map((post) => <PostCard entry={post} />)}
+		</div>
+	</section>
+
+	<section class="section-grid panel">
+		<div class="section-header">
+			<div>
+				<p class="eyebrow">GAME ARCHIVE</p>
+				<h2 class="section-title">项目展示</h2>
+			</div>
+			<a class="section-link" href="/games">进入作品库</a>
+		</div>
+		<div class="content-grid">
+			{games.map((game) => <GameCard entry={game} />)}
+		</div>
+	</section>
+</BaseLayout>

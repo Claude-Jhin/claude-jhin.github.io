@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import PostCard from '../../components/PostCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf(),
+);
+---
+
+<BaseLayout title="博文 | Claude Jhin 开发日志" description="关于 Unreal Engine、图形渲染、C++ 和游戏开发的中文博文归档。">
+	<section class="page-hero panel">
+		<p class="eyebrow">DEVLOG ARCHIVE</p>
+		<h1 class="page-title">开发日志 / 博文归档</h1>
+		<p class="page-intro">
+			这里集中放置我关于 Unreal Engine、图形渲染、C++ 工程组织以及游戏开发过程中的笔记、总结与实验记录。
+		</p>
+	</section>
+
+	<section class="section-grid panel">
+		<div class="content-grid">
+			{posts.map((post) => <PostCard entry={post} />)}
+		</div>
+	</section>
+</BaseLayout>
