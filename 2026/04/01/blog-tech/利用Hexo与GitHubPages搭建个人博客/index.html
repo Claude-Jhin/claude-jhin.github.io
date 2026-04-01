@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>利用 Hexo 与 GitHub Pages 搭建个人博客 - Claude's Desk</title>
+    <meta name="description" content="Notes on development, technology, and a fresh start.">
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+
+    <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to desk
+    </a>
+</div>
+
+<article class="post-container module"
+    style="position: relative; margin: 80px auto 40px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
+    <h1 style="font-size: 28px; margin-bottom: 8px;">利用 Hexo 与 GitHub Pages 搭建个人博客</h1>
+    <div class="post-meta" style="margin-bottom: 32px;">
+        Published on 2026.04.01
+        
+        /
+        
+        <span style="color: var(--accent);">#Hexo</span>
+        
+        <span style="color: var(--accent);">#GitHub Pages</span>
+        
+        <span style="color: var(--accent);">#SSH</span>
+        
+        <span style="color: var(--accent);">#博客搭建</span>
+        
+        
+    </div>
+
+    <div class="post-content">
+        <p>这篇文章记录一下我重新搭建个人博客的过程。整个方案并不复杂，核心就是两件事：使用 <code>Hexo</code> 负责本地内容管理与静态页面生成，使用 <code>GitHub Pages</code> 负责博客的托管与发布。</p>
+<p>对个人博客来说，这套方案有几个很直接的优点：</p>
+<ul>
+<li>本地写作体验比较轻，适合长期维护</li>
+<li>生成的是静态文件，部署成本低</li>
+<li>可以直接挂在 <code>username.github.io</code> 这样的域名上</li>
+<li>配合 Git 和 GitHub，备份与迁移都比较方便</li>
+</ul>
+<h2 id="为什么选择-Hexo">为什么选择 Hexo</h2>
+<p><code>Hexo</code> 是一个经典的静态博客框架。对我来说，它最大的价值不是“功能特别多”，而是结构简单、可控，而且改主题、改配置、改部署方式都比较直接。</p>
+<p>我需要的是一个可以长期记录技术内容的博客，而不是一个过于复杂的后台系统。<code>Hexo</code> 刚好适合这种场景。</p>
+<h2 id="为什么选择-GitHub-Pages">为什么选择 GitHub Pages</h2>
+<p><code>GitHub Pages</code> 适合拿来托管个人博客，尤其是和 <code>Hexo</code> 这种静态站点配合时，流程非常顺。</p>
+<p>只要仓库名符合规则，比如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Claude-Jhin/claude-jhin.github.io</span><br></pre></td></tr></table></figure>
+<p>那么发布成功以后，博客就可以直接通过下面这个地址访问：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://claude-jhin.github.io/</span><br></pre></td></tr></table></figure>
+<h2 id="本地项目准备">本地项目准备</h2>
+<p>先在本地准备好博客目录，然后安装依赖：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install</span><br></pre></td></tr></table></figure>
+<p>本地预览时，直接启动 Hexo 服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm run server</span><br></pre></td></tr></table></figure>
+<p>默认情况下可以通过下面的地址访问本地博客：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:4000/</span><br></pre></td></tr></table></figure>
+<p>这一步非常重要，因为无论是改配置、换主题还是写文章，都应该优先在本地确认效果。</p>
+<h2 id="基础配置">基础配置</h2>
+<p>博客的核心配置在根目录的 <code>_config.yml</code> 中。</p>
+<p>像站点标题、作者、语言、时区、发布地址这些内容，都需要在这里明确下来。当前博客的关键配置可以概括成下面这样：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">title:</span> <span class="string">Claude&#x27;s</span> <span class="string">Desk</span></span><br><span class="line"><span class="attr">author:</span> <span class="string">Claude</span></span><br><span class="line"><span class="attr">language:</span> <span class="string">zh-CN</span></span><br><span class="line"><span class="attr">timezone:</span> <span class="string">Asia/Shanghai</span></span><br><span class="line"></span><br><span class="line"><span class="attr">url:</span> <span class="string">https://claude-jhin.github.io/</span></span><br><span class="line"><span class="attr">root:</span> <span class="string">/</span></span><br><span class="line"></span><br><span class="line"><span class="attr">theme:</span> <span class="string">desktop</span></span><br><span class="line"></span><br><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">git@github.com:Claude-Jhin/claude-jhin.github.io.git</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">main</span></span><br></pre></td></tr></table></figure>
+<p>这里最关键的是 <code>url</code> 和 <code>deploy.repo</code>。</p>
+<ul>
+<li><code>url</code> 决定博客最终对外访问的地址</li>
+<li><code>deploy.repo</code> 决定 <code>Hexo</code> 会把生成后的静态文件推送到哪个 GitHub 仓库</li>
+</ul>
+<h2 id="使用-SSH-完成-GitHub-发布">使用 SSH 完成 GitHub 发布</h2>
+<p>为了让本地可以稳定地把博客发布到 GitHub，我选择使用 <code>SSH</code>。</p>
+<p>先在本地生成一把 SSH key：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t ed25519 -C <span class="string">&quot;Claude-Jhin GitHub&quot;</span></span><br></pre></td></tr></table></figure>
+<p>然后把公钥内容添加到 GitHub 的 <code>SSH keys</code> 页面里。</p>
+<p>配置完成后，可以用下面这条命令测试是否连接成功：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -T git@github.com</span><br></pre></td></tr></table></figure>
+<p>如果看到类似下面的提示，就说明 SSH 已经配置完成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Hi Claude-Jhin! You&#x27;ve successfully authenticated...</span><br></pre></td></tr></table></figure>
+<h2 id="发布流程">发布流程</h2>
+<p>博客发布时，我使用的是 <code>Hexo</code> 提供的标准流程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm run clean</span><br><span class="line">npm run build</span><br><span class="line">npm run deploy</span><br></pre></td></tr></table></figure>
+<p>这三步分别对应：</p>
+<ol>
+<li>清理旧的生成缓存</li>
+<li>重新生成静态页面</li>
+<li>推送到 GitHub Pages 仓库</li>
+</ol>
+<p>发布成功后，GitHub Pages 会接管这些静态文件，对外提供网站访问。</p>
+<h2 id="重新整理博客内容结构">重新整理博客内容结构</h2>
+<p>这次重新开始搭建博客时，我顺手也把内容结构重新整理了一遍。</p>
+<p>为了后续持续记录和博客本身相关的技术内容，我单独建立了一个专门目录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source/_posts/blog-tech/</span><br></pre></td></tr></table></figure>
+<p>这意味着以后像下面这些内容，都可以统一放在这个目录下：</p>
+<ul>
+<li>Hexo 配置记录</li>
+<li>主题接入与修改</li>
+<li>GitHub Pages 发布问题</li>
+<li>域名、CDN、评论系统、统计脚本等博客相关技术内容</li>
+</ul>
+<p>同时，这篇文章也被归到了 <code>博客技术 / 博客搭建</code> 这个分类下，方便后续统一整理。</p>
+<h2 id="主题与风格">主题与风格</h2>
+<p>博客当前使用的是 <code>hexo-theme-desktop</code> 这个主题，并且在此基础上继续做了一些调整：</p>
+<ul>
+<li>清理掉旧主题遗留配置</li>
+<li>调整为更适合中文阅读的字体策略</li>
+<li>修改了首页卡片文案和整体色彩气质</li>
+<li>修复了空站点状态下首页无法正常展示的问题</li>
+</ul>
+<p>对个人博客来说，主题不是一次性决定的东西。先跑通，再慢慢打磨，比一开始就追求完全定稿更重要。</p>
+<h2 id="这篇文章之后">这篇文章之后</h2>
+<p>博客重新搭起来只是第一步，后面更重要的是持续写下去。</p>
+<p>接下来我会优先记录几类内容：</p>
+<ul>
+<li>博客本身的技术配置与改造过程</li>
+<li>开发过程中的问题与总结</li>
+<li>值得长期沉淀的技术笔记</li>
+</ul>
+<p>这篇文章就作为重新开始后的第一篇记录。</p>
+
+    </div>
+
+    <div class="copyright-box">
+        <strong>Copyright Notice:</strong> All articles in this blog are licensed under <a
+            href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a> unless stated
+        otherwise.
+    </div>
+
+    <div class="post-navigation">
+        
+        <div class="nav-prev empty"></div>
+        
+
+        
+        <div class="nav-next empty"></div>
+        
+    </div>
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>.
+        </div>
+
+        
+            
+<script src="/js/codeblocks.js"></script>
+
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+        </script>
+</body>
+
+</html>
