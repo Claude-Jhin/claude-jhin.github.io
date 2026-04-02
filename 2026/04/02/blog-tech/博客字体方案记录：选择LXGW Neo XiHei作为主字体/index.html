@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>博客字体方案记录：选择 LXGW Neo XiHei 作为主字体 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260402b">
+    <link rel="shortcut icon" href="/favicon.svg?v=20260402b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<article class="post-container module"
+    style="position: relative; margin: 80px auto 40px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
+    <h1 style="font-size: 28px; margin-bottom: 8px;">博客字体方案记录：选择 LXGW Neo XiHei 作为主字体</h1>
+    <div class="post-meta" style="margin-bottom: 32px;">
+        发布于 2026.04.02
+        
+        /
+        
+        <span style="color: var(--accent);">#Hexo</span>
+        
+        <span style="color: var(--accent);">#博客字体</span>
+        
+        <span style="color: var(--accent);">#LXGW Neo XiHei</span>
+        
+        <span style="color: var(--accent);">#中文字体</span>
+        
+        <span style="color: var(--accent);">#CSS</span>
+        
+        
+    </div>
+
+    <div class="post-content">
+        <p>这篇文章记录一下这次博客字体方案的整理过程。</p>
+<p>对于一个以中文为主的个人技术博客来说，字体不是“最后再修”的装饰问题。正文是否稳定、标题是否清楚、导航和标签在小字号下会不会发虚，都会直接影响整个站点的气质。尤其是当博客想走一种偏冷静、偏克制、偏技术文档的风格时，字体的影响会比想象中更大。</p>
+<h2 id="这次想解决的是什么问题">这次想解决的是什么问题</h2>
+<p>这次调整字体时，我心里其实只有两个目标：</p>
+<ol>
+<li>中文显示要稳定，不能出现中英混排气质完全分家的情况</li>
+<li>整体风格要更接近技术博客，而不是偏手写、偏文艺的个人手账</li>
+</ol>
+<p>最开始博客里使用的是一套比较通用的中文无衬线回退字体，它们当然能用，但缺少一点更明确的站点个性。后面又认真看了一轮霞鹜系列字体，才慢慢把方向收清楚。</p>
+<h2 id="为什么没有选文楷路线">为什么没有选文楷路线</h2>
+<p>一开始最容易让人动心的，其实是「霞鹜文楷」系列。</p>
+<p>它的优点很明显：</p>
+<ul>
+<li>中文辨识度高</li>
+<li>书写感强</li>
+<li>做长文阅读时有温度</li>
+<li>放在个人站上很容易显得“有性格”</li>
+</ul>
+<p>但问题也同样明显。这个博客目前更想走的是偏冷峻、偏技术、偏工程文档的气质，而不是偏人文、偏随笔、偏温润的方向。<code>LXGW WenKai</code> 这类字体的笔形太有“手写感”了，放在正文里会削弱技术博客那种干净、克制的力量感。</p>
+<p>如果只是做引言、引用块、题图文案，文楷仍然是很好看的选择；但如果拿来做整站主字体，就会把整个博客往另一个方向带过去。</p>
+<h2 id="为什么最后选了-LXGW-Neo-XiHei">为什么最后选了 LXGW Neo XiHei</h2>
+<p>最后真正比较适合这个博客方向的，是 <code>LXGW Neo XiHei</code>。</p>
+<p>它有几个点很符合我的预期：</p>
+<ul>
+<li>它本身就是一套面向简体中文的黑体路线</li>
+<li>字形规整、重心稳定，小字号下更适合界面和正文阅读</li>
+<li>没有太重的书写感，更容易撑起技术博客的冷静风格</li>
+<li>和代码块、导航、标签、元信息这些 UI 元素放在一起时，不会显得跳</li>
+</ul>
+<p>对我来说，这套字体最大的优点不是“花哨”，而是“稳”。它不会抢内容本身的注意力，但会让整个页面更统一、更有秩序。</p>
+<p>另外，实际接入时我还把 <code>LXGW Neo XiHei Screen</code> 放在了前面优先尝试。原因也很直接：<code>Screen</code> 版更偏向屏幕阅读，适合 PC 和手机浏览器这种真实使用场景。</p>
+<h2 id="最终的字体策略">最终的字体策略</h2>
+<p>这次博客的字体没有走复杂的混搭路线，而是尽量收拢成一个更统一的方案：</p>
+<ul>
+<li>正文：<code>LXGW Neo XiHei</code></li>
+<li>导航、标签、按钮、页脚等 UI：<code>LXGW Neo XiHei</code></li>
+<li>文章标题：仍然统一走这一套无衬线体系</li>
+<li>代码字体：继续保持等宽字体，不和中文主字体混用</li>
+</ul>
+<p>对应的 CSS 字体栈大致像这样：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">--font-sans</span>: <span class="string">&quot;LXGW Neo XiHei Web&quot;</span>, <span class="string">&quot;LXGW Neo XiHei Screen&quot;</span>, <span class="string">&quot;LXGW Neo XiHei&quot;</span>,</span><br><span class="line">  <span class="string">&quot;HarmonyOS Sans SC&quot;</span>, <span class="string">&quot;PingFang SC&quot;</span>, <span class="string">&quot;Noto Sans SC&quot;</span>, <span class="string">&quot;Microsoft YaHei&quot;</span>, sans-serif;</span><br><span class="line"></span><br><span class="line"><span class="attr">--font-mono</span>: <span class="string">&quot;Cascadia Code&quot;</span>, <span class="string">&quot;JetBrains Mono&quot;</span>, <span class="string">&quot;Sarasa Mono SC&quot;</span>, Consolas, monospace;</span><br></pre></td></tr></table></figure>
+<p>这里保留系统字体作为回退，是为了在字体加载失败时，页面仍然能稳定显示。</p>
+<h2 id="让所有访客都能看到同一套字体">让所有访客都能看到同一套字体</h2>
+<p>只在自己的电脑上安装字体当然很简单，但那只能保证“我自己”看到的效果正确。要让所有访客都看到同样的中文字体，就必须把字体真正接进站点里。</p>
+<p>最后采用的是“主题内自托管”的方式：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">@font-face</span> &#123;</span><br><span class="line">  <span class="attribute">font-family</span>: <span class="string">&quot;LXGW Neo XiHei Web&quot;</span>;</span><br><span class="line">  <span class="attribute">src</span>: <span class="built_in">url</span>(<span class="string">&quot;/fonts/LXGWNeoXiHei.ttf&quot;</span>) <span class="built_in">format</span>(<span class="string">&quot;truetype&quot;</span>);</span><br><span class="line">  <span class="attribute">font-display</span>: swap;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样做有几个直接好处：</p>
+<ul>
+<li>不依赖访客本机是否安装字体</li>
+<li>不依赖第三方字体 CDN</li>
+<li>页面最终呈现更可控</li>
+<li>本地调试和线上效果更一致</li>
+</ul>
+<p>同时为了减少首屏闪动，我也在页面头部补了字体预加载。</p>
+<h2 id="字体接入时顺手处理的授权问题">字体接入时顺手处理的授权问题</h2>
+<p>这一步其实比单纯“把字体放进网站里”更重要。</p>
+<p><code>LXGW Neo XiHei</code> 的授权来源比较特殊，它属于 IPA 系列字体的衍生字体。也正因为如此，官方仓库里专门给了嵌入说明。简单说就是：如果把它用在网页这种嵌入式场景里，不能只顾着加载字体文件，还需要补上相应的授权说明和恢复路径说明。</p>
+<p>所以这次没有只是简单加一个 <code>@font-face</code> 就结束，而是一起补了两件事：</p>
+<ol>
+<li>新增了一个字体授权说明页</li>
+<li>在页面右上角加了一个字体切换按钮</li>
+</ol>
+<p>这样做的目的是：</p>
+<ul>
+<li>默认给访客展示站点内置字体</li>
+<li>同时保留切回本机字体的方式</li>
+<li>把字体来源、协议和说明页公开放在站点里</li>
+</ul>
+<p>这比“偷偷塞一个 webfont 文件进来”要更稳妥，也更适合长期维护。</p>
+<h2 id="这次调整对博客气质的影响">这次调整对博客气质的影响</h2>
+<p>字体换完之后，整个博客的观感变化比我预期的还要明显。</p>
+<p>最直观的变化不是“更漂亮”，而是下面这些：</p>
+<ul>
+<li>导航和标签的中文终于不再发怪</li>
+<li>页面小字号信息读起来更自然</li>
+<li>标题、正文、代码块之间的气质更统一</li>
+<li>站点整体更像技术博客，而不是主题演示页</li>
+</ul>
+<p>某种程度上，这次字体方案真正解决的不是一个单点问题，而是把“页面风格”和“内容类型”对齐了。</p>
+<h2 id="这篇之后">这篇之后</h2>
+<p>博客现在已经完成了从基础搭建、主题接入，到字体方案落地的第一轮整理。后面和博客本身相关的内容，我会继续放在下面这个目录里：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source/_posts/blog-tech/</span><br></pre></td></tr></table></figure>
+<p>接下来值得继续记录的内容至少还有这些：</p>
+<ul>
+<li>代码块风格和阅读密度的调整</li>
+<li>favicon 与站点识别元素的设计</li>
+<li>首页卡片布局和交互的取舍</li>
+<li>主题进一步中文化时踩到的细节问题</li>
+</ul>
+<p>这篇文章就当作第二篇记录，给这次字体调整留一个完整的收尾。</p>
+
+    </div>
+
+    <div class="copyright-box">
+        <strong>版权声明：</strong>除特别说明外，本站文章均采用 <a
+            href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a> 协议发布。
+    </div>
+
+    <div class="post-navigation">
+        
+        <div class="nav-prev empty"></div>
+        
+
+        
+        <a href="/2026/04/01/blog-tech/%E5%88%A9%E7%94%A8Hexo%E4%B8%8EGitHubPages%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" class="nav-next">
+            <span class="nav-label">下一篇 &rarr;</span>
+            <span class="nav-title">利用 Hexo 与 GitHub Pages 搭建个人博客</span>
+        </a>
+        
+    </div>
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            
+<script src="/js/codeblocks.js"></script>
+
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
