@@ -6,7 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Claude's Desk</title>
-    <meta name="description" content="Notes on development, technology, and a fresh start.">
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     
 <link rel="stylesheet" href="/css/style.css">
 
@@ -14,15 +15,19 @@
         
                 <script>
                     const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
                     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     if (userPref === 'dark' || (!userPref && systemDark)) {
                         document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
                     }
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
 <body class="is-post">
-    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -38,6 +43,9 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
     </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
 
     <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
     <a href="/" class="back-btn">
@@ -46,14 +54,14 @@
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        Back to desk
+        返回首页
     </a>
 </div>
 
 <article class="post-container module"
     style="position: relative; margin: 80px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
     <h1 style="font-size: 28px; margin-bottom: 32px;">
-        Category: 博客搭建
+        分类：博客搭建
     </h1>
 
     <div class="archive-list">
@@ -75,7 +83,8 @@
 
         <div class="global-footer">
             &copy; 2026 Claude.<br>
-                    Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>.
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
         </div>
 
         
@@ -86,6 +95,15 @@
 
         <script>
             const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
             themeToggleBtn.addEventListener('click', () => {
                 const html = document.documentElement;
                 if (html.getAttribute('data-theme') === 'dark') {
@@ -96,6 +114,20 @@
                     localStorage.setItem('theme', 'dark');
                 }
             });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
         </script>
 </body>
 

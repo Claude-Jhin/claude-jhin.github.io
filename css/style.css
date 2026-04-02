@@ -1,3 +1,9 @@
+@font-face {
+    font-family: "LXGW Neo XiHei Web";
+    src: url("/fonts/LXGWNeoXiHei.ttf") format("truetype");
+    font-display: swap;
+}
+
 :root {
     --bg-color: #e7edf4;
     --card-bg: #f7f9fc;
@@ -35,8 +41,9 @@
     --code-copy-bg-hover: rgba(247, 249, 252, 0.16);
     --code-copy-border: rgba(255, 255, 255, 0.12);
 
-    --font-sans: "HarmonyOS Sans SC", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
-    --font-serif: "HarmonyOS Sans SC", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    --font-sans-local: "IPAexGothic", "IPAex Gothic", "HarmonyOS Sans SC", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    --font-sans: "LXGW Neo XiHei Web", "LXGW Neo XiHei Screen", "LXGW Neo XiHei", var(--font-sans-local);
+    --font-serif: "LXGW Neo XiHei Web", "LXGW Neo XiHei Screen", "LXGW Neo XiHei", var(--font-sans-local);
     --font-mono: "Cascadia Code", "JetBrains Mono", "Sarasa Mono SC", "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
 }
 
@@ -78,12 +85,18 @@ html[data-theme='dark'] {
     --code-copy-border: rgba(255, 255, 255, 0.12);
 }
 
+html[data-font='local'] {
+    --font-sans: var(--font-sans-local);
+    --font-serif: var(--font-sans-local);
+}
+
 body,
 .module,
 .copyright-box,
 .post-navigation a,
 .back-btn,
-.theme-toggle {
+.theme-toggle,
+.font-toggle {
     transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
 }
 
@@ -132,10 +145,11 @@ button {
     color: var(--primary-text);
     border: 1px solid var(--primary-bg);
     padding: 11px 18px;
-    font-size: 12px;
+    font-size: 13px;
     font-family: var(--font-sans);
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
+    line-height: 1.4;
     cursor: pointer;
     border-radius: 8px;
     transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
@@ -241,10 +255,11 @@ a {
     align-items: center;
     border-bottom: 1px solid var(--border-color) !important;
     padding-bottom: 8px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    font-family: var(--font-mono);
-    letter-spacing: 0.02em;
+    font-family: var(--font-sans);
+    letter-spacing: 0;
+    line-height: 1.55;
 }
 
 .nav-link:last-child {
@@ -276,12 +291,13 @@ a {
 }
 
 .post-meta {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--text-muted);
     margin-bottom: 4px;
     display: block;
-    font-family: var(--font-mono);
-    letter-spacing: 0.02em;
+    font-family: var(--font-sans);
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
 }
 
 .tag-list {
@@ -293,10 +309,10 @@ a {
 .tag {
     border: 1px solid var(--border-color);
     padding: 5px 11px;
-    font-size: 11px;
+    font-size: 12px;
     border-radius: 6px;
-    letter-spacing: 0.02em;
-    font-family: var(--font-mono);
+    letter-spacing: 0;
+    font-family: var(--font-sans);
     background: var(--box-bg);
 }
 
@@ -320,11 +336,16 @@ a {
     border: 1px solid var(--border-color);
     padding: 8px 16px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    font-family: var(--font-mono);
-    letter-spacing: 0.02em;
+    font-family: var(--font-sans);
+    letter-spacing: 0;
     box-shadow: 0 8px 20px var(--shadow-base);
+}
+
+.post-item a {
+    font-size: 15px;
+    line-height: 1.6;
 }
 
 .back-btn:hover {
@@ -525,17 +546,17 @@ a {
     top: 10px;
     right: 10px;
     z-index: 2;
-    min-width: 62px;
+    min-width: 74px;
     padding: 6px 12px;
     border-radius: 6px;
     border: 1px solid var(--code-copy-border);
     background: var(--code-copy-bg);
     color: var(--code-panel-text);
     box-shadow: none;
-    font-size: 11px;
-    font-family: var(--font-mono);
+    font-size: 12px;
+    font-family: var(--font-sans);
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     backdrop-filter: blur(8px);
 }
 
@@ -634,9 +655,9 @@ a {
     padding: 4px 12px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0;
+    font-family: var(--font-sans);
 }
 
 .pagination .current {
@@ -720,11 +741,11 @@ a {
 }
 
 .nav-label {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--text-muted);
     margin-bottom: 4px;
-    letter-spacing: 0.02em;
-    font-family: var(--font-mono);
+    letter-spacing: 0;
+    font-family: var(--font-sans);
 }
 
 .nav-title {
@@ -741,11 +762,11 @@ a {
 }
 
 .global-footer {
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--text-muted);
     line-height: 1.6;
-    letter-spacing: 0.02em;
-    font-family: var(--font-mono);
+    letter-spacing: 0;
+    font-family: var(--font-sans);
 }
 
 .global-footer a {
@@ -842,6 +863,33 @@ html[data-theme='dark'] .theme-toggle .sun-icon {
 
 html[data-theme='dark'] .theme-toggle .moon-icon {
     display: none;
+}
+
+.font-toggle {
+    position: fixed;
+    top: 78px;
+    right: max(24px, env(safe-area-inset-right));
+    z-index: 9999;
+    width: 46px;
+    height: 46px;
+    background: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 20px var(--shadow-base);
+    font-size: 16px;
+    font-family: var(--font-sans);
+    font-weight: 700;
+}
+
+.font-toggle:hover,
+.font-toggle.is-local {
+    background: var(--text-main);
+    color: var(--card-bg);
 }
 
 

@@ -22,8 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const copyButton = document.createElement("button");
         copyButton.type = "button";
         copyButton.className = "code-copy-btn";
-        copyButton.setAttribute("aria-label", "Copy code");
-        copyButton.textContent = "Copy";
+        copyButton.setAttribute("aria-label", "复制代码");
+        copyButton.textContent = "复制";
 
         copyButton.addEventListener("click", async () => {
             const lines = codeRoot.querySelectorAll(".line");
@@ -35,16 +35,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     fallbackCopy(codeText);
                 }
-                copyButton.textContent = "Copied";
+                copyButton.textContent = "已复制";
                 copyButton.classList.add("is-copied");
                 window.setTimeout(() => {
-                    copyButton.textContent = "Copy";
+                    copyButton.textContent = "复制";
                     copyButton.classList.remove("is-copied");
                 }, 1800);
             } catch (error) {
-                copyButton.textContent = "Failed";
+                copyButton.textContent = "失败";
                 window.setTimeout(() => {
-                    copyButton.textContent = "Copy";
+                    copyButton.textContent = "复制";
                 }, 1800);
             }
         });

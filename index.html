@@ -6,7 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Claude's Desk</title>
-    <meta name="description" content="Notes on development, technology, and a fresh start.">
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     
 <link rel="stylesheet" href="/css/style.css">
 
@@ -14,15 +15,19 @@
         
                 <script>
                     const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
                     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     if (userPref === 'dark' || (!userPref && systemDark)) {
                         document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
                     }
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
 <body class="is-home">
-    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -38,6 +43,9 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
     </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
 
     <div class="controls">
     <button id="scatter-btn">
@@ -45,7 +53,7 @@
             viewBox="0 0 24 24">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.44l5.67-5.67" />
         </svg>
-        Tidy desk
+        整理桌面
     </button>
 </div>
 
@@ -56,22 +64,21 @@
             <polyline points="2 17 12 22 22 17"></polyline>
             <polyline points="2 12 12 17 22 12"></polyline>
         </svg>
-        Map
+        导航
     </h3>
     <div style="display: flex; flex-direction: column; gap: 14px;">
         
-        <a href="/archives" class="nav-link">Archives<span>-></span></a>
+        <a href="/archives" class="nav-link">归档<span>-></span></a>
         
-        <a href="/categories" class="nav-link">Categories<span>-></span></a>
-        <a href="/tags" class="nav-link">Tags<span>-></span></a>
-        <a href="/friends" class="nav-link">Friends<span>-></span></a>
-        <a href="/about" class="nav-link">About<span>-></span></a>
+        <a href="/categories" class="nav-link">分类<span>-></span></a>
+        <a href="/tags" class="nav-link">标签<span>-></span></a>
+        <a href="/about" class="nav-link">关于<span>-></span></a>
     </div>
 </div>
 
 <div class="module mod-posts">
     <h3 style="display: flex; align-items: center; justify-content: space-between;">
-        Notes
+        最新文章
         <svg class="svg-icon" viewBox="0 0 24 24">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
@@ -93,14 +100,14 @@
     
     <div style="text-align: right; margin-top: 8px;">
         <a href="/archives"
-            style="font-size: 13px; color: var(--text-muted); border-bottom: none;">View all 1
-            posts -></a>
+            style="font-size: 13px; color: var(--text-muted); border-bottom: none;">查看全部 1
+            篇文章 -></a>
     </div>
     
 </div>
 
 <div class="module mod-tags">
-    <h3>Tags</h3>
+    <h3>标签</h3>
     <div class="tag-list">
         
         
@@ -113,14 +120,14 @@
             <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" class="tag"># 博客搭建</a>
         
         <a href="/tags" class="tag"
-            style="background: var(--primary-bg); color: var(--primary-text); border: none;">All tags</a>
+            style="background: var(--primary-bg); color: var(--primary-text); border: none;">全部标签</a>
         
     </div>
 </div>
 
 
 <div class="module mod-contact">
-    <h3>Contact me</h3>
+    <h3>联系</h3>
     <div style="display: flex; gap: 16px; margin-top: 8px;">
         
         <a href="https://github.com/Claude-Jhin" title="GitHub" target="_blank"
@@ -144,7 +151,7 @@
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
     </svg>
     <p class="quote-text">
-        "Clear the desk, then start writing what matters."
+        "把桌面整理干净，再开始写真正重要的东西。"
     </p>
     <span class="post-meta quote-author">- Claude</span>
 </div>
@@ -156,17 +163,18 @@
         <circle cx="50" cy="50" r="20" fill="var(--card-bg)"></circle>
         <path d="M50 50 L80 80" stroke="var(--bg-color)" stroke-width="8"></path>
     </svg>
-    <h2>Hi, I'm Claude.</h2>
-    <p>Notes on development, technology, and a fresh start.</p>
+    <h2>你好，我是 Claude。</h2>
+    <p>记录开发、技术与持续写作。</p>
     <div>
-        <a href="/about">Read more -></a>
+        <a href="/about">了解更多 -></a>
     </div>
 </div>
 
 
         <div class="global-footer">
             &copy; 2026 Claude.<br>
-                    Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>.
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
         </div>
 
         
@@ -177,6 +185,15 @@
 
         <script>
             const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
             themeToggleBtn.addEventListener('click', () => {
                 const html = document.documentElement;
                 if (html.getAttribute('data-theme') === 'dark') {
@@ -187,6 +204,20 @@
                     localStorage.setItem('theme', 'dark');
                 }
             });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
         </script>
 </body>
 
