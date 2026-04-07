@@ -354,14 +354,14 @@ a {
 
 .post-page-shell {
     width: min(92vw, 820px);
-    margin: 80px auto 40px auto;
+    margin: 112px auto 40px auto;
 }
 
 .post-page-shell.has-toc {
-    width: min(94vw, 1120px);
+    width: min(95vw, 1120px);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 268px;
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr) 248px;
+    gap: 20px;
     align-items: start;
 }
 
@@ -402,9 +402,9 @@ a {
 
 .post-toc-sidebar {
     position: sticky;
-    top: 136px;
+    top: 124px;
     padding: 18px 20px;
-    max-height: calc(100vh - 160px);
+    max-height: calc(100vh - 148px);
     overflow: auto;
 }
 
@@ -1109,7 +1109,15 @@ html[data-theme='dark'] .theme-toggle .moon-icon {
     color: var(--quote-muted);
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1180px) {
+    .post-page-shell.has-toc {
+        width: min(96vw, 1040px);
+        grid-template-columns: minmax(0, 1fr) 228px;
+        gap: 18px;
+    }
+}
+
+@media (max-width: 920px) {
     .post-page-shell,
     .post-page-shell.has-toc {
         width: min(92vw, 820px);
