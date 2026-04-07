@@ -1,0 +1,522 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从创建窗口到第一个三角形：我的 OpenGL 入门笔记 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260402b">
+    <link rel="shortcut icon" href="/favicon.svg?v=20260402b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从创建窗口到第一个三角形：我的 OpenGL 入门笔记</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.08
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#GLFW</span>
+            
+            <span style="color: var(--accent);">#GLAD</span>
+            
+            <span style="color: var(--accent);">#Shader</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            
+        </div>
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E2%80%9C%E7%AA%97%E5%8F%A3%E2%80%9D%E5%92%8C%E2%80%9C%E4%B8%89%E8%A7%92%E5%BD%A2%E2%80%9D%E8%AE%A4%E7%9C%9F%E5%AD%A6%E4%B8%80%E9%81%8D"><span class="post-toc-list-text">为什么要把“窗口”和“三角形”认真学一遍</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E6%98%AF%E6%80%8E%E4%B9%88%E7%BB%84%E7%BB%87%E5%B7%A5%E7%A8%8B%E7%9A%84"><span class="post-toc-list-text">我是怎么组织工程的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GLFW%E3%80%81GLAD-%E5%92%8C-OpenGL-%E5%88%B0%E5%BA%95%E5%90%84%E8%87%AA%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">GLFW、GLAD 和 OpenGL 到底各自负责什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#OpenGL%EF%BC%9A%E7%9C%9F%E6%AD%A3%E8%B4%9F%E8%B4%A3%E6%B8%B2%E6%9F%93%E7%9A%84%E5%9B%BE%E5%BD%A2-API"><span class="post-toc-list-text">OpenGL：真正负责渲染的图形 API</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GLFW%EF%BC%9A%E8%B4%9F%E8%B4%A3%E7%AA%97%E5%8F%A3%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E5%92%8C%E4%BA%8B%E4%BB%B6"><span class="post-toc-list-text">GLFW：负责窗口、上下文和事件</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GLAD%EF%BC%9A%E8%B4%9F%E8%B4%A3%E5%8A%A0%E8%BD%BD-OpenGL-%E5%87%BD%E6%95%B0"><span class="post-toc-list-text">GLAD：负责加载 OpenGL 函数</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%89%E8%80%85%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B8%E5%9E%8B%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">三者之间的典型顺序</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E4%BB%8E%E2%80%9C%E8%83%BD%E6%89%93%E5%BC%80%E7%AA%97%E5%8F%A3%E2%80%9D%E5%BC%80%E5%A7%8B"><span class="post-toc-list-text">第一部分：从“能打开窗口”开始</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E7%9A%84%E4%BB%A3%E7%A0%81%E4%B8%BB%E7%BA%BF"><span class="post-toc-list-text">这一章的代码主线</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E8%BF%99%E4%B8%80%E7%AB%A0%E9%87%8C%E7%9C%9F%E6%AD%A3%E7%90%86%E8%A7%A3%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">我在这一章里真正理解的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E5%85%88%E6%9C%89%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%8C%E5%86%8D%E5%88%9D%E5%A7%8B%E5%8C%96-GLAD"><span class="post-toc-list-text">1. 为什么必须先有上下文，再初始化 GLAD</span></a></li><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#2-glViewport-%E7%A9%B6%E7%AB%9F%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">2. glViewport(...) 究竟在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#3-%E6%B8%B2%E6%9F%93%E5%BE%AA%E7%8E%AF%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%9B%BE%E5%BD%A2%E7%A8%8B%E5%BA%8F%E7%9A%84%E9%AA%A8%E6%9E%B6"><span class="post-toc-list-text">3. 渲染循环为什么是图形程序的骨架</span></a></li><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#4-glClearColor-%E5%92%8C-glClear-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="post-toc-list-text">4. glClearColor 和 glClear 的区别</span></a></li></ol></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E4%BB%8E%E7%A9%BA%E7%AA%97%E5%8F%A3%E5%88%B0%E7%AC%AC%E4%B8%80%E4%B8%AA%E4%B8%89%E8%A7%92%E5%BD%A2"><span class="post-toc-list-text">第二部分：从空窗口到第一个三角形</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E7%9A%84%E4%B8%BB%E7%BA%BF%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">这一章的主线步骤</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%92%8C%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">顶点着色器和片元着色器到底在做什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%EF%BC%9A%E5%86%B3%E5%AE%9A%E9%A1%B6%E7%82%B9%E8%A2%AB%E6%94%BE%E5%88%B0%E5%93%AA%E9%87%8C"><span class="post-toc-list-text">顶点着色器：决定顶点被放到哪里</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8%EF%BC%9A%E5%86%B3%E5%AE%9A%E5%83%8F%E7%B4%A0%E6%98%AF%E4%BB%80%E4%B9%88%E9%A2%9C%E8%89%B2"><span class="post-toc-list-text">片元着色器：决定像素是什么颜色</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Shader-Program"><span class="post-toc-list-text">什么是 Shader Program</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-VBO"><span class="post-toc-list-text">什么是 VBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-VAO"><span class="post-toc-list-text">什么是 VAO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glVertexAttribPointer-%E7%9C%9F%E6%AD%A3%E8%A1%A8%E8%BE%BE%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">glVertexAttribPointer(...) 真正表达了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E8%A7%92%E5%BD%A2%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BB%88%E4%BA%8E%E8%83%BD%E8%A2%AB%E7%94%BB%E5%87%BA%E6%9D%A5"><span class="post-toc-list-text">三角形为什么终于能被画出来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E5%AF%B9%E8%BF%99%E6%9D%A1%E6%B8%B2%E6%9F%93%E9%93%BE%E8%B7%AF%E7%9A%84%E7%90%86%E8%A7%A3"><span class="post-toc-list-text">到目前为止，我对这条渲染链路的理解</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%9B%AE%E5%89%8D%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E6%A6%82%E5%BF%B5"><span class="post-toc-list-text">目前最容易混淆的几个概念</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GLFW%E3%80%81GLAD%E3%80%81OpenGL"><span class="post-toc-list-text">GLFW、GLAD、OpenGL</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%92%8C%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8"><span class="post-toc-list-text">顶点着色器和片元着色器</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#VBO-%E5%92%8C-VAO"><span class="post-toc-list-text">VBO 和 VAO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#glClearColor-%E5%92%8C-glClear"><span class="post-toc-list-text">glClearColor 和 glClear</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%B7%AF%E8%B8%A9%E5%88%B0%E7%9A%84%E4%B8%A4%E4%B8%AA%E5%BE%88%E7%9C%9F%E5%AE%9E%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">这一路踩到的两个很真实的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Visual-Studio-%E5%8E%9F%E7%94%9F%E9%A1%B9%E7%9B%AE%E4%BC%9A%E4%B8%8D%E6%96%AD%E9%87%8D%E5%A4%8D%E9%85%8D%E7%BD%AE%E5%BA%93%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">1. Visual Studio 原生项目会不断重复配置库路径</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%B8%AD%E6%96%87%E6%B3%A8%E9%87%8A%E5%B8%A6%E6%9D%A5%E7%9A%84%E6%BA%90%E7%A0%81%E7%BC%96%E7%A0%81%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">2. 中文注释带来的源码编码问题</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%8E%B0%E5%9C%A8%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%9C%9F%E6%AD%A3%E5%AD%A6%E5%88%B0%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">到现在为止，我真正学到的是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5%E5%87%86%E5%A4%87%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">下一步准备做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>刚开始学 OpenGL 时，我以为“画出第一个三角形”只是一个象征性的入门仪式。真正动手之后才发现，这一步的意义比想象中大得多。</p>
+<p>因为从“打开一个窗口”到“屏幕上出现一个三角形”，中间实际上串起了图形程序最基础的一整条链路：窗口系统、OpenGL 上下文、函数加载、Shader、顶点数据、GPU 缓冲区，以及最终的绘制调用。</p>
+<p>这篇文章记录的，就是我刚开始学习 OpenGL 时，如何从一个空窗口走到第一个三角形，以及在这个过程中建立起来的最初理解。</p>
+<p>当前的学习主线是 <a target="_blank" rel="noopener" href="https://learnopengl-cn.github.io/">LearnOpenGL CN</a>，开发环境选择的是 <code>Visual Studio + GLFW + GLAD + OpenGL 3.3 Core</code>。</p>
+<p>目前为止，我完成了两件事：</p>
+<ol>
+<li>跑通第一个 OpenGL 窗口</li>
+<li>在窗口里成功绘制出第一个三角形</li>
+</ol>
+<p>看起来只是很小的一步，但它已经把 OpenGL 最基本的运行方式完整打通了。</p>
+<h2 id="为什么要把“窗口”和“三角形”认真学一遍">为什么要把“窗口”和“三角形”认真学一遍</h2>
+<p>很多教程在这一部分看上去都很简单，代码量也不大，于是很容易让人产生一种错觉：</p>
+<p>“这几章只是铺垫，真正重要的是后面的纹理、光照和模型加载。”</p>
+<p>但现在回头看，我反而觉得最初这两步特别值得慢一点学。因为后面的几乎所有内容，都是在这里建立起来的：</p>
+<ul>
+<li>为什么图形程序需要渲染循环</li>
+<li>为什么必须先创建 OpenGL 上下文，再初始化 GLAD</li>
+<li>Shader 在整个渲染流程里到底扮演什么角色</li>
+<li>顶点数据为什么不能直接交给 GPU，而是要通过 VBO 和 VAO 这类对象来组织</li>
+<li>真正触发绘制的，到底是哪一句代码</li>
+</ul>
+<p>如果这些问题一开始没有想明白，后面即使“能照着教程做出来”，理解也会非常飘。</p>
+<h2 id="我是怎么组织工程的">我是怎么组织工程的</h2>
+<p>这次我没有把所有代码都塞进一个项目里，而是按章节拆成独立项目来推进。</p>
+<p>当前工程里已经有这几个项目：</p>
+<ul>
+<li><code>01_first_project</code>：最初的环境打通项目</li>
+<li><code>02_hello_window</code>：你好，窗口</li>
+<li><code>03_hello_triangle</code>：你好，三角形</li>
+</ul>
+<p>这种组织方式有几个很实际的好处：</p>
+<ol>
+<li>每一章都有独立入口，不会出现多个 <code>main</code> 冲突</li>
+<li>每一步都能作为阶段性成果保留下来，方便回看和对照</li>
+<li>如果某一章改坏了，不会影响前面的稳定版本</li>
+<li>更符合 LearnOpenGL 这种按章节递进的学习方式</li>
+</ol>
+<p>另外，为了避免每建一个新项目都重新配置库路径，我还额外整理了一份公共属性表 <code>common/LearnOpenGL.props</code>，统一管理：</p>
+<ul>
+<li><code>include</code> 路径</li>
+<li><code>lib</code> 路径</li>
+<li><code>glfw3.lib</code></li>
+<li><code>opengl32.lib</code></li>
+<li><code>/utf-8</code> 编译选项</li>
+</ul>
+<p>这一步看起来和图形学无关，但它直接决定了学习过程会不会被工程细节不断打断。</p>
+<h2 id="GLFW、GLAD-和-OpenGL-到底各自负责什么">GLFW、GLAD 和 OpenGL 到底各自负责什么</h2>
+<p>这是我入门时第一个需要理清的问题。</p>
+<h3 id="OpenGL：真正负责渲染的图形-API">OpenGL：真正负责渲染的图形 API</h3>
+<p>OpenGL 本质上是一套图形编程接口。它定义了程序如何和 GPU 沟通，去完成这些事情：</p>
+<ul>
+<li>创建缓冲区</li>
+<li>上传顶点数据</li>
+<li>编译和使用 Shader</li>
+<li>配置渲染状态</li>
+<li>发出绘制命令</li>
+</ul>
+<p>一句话概括：OpenGL 负责“怎么画”。</p>
+<h3 id="GLFW：负责窗口、上下文和事件">GLFW：负责窗口、上下文和事件</h3>
+<p>GLFW 不是图形 API，它更像是 OpenGL 程序和操作系统之间的桥梁。</p>
+<p>它负责的事情包括：</p>
+<ul>
+<li>创建窗口</li>
+<li>创建 OpenGL 上下文</li>
+<li>处理键盘和鼠标输入</li>
+<li>处理窗口事件</li>
+<li>交换前后缓冲</li>
+</ul>
+<p>一句话概括：GLFW 负责“在哪画，以及怎么和系统打交道”。</p>
+<h3 id="GLAD：负责加载-OpenGL-函数">GLAD：负责加载 OpenGL 函数</h3>
+<p>GLAD 是 OpenGL 函数加载器。</p>
+<p>现代 OpenGL 的很多函数，不是在程序启动时就天然可以直接调用的。必须先创建好 OpenGL 上下文，再通过驱动去查询这些函数的地址。</p>
+<p>GLAD 做的，就是把这些函数入口加载进来，让程序真正可以使用它们。</p>
+<p>一句话概括：GLAD 负责“把 OpenGL 函数接进程序”。</p>
+<h3 id="三者之间的典型顺序">三者之间的典型顺序</h3>
+<p>实际执行顺序通常是这样的：</p>
+<ol>
+<li>用 GLFW 创建窗口</li>
+<li>用 GLFW 创建 OpenGL 上下文</li>
+<li>用 GLAD 加载 OpenGL 函数</li>
+<li>然后才真正开始调用 OpenGL 进行渲染</li>
+</ol>
+<p>这条顺序非常重要，尤其是第 2 步和第 3 步不能反过来。</p>
+<h2 id="第一部分：从“能打开窗口”开始">第一部分：从“能打开窗口”开始</h2>
+<p>对应实现：<code>02_hello_window</code></p>
+<p>这一章的目标不是画图，而是建立一个最小可运行的 OpenGL 程序外壳。</p>
+<p>换句话说，它解决的问题是：</p>
+<p>“怎样在本地正确创建一个 OpenGL 窗口，并让程序持续运行起来？”</p>
+<h3 id="这一章的代码主线">这一章的代码主线</h3>
+<p>整个流程可以概括成下面几步：</p>
+<ol>
+<li>初始化 GLFW</li>
+<li>指定 OpenGL 的版本和 Profile</li>
+<li>创建窗口</li>
+<li>让窗口的 OpenGL 上下文成为当前上下文</li>
+<li>初始化 GLAD</li>
+<li>设置视口</li>
+<li>进入渲染循环</li>
+<li>每帧清屏、换缓冲、处理事件</li>
+</ol>
+<h3 id="我在这一章里真正理解的几个点">我在这一章里真正理解的几个点</h3>
+<h4 id="1-为什么必须先有上下文，再初始化-GLAD">1. 为什么必须先有上下文，再初始化 GLAD</h4>
+<p>因为 GLAD 要从“当前 OpenGL 上下文”里查询函数地址。</p>
+<p>如果上下文还没创建出来，GLAD 就没有办法知道应该去哪里加载这些函数。</p>
+<p>所以这几句的顺序是不能乱的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glfwCreateWindow</span>(...);</span><br><span class="line"><span class="built_in">glfwMakeContextCurrent</span>(window);</span><br><span class="line"><span class="built_in">gladLoadGLLoader</span>(...);</span><br></pre></td></tr></table></figure>
+<p>这一点虽然只是初始化细节，但它决定了整个 OpenGL 程序能不能真正跑起来。</p>
+<h4 id="2-glViewport-究竟在做什么">2. <code>glViewport(...)</code> 究竟在做什么</h4>
+<p>一开始我对 <code>glViewport</code> 的理解其实挺模糊，总感觉它像是某个“画布大小设置”。</p>
+<p>后来慢慢明白，它的作用更准确地说是：</p>
+<p>“告诉 OpenGL，最终渲染结果应该映射到窗口中的哪一块区域。”</p>
+<p>所以程序启动时要先设置一次：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glViewport</span>(<span class="number">0</span>, <span class="number">0</span>, width, height);</span><br></pre></td></tr></table></figure>
+<p>而窗口大小变化时，也要通过回调重新设置它。</p>
+<p>这也是为什么 <code>framebuffer_size_callback(...)</code> 是有必要存在的。</p>
+<h4 id="3-渲染循环为什么是图形程序的骨架">3. 渲染循环为什么是图形程序的骨架</h4>
+<p>普通控制台程序常常是从 <code>main()</code> 开始，做完任务就退出。</p>
+<p>但图形程序不是这样。图形程序必须持续运行，不断重复做三件事：</p>
+<ol>
+<li>处理输入</li>
+<li>渲染当前帧</li>
+<li>处理窗口事件并显示结果</li>
+</ol>
+<p>也正因为如此，OpenGL 程序的核心结构通常都会长这样：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (!<span class="built_in">glfwWindowShouldClose</span>(window))</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">process_input</span>(window);</span><br><span class="line">    <span class="built_in">glClearColor</span>(...);</span><br><span class="line">    <span class="built_in">glClear</span>(GL_COLOR_BUFFER_BIT);</span><br><span class="line">    <span class="built_in">glfwSwapBuffers</span>(window);</span><br><span class="line">    <span class="built_in">glfwPollEvents</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从这个角度看，渲染循环不是“某种技巧”，而是实时图形程序最基本的运行方式。</p>
+<h4 id="4-glClearColor-和-glClear-的区别">4. <code>glClearColor</code> 和 <code>glClear</code> 的区别</h4>
+<p>这是我刚开始最容易混淆的点之一。</p>
+<ul>
+<li><code>glClearColor(...)</code>：设置清屏颜色</li>
+<li><code>glClear(...)</code>：真正执行清屏</li>
+</ul>
+<p>也就是说，前者是在设置状态，后者是在执行动作。</p>
+<p>这其实也让我第一次意识到，OpenGL 里有很多 API 都是在“设置当前状态”，真正生效往往要等到后面的某个操作触发。</p>
+<h2 id="第二部分：从空窗口到第一个三角形">第二部分：从空窗口到第一个三角形</h2>
+<p>对应实现：<code>03_hello_triangle</code></p>
+<p>如果说上一章是在搭舞台，那么这一章才是真正意义上的第一次演出。</p>
+<p>因为从这一章开始，程序第一次把顶点数据交给 GPU，并通过完整的渲染流程，把它画成了屏幕上的图形。</p>
+<p>这一章真正解决的问题是：</p>
+<p>“怎样把一组顶点数据交给 OpenGL，并最终在窗口里画出一个三角形？”</p>
+<h3 id="这一章的主线步骤">这一章的主线步骤</h3>
+<p>整个流程可以拆成下面几个环节：</p>
+<ol>
+<li>写顶点着色器源码</li>
+<li>写片元着色器源码</li>
+<li>创建并编译两个 Shader</li>
+<li>把它们链接成一个 Shader Program</li>
+<li>准备三角形顶点数据</li>
+<li>创建 VAO 和 VBO</li>
+<li>把顶点数据上传到 GPU</li>
+<li>配置顶点属性格式</li>
+<li>在渲染循环里发出绘制命令</li>
+</ol>
+<p>这几步看起来不少，但它们刚好组成了现代 OpenGL 最小渲染链路。</p>
+<h2 id="顶点着色器和片元着色器到底在做什么">顶点着色器和片元着色器到底在做什么</h2>
+<h3 id="顶点着色器：决定顶点被放到哪里">顶点着色器：决定顶点被放到哪里</h3>
+<p>顶点着色器处理的是“每一个顶点”。</p>
+<p>在当前这个最小例子里，它的工作非常简单：</p>
+<ul>
+<li>接收一个顶点位置 <code>aPos</code></li>
+<li>把它写入 <code>gl_Position</code></li>
+</ul>
+<p>也就是说，它决定的是：</p>
+<p>“这个顶点最终会出现在屏幕空间里的什么位置。”</p>
+<p>虽然现在只是简单地原样传递位置，但这已经是后面变换、摄像机、投影矩阵等内容的起点了。</p>
+<h3 id="片元着色器：决定像素是什么颜色">片元着色器：决定像素是什么颜色</h3>
+<p>片元着色器处理的是“最终要写进屏幕的像素颜色”。</p>
+<p>在当前例子里，片元着色器直接返回一个固定颜色：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="type">vec4</span>(<span class="number">1.0</span>, <span class="number">0.5</span>, <span class="number">0.2</span>, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>所以这个三角形之所以是橙色，不是因为顶点数据里带了颜色信息，而是因为片元着色器把它写死成了这个颜色。</p>
+<p>这让我第一次真正感受到：图形程序里的“颜色”并不是凭空出现的，它是由 Shader 明确计算或指定出来的。</p>
+<h2 id="什么是-Shader-Program">什么是 Shader Program</h2>
+<p>顶点着色器和片元着色器分别写好之后，还不能直接拿来渲染。</p>
+<p>它们还要经历两步：</p>
+<ol>
+<li>各自编译</li>
+<li>再链接成一个完整的 Program</li>
+</ol>
+<p>最终渲染时真正使用的是这个 Program：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glUseProgram</span>(shader_program);</span><br></pre></td></tr></table></figure>
+<p>也就是说，渲染阶段不再分别使用单个 Shader，而是使用“已经组装完成的一整套着色器程序”。</p>
+<p>从这个角度看，Shader 像零件，Program 像装配完成后的可执行组合。</p>
+<h2 id="什么是-VBO">什么是 VBO</h2>
+<p>VBO 的全称是 Vertex Buffer Object。</p>
+<p>它的职责很直接：</p>
+<ul>
+<li>存顶点数据</li>
+</ul>
+<p>比如下面这组顶点：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">float</span> vertices[] = &#123;</span><br><span class="line">    <span class="number">-0.5f</span>, <span class="number">-0.5f</span>, <span class="number">0.0f</span>,</span><br><span class="line">     <span class="number">0.5f</span>, <span class="number">-0.5f</span>, <span class="number">0.0f</span>,</span><br><span class="line">     <span class="number">0.0f</span>,  <span class="number">0.5f</span>, <span class="number">0.0f</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>最开始它们只是 CPU 侧内存中的一组浮点数。</p>
+<p>而下面这一步：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, <span class="built_in">sizeof</span>(vertices), vertices, GL_STATIC_DRAW);</span><br></pre></td></tr></table></figure>
+<p>做的事情，就是把这些顶点数据复制到 GPU 侧的缓冲区中。</p>
+<p>所以我现在更愿意把 VBO 理解为：</p>
+<p>“GPU 上的一块顶点数据存储区。”</p>
+<h2 id="什么是-VAO">什么是 VAO</h2>
+<p>VAO 的全称是 Vertex Array Object。</p>
+<p>它不是用来存顶点值本身的，而是用来记录：</p>
+<p>“这些顶点数据应该怎么被解释。”</p>
+<p>比如：</p>
+<ul>
+<li>顶点属性位置 0 从哪里读</li>
+<li>每个顶点包含几个分量</li>
+<li>每个分量是什么类型</li>
+<li>相邻顶点之间步长是多少</li>
+</ul>
+<p>如果用一个更形象的比喻：</p>
+<ul>
+<li><code>VBO</code> 是数据仓库</li>
+<li><code>VAO</code> 是数据说明书</li>
+</ul>
+<p>VBO 告诉 GPU“数据放在哪”，VAO 告诉 GPU“应该怎么读这些数据”。</p>
+<h2 id="glVertexAttribPointer-真正表达了什么"><code>glVertexAttribPointer(...)</code> 真正表达了什么</h2>
+<p>这一句是我觉得整章里最值得慢下来理解的代码之一：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">0</span>, <span class="number">3</span>, GL_FLOAT, GL_FALSE, <span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>), <span class="literal">nullptr</span>);</span><br></pre></td></tr></table></figure>
+<p>它实际上是在告诉 OpenGL：</p>
+<ol>
+<li>我要配置的是位置 <code>0</code> 的顶点属性</li>
+<li>这个属性由 <code>3</code> 个 <code>float</code> 组成</li>
+<li>不需要做归一化</li>
+<li>每个顶点之间的步长是 <code>3 * sizeof(float)</code></li>
+<li>从当前 VBO 的起始位置开始读</li>
+</ol>
+<p>这句为什么会和顶点着色器关联起来？</p>
+<p>因为顶点着色器里写了：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">0</span>) <span class="keyword">in</span> <span class="type">vec3</span> aPos;</span><br></pre></td></tr></table></figure>
+<p>也就是说：</p>
+<ul>
+<li>顶点着色器说：“我需要位置 0 的输入”</li>
+<li><code>glVertexAttribPointer(...)</code> 说：“我把这段 VBO 数据解释成位置 0 的输入”</li>
+</ul>
+<p>到这里，Shader 和顶点数据才真正接上。</p>
+<h2 id="三角形为什么终于能被画出来">三角形为什么终于能被画出来</h2>
+<p>到了渲染循环里，真正和“画出三角形”直接相关的，其实只有三句：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glUseProgram</span>(shader_program);</span><br><span class="line"><span class="built_in">glBindVertexArray</span>(vao);</span><br><span class="line"><span class="built_in">glDrawArrays</span>(GL_TRIANGLES, <span class="number">0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>它们的含义分别是：</p>
+<ul>
+<li>使用这套 Shader Program</li>
+<li>绑定这套顶点属性配置</li>
+<li>按三角形的方式，从第 <code>0</code> 个顶点开始，取 <code>3</code> 个顶点进行绘制</li>
+</ul>
+<p>其中真正发出绘制命令的是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDrawArrays</span>(GL_TRIANGLES, <span class="number">0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>也就是说，前面准备了那么多东西，最终真正让 GPU 开始画图的，是这一句 draw call。</p>
+<p>这一点我觉得很重要，因为它让我开始意识到：OpenGL 程序里有很多步骤都属于“准备阶段”，而真正触发渲染的是 draw call。</p>
+<h2 id="到目前为止，我对这条渲染链路的理解">到目前为止，我对这条渲染链路的理解</h2>
+<p>如果用一句话把“第一个三角形”背后的流程串起来，我现在的理解是：</p>
+<ul>
+<li>CPU 先准备顶点数据</li>
+<li>通过 VBO 把数据上传到 GPU</li>
+<li>通过 VAO 告诉 OpenGL 如何解释这些数据</li>
+<li>通过顶点着色器处理每个顶点的位置</li>
+<li>通过片元着色器决定像素颜色</li>
+<li>最后通过 <code>glDrawArrays</code> 发出绘制命令</li>
+</ul>
+<p>如果把它压缩成一条更直观的渲染链路，大概可以写成这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">CPU 中的顶点数组</span><br><span class="line">-&gt; VBO：把顶点数据上传到 GPU</span><br><span class="line">-&gt; VAO：记录顶点属性布局</span><br><span class="line">-&gt; Vertex Shader + Fragment Shader：链接成 Shader Program</span><br><span class="line">-&gt; glDrawArrays：发出绘制命令</span><br><span class="line">-&gt; GPU 读取顶点</span><br><span class="line">-&gt; 顶点着色器处理顶点位置</span><br><span class="line">-&gt; 图元装配</span><br><span class="line">-&gt; 光栅化</span><br><span class="line">-&gt; 片元着色器计算颜色</span><br><span class="line">-&gt; 写入帧缓冲</span><br><span class="line">-&gt; glfwSwapBuffers：显示到窗口</span><br></pre></td></tr></table></figure>
+<p>这条链路虽然简单，但我觉得它已经能概括我目前对“第一个三角形是怎么来的”的理解。</p>
+<h2 id="目前最容易混淆的几个概念">目前最容易混淆的几个概念</h2>
+<h3 id="GLFW、GLAD、OpenGL">GLFW、GLAD、OpenGL</h3>
+<ul>
+<li>GLFW：负责窗口、上下文、输入和事件</li>
+<li>GLAD：负责加载 OpenGL 函数</li>
+<li>OpenGL：负责真正的图形渲染</li>
+</ul>
+<h3 id="顶点着色器和片元着色器">顶点着色器和片元着色器</h3>
+<ul>
+<li>顶点着色器：决定顶点放到哪里</li>
+<li>片元着色器：决定像素是什么颜色</li>
+</ul>
+<h3 id="VBO-和-VAO">VBO 和 VAO</h3>
+<ul>
+<li>VBO：存数据</li>
+<li>VAO：存“怎么读这些数据”的规则</li>
+</ul>
+<h3 id="glClearColor-和-glClear"><code>glClearColor</code> 和 <code>glClear</code></h3>
+<ul>
+<li><code>glClearColor</code>：设置清屏颜色</li>
+<li><code>glClear</code>：真正执行清屏</li>
+</ul>
+<h2 id="这一路踩到的两个很真实的问题">这一路踩到的两个很真实的问题</h2>
+<h3 id="1-Visual-Studio-原生项目会不断重复配置库路径">1. Visual Studio 原生项目会不断重复配置库路径</h3>
+<p>如果每章都新建一个 <code>.vcxproj</code>，就会不断重复配置：</p>
+<ul>
+<li>Include 路径</li>
+<li>Library 路径</li>
+<li><code>glfw3.lib</code></li>
+<li><code>opengl32.lib</code></li>
+</ul>
+<p>这类问题虽然不属于图形学本身，但会非常消耗学习精力。</p>
+<p>后来我把这些内容抽到了公共 <code>.props</code> 文件里，整个工程组织才稳定下来。</p>
+<h3 id="2-中文注释带来的源码编码问题">2. 中文注释带来的源码编码问题</h3>
+<p>在 <code>Visual Studio + CL.exe</code> 这套环境下，如果源码编码和编译器读取编码不一致，中文注释有时会直接把代码解析搞乱，最后报出一堆看起来很奇怪的语法错误。</p>
+<p>最后的解决办法是：</p>
+<ul>
+<li>源码统一保存为 UTF-8</li>
+<li>编译选项里统一加上 <code>/utf-8</code></li>
+</ul>
+<p>这也是为什么我后来把 <code>/utf-8</code> 也写进了公共属性表。</p>
+<p>这个问题虽然和 OpenGL 没有直接关系，但它让我更直观地意识到：学习图形学，不只是学图形 API，还要学会和真实的开发环境打交道。</p>
+<h2 id="到现在为止，我真正学到的是什么">到现在为止，我真正学到的是什么</h2>
+<p>如果只用一句话概括，那么到现在为止，我学到的还不是“我会画一个三角形”，而是：</p>
+<p>“我开始知道 OpenGL 程序到底是怎样一步一步运行起来的。”</p>
+<p>更具体一点，我已经建立起了下面这些非常基础、但也非常关键的认识：</p>
+<ol>
+<li>OpenGL 程序不是一次性执行逻辑，而是持续运行的渲染循环</li>
+<li>窗口系统、OpenGL 上下文、函数加载和图形 API 本身是不同层次的事情</li>
+<li>Shader 是运行在 GPU 端的小程序</li>
+<li>顶点数据必须通过缓冲区和属性配置，GPU 才知道该怎么使用它们</li>
+<li>真正触发绘制的是 draw call，而不是前面那些准备动作</li>
+</ol>
+<p>这些东西现在看起来都还很初级，但它们正是后面继续往纹理、变换、摄像机、光照推进时最重要的地基。</p>
+<h2 id="下一步准备做什么">下一步准备做什么</h2>
+<p>接下来我会继续沿着 LearnOpenGL 往后推进，重点想放在这几个方向：</p>
+<ol>
+<li>继续做“你好，三角形”这一章的练习</li>
+<li>更深入地理解 Shader 的编译、链接和使用方式</li>
+<li>开始接触顶点属性扩展，例如颜色插值</li>
+<li>为后面的纹理、变换和坐标系统打基础</li>
+</ol>
+<h2 id="结语">结语</h2>
+<p>从空窗口到第一个三角形，这一步看起来很小，但它真正让我第一次把这些原本零散的词串到了一条完整链路里：</p>
+<ul>
+<li>窗口系统</li>
+<li>OpenGL 上下文</li>
+<li>函数加载</li>
+<li>Shader</li>
+<li>顶点数据</li>
+<li>GPU 缓冲区</li>
+<li>绘制命令</li>
+</ul>
+<p>而我现在也越来越能感受到，后面那些看起来更“炫”的内容，比如纹理、坐标变换、摄像机、光照，本质上都是在这条最基础的链路上继续叠加出来的。</p>
+<p>所以现阶段最重要的事情，并不是急着往更高级的效果冲，而是把这条基础链路真正理解透。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <div class="nav-prev empty"></div>
+            
+
+            
+            <a href="/2026/04/07/dev-notes/VPN%E5%BC%80%E5%90%AF%E5%90%8EPerforce%E6%97%A0%E6%B3%95%E8%BF%9E%E6%8E%A5%E7%9A%84%E4%B8%80%E6%AC%A1%E6%8E%92%E6%9F%A5%E8%AE%B0%E5%BD%95/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">VPN 开启后 Perforce 无法连接的一次排查记录</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E2%80%9C%E7%AA%97%E5%8F%A3%E2%80%9D%E5%92%8C%E2%80%9C%E4%B8%89%E8%A7%92%E5%BD%A2%E2%80%9D%E8%AE%A4%E7%9C%9F%E5%AD%A6%E4%B8%80%E9%81%8D"><span class="post-toc-list-text">为什么要把“窗口”和“三角形”认真学一遍</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E6%98%AF%E6%80%8E%E4%B9%88%E7%BB%84%E7%BB%87%E5%B7%A5%E7%A8%8B%E7%9A%84"><span class="post-toc-list-text">我是怎么组织工程的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GLFW%E3%80%81GLAD-%E5%92%8C-OpenGL-%E5%88%B0%E5%BA%95%E5%90%84%E8%87%AA%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">GLFW、GLAD 和 OpenGL 到底各自负责什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#OpenGL%EF%BC%9A%E7%9C%9F%E6%AD%A3%E8%B4%9F%E8%B4%A3%E6%B8%B2%E6%9F%93%E7%9A%84%E5%9B%BE%E5%BD%A2-API"><span class="post-toc-list-text">OpenGL：真正负责渲染的图形 API</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GLFW%EF%BC%9A%E8%B4%9F%E8%B4%A3%E7%AA%97%E5%8F%A3%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E5%92%8C%E4%BA%8B%E4%BB%B6"><span class="post-toc-list-text">GLFW：负责窗口、上下文和事件</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GLAD%EF%BC%9A%E8%B4%9F%E8%B4%A3%E5%8A%A0%E8%BD%BD-OpenGL-%E5%87%BD%E6%95%B0"><span class="post-toc-list-text">GLAD：负责加载 OpenGL 函数</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%89%E8%80%85%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B8%E5%9E%8B%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">三者之间的典型顺序</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E4%BB%8E%E2%80%9C%E8%83%BD%E6%89%93%E5%BC%80%E7%AA%97%E5%8F%A3%E2%80%9D%E5%BC%80%E5%A7%8B"><span class="post-toc-list-text">第一部分：从“能打开窗口”开始</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E7%9A%84%E4%BB%A3%E7%A0%81%E4%B8%BB%E7%BA%BF"><span class="post-toc-list-text">这一章的代码主线</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E8%BF%99%E4%B8%80%E7%AB%A0%E9%87%8C%E7%9C%9F%E6%AD%A3%E7%90%86%E8%A7%A3%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">我在这一章里真正理解的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E5%85%88%E6%9C%89%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%8C%E5%86%8D%E5%88%9D%E5%A7%8B%E5%8C%96-GLAD"><span class="post-toc-list-text">1. 为什么必须先有上下文，再初始化 GLAD</span></a></li><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#2-glViewport-%E7%A9%B6%E7%AB%9F%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">2. glViewport(...) 究竟在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#3-%E6%B8%B2%E6%9F%93%E5%BE%AA%E7%8E%AF%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%9B%BE%E5%BD%A2%E7%A8%8B%E5%BA%8F%E7%9A%84%E9%AA%A8%E6%9E%B6"><span class="post-toc-list-text">3. 渲染循环为什么是图形程序的骨架</span></a></li><li class="post-toc-list-item post-toc-list-level-4"><a class="post-toc-list-link" href="#4-glClearColor-%E5%92%8C-glClear-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="post-toc-list-text">4. glClearColor 和 glClear 的区别</span></a></li></ol></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E4%BB%8E%E7%A9%BA%E7%AA%97%E5%8F%A3%E5%88%B0%E7%AC%AC%E4%B8%80%E4%B8%AA%E4%B8%89%E8%A7%92%E5%BD%A2"><span class="post-toc-list-text">第二部分：从空窗口到第一个三角形</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E7%9A%84%E4%B8%BB%E7%BA%BF%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">这一章的主线步骤</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%92%8C%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">顶点着色器和片元着色器到底在做什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%EF%BC%9A%E5%86%B3%E5%AE%9A%E9%A1%B6%E7%82%B9%E8%A2%AB%E6%94%BE%E5%88%B0%E5%93%AA%E9%87%8C"><span class="post-toc-list-text">顶点着色器：决定顶点被放到哪里</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8%EF%BC%9A%E5%86%B3%E5%AE%9A%E5%83%8F%E7%B4%A0%E6%98%AF%E4%BB%80%E4%B9%88%E9%A2%9C%E8%89%B2"><span class="post-toc-list-text">片元着色器：决定像素是什么颜色</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Shader-Program"><span class="post-toc-list-text">什么是 Shader Program</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-VBO"><span class="post-toc-list-text">什么是 VBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-VAO"><span class="post-toc-list-text">什么是 VAO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glVertexAttribPointer-%E7%9C%9F%E6%AD%A3%E8%A1%A8%E8%BE%BE%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">glVertexAttribPointer(...) 真正表达了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E8%A7%92%E5%BD%A2%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BB%88%E4%BA%8E%E8%83%BD%E8%A2%AB%E7%94%BB%E5%87%BA%E6%9D%A5"><span class="post-toc-list-text">三角形为什么终于能被画出来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E5%AF%B9%E8%BF%99%E6%9D%A1%E6%B8%B2%E6%9F%93%E9%93%BE%E8%B7%AF%E7%9A%84%E7%90%86%E8%A7%A3"><span class="post-toc-list-text">到目前为止，我对这条渲染链路的理解</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%9B%AE%E5%89%8D%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E6%A6%82%E5%BF%B5"><span class="post-toc-list-text">目前最容易混淆的几个概念</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GLFW%E3%80%81GLAD%E3%80%81OpenGL"><span class="post-toc-list-text">GLFW、GLAD、OpenGL</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%92%8C%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8"><span class="post-toc-list-text">顶点着色器和片元着色器</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#VBO-%E5%92%8C-VAO"><span class="post-toc-list-text">VBO 和 VAO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#glClearColor-%E5%92%8C-glClear"><span class="post-toc-list-text">glClearColor 和 glClear</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%B7%AF%E8%B8%A9%E5%88%B0%E7%9A%84%E4%B8%A4%E4%B8%AA%E5%BE%88%E7%9C%9F%E5%AE%9E%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">这一路踩到的两个很真实的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Visual-Studio-%E5%8E%9F%E7%94%9F%E9%A1%B9%E7%9B%AE%E4%BC%9A%E4%B8%8D%E6%96%AD%E9%87%8D%E5%A4%8D%E9%85%8D%E7%BD%AE%E5%BA%93%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">1. Visual Studio 原生项目会不断重复配置库路径</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%B8%AD%E6%96%87%E6%B3%A8%E9%87%8A%E5%B8%A6%E6%9D%A5%E7%9A%84%E6%BA%90%E7%A0%81%E7%BC%96%E7%A0%81%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">2. 中文注释带来的源码编码问题</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%8E%B0%E5%9C%A8%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%9C%9F%E6%AD%A3%E5%AD%A6%E5%88%B0%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">到现在为止，我真正学到的是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5%E5%87%86%E5%A4%87%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">下一步准备做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            
+<script src="/js/codeblocks.js"></script>
+
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

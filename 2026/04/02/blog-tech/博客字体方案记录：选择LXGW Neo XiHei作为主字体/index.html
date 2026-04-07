@@ -49,7 +49,9 @@
         字
     </button>
 
-    <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
     <a href="/" class="back-btn">
         <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
             viewBox="0 0 24 24">
@@ -60,29 +62,41 @@
     </a>
 </div>
 
-<article class="post-container module"
-    style="position: relative; margin: 80px auto 40px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
-    <h1 style="font-size: 28px; margin-bottom: 8px;">博客字体方案记录：选择 LXGW Neo XiHei 作为主字体</h1>
-    <div class="post-meta" style="margin-bottom: 32px;">
-        发布于 2026.04.02
-        
-        /
-        
-        <span style="color: var(--accent);">#Hexo</span>
-        
-        <span style="color: var(--accent);">#博客字体</span>
-        
-        <span style="color: var(--accent);">#LXGW Neo XiHei</span>
-        
-        <span style="color: var(--accent);">#中文字体</span>
-        
-        <span style="color: var(--accent);">#CSS</span>
-        
-        
-    </div>
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">博客字体方案记录：选择 LXGW Neo XiHei 作为主字体</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.02
+            
+            /
+            
+            <span style="color: var(--accent);">#Hexo</span>
+            
+            <span style="color: var(--accent);">#博客字体</span>
+            
+            <span style="color: var(--accent);">#LXGW Neo XiHei</span>
+            
+            <span style="color: var(--accent);">#中文字体</span>
+            
+            <span style="color: var(--accent);">#CSS</span>
+            
+            
+        </div>
 
-    <div class="post-content">
-        <p>这篇文章记录一下这次博客字体方案的整理过程。</p>
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E6%83%B3%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">这次想解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B2%A1%E6%9C%89%E9%80%89%E6%96%87%E6%A5%B7%E8%B7%AF%E7%BA%BF"><span class="post-toc-list-text">为什么没有选文楷路线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%80%E5%90%8E%E9%80%89%E4%BA%86-LXGW-Neo-XiHei"><span class="post-toc-list-text">为什么最后选了 LXGW Neo XiHei</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E7%BB%88%E7%9A%84%E5%AD%97%E4%BD%93%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最终的字体策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%AE%A9%E6%89%80%E6%9C%89%E8%AE%BF%E5%AE%A2%E9%83%BD%E8%83%BD%E7%9C%8B%E5%88%B0%E5%90%8C%E4%B8%80%E5%A5%97%E5%AD%97%E4%BD%93"><span class="post-toc-list-text">让所有访客都能看到同一套字体</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AD%97%E4%BD%93%E6%8E%A5%E5%85%A5%E6%97%B6%E9%A1%BA%E6%89%8B%E5%A4%84%E7%90%86%E7%9A%84%E6%8E%88%E6%9D%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">字体接入时顺手处理的授权问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E8%B0%83%E6%95%B4%E5%AF%B9%E5%8D%9A%E5%AE%A2%E6%B0%94%E8%B4%A8%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="post-toc-list-text">这次调整对博客气质的影响</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E4%B9%8B%E5%90%8E"><span class="post-toc-list-text">这篇之后</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>这篇文章记录一下这次博客字体方案的整理过程。</p>
 <p>对于一个以中文为主的个人技术博客来说，字体不是“最后再修”的装饰问题。正文是否稳定、标题是否清楚、导航和标签在小字号下会不会发虚，都会直接影响整个站点的气质。尤其是当博客想走一种偏冷静、偏克制、偏技术文档的风格时，字体的影响会比想象中更大。</p>
 <h2 id="这次想解决的是什么问题">这次想解决的是什么问题</h2>
 <p>这次调整字体时，我心里其实只有两个目标：</p>
@@ -173,26 +187,43 @@
 </ul>
 <p>这篇文章就当作第二篇记录，给这次字体调整留一个完整的收尾。</p>
 
-    </div>
+        </div>
 
-    <div class="copyright-box">
-        <strong>版权声明：</strong>除特别说明外，本站文章均采用 <a
-            href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a> 协议发布。
-    </div>
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
 
-    <div class="post-navigation">
-        
-        <div class="nav-prev empty"></div>
-        
+        <div class="post-navigation">
+            
+            <a href="/2026/04/07/dev-notes/VPN%E5%BC%80%E5%90%AF%E5%90%8EPerforce%E6%97%A0%E6%B3%95%E8%BF%9E%E6%8E%A5%E7%9A%84%E4%B8%80%E6%AC%A1%E6%8E%92%E6%9F%A5%E8%AE%B0%E5%BD%95/" class="nav-prev">
+                <span class="nav-label">&larr; 上一篇</span>
+                <span class="nav-title">VPN 开启后 Perforce 无法连接的一次排查记录</span>
+            </a>
+            
 
-        
-        <a href="/2026/04/01/blog-tech/%E5%88%A9%E7%94%A8Hexo%E4%B8%8EGitHubPages%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" class="nav-next">
-            <span class="nav-label">下一篇 &rarr;</span>
-            <span class="nav-title">利用 Hexo 与 GitHub Pages 搭建个人博客</span>
-        </a>
-        
-    </div>
-</article>
+            
+            <a href="/2026/04/01/blog-tech/%E5%88%A9%E7%94%A8Hexo%E4%B8%8EGitHubPages%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">利用 Hexo 与 GitHub Pages 搭建个人博客</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E6%83%B3%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">这次想解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B2%A1%E6%9C%89%E9%80%89%E6%96%87%E6%A5%B7%E8%B7%AF%E7%BA%BF"><span class="post-toc-list-text">为什么没有选文楷路线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%80%E5%90%8E%E9%80%89%E4%BA%86-LXGW-Neo-XiHei"><span class="post-toc-list-text">为什么最后选了 LXGW Neo XiHei</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E7%BB%88%E7%9A%84%E5%AD%97%E4%BD%93%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最终的字体策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%AE%A9%E6%89%80%E6%9C%89%E8%AE%BF%E5%AE%A2%E9%83%BD%E8%83%BD%E7%9C%8B%E5%88%B0%E5%90%8C%E4%B8%80%E5%A5%97%E5%AD%97%E4%BD%93"><span class="post-toc-list-text">让所有访客都能看到同一套字体</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AD%97%E4%BD%93%E6%8E%A5%E5%85%A5%E6%97%B6%E9%A1%BA%E6%89%8B%E5%A4%84%E7%90%86%E7%9A%84%E6%8E%88%E6%9D%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">字体接入时顺手处理的授权问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E8%B0%83%E6%95%B4%E5%AF%B9%E5%8D%9A%E5%AE%A2%E6%B0%94%E8%B4%A8%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="post-toc-list-text">这次调整对博客气质的影响</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E4%B9%8B%E5%90%8E"><span class="post-toc-list-text">这篇之后</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
 
 
         <div class="global-footer">

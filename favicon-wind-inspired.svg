@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Wind Inspired Cold Icon</title>
+  <desc id="desc">A cold, minimal icon inspired by a tiny wind-like game symbol, rendered in white and blue on a deep navy background.</desc>
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#08111d"/>
+      <stop offset="0.6" stop-color="#10243a"/>
+      <stop offset="1" stop-color="#1a3f69"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="18" cy="14" r="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eef7ff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#eef7ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="topFacet" x1="19" y1="14" x2="47" y2="29" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="0.58" stop-color="#c8ddff"/>
+      <stop offset="1" stop-color="#7da9ef"/>
+    </linearGradient>
+    <linearGradient id="midFacet" x1="14" y1="28" x2="46" y2="45" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dcecff"/>
+      <stop offset="1" stop-color="#6f9ae0"/>
+    </linearGradient>
+    <linearGradient id="tailFacet" x1="10" y1="37" x2="30" y2="51" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a7c9ff"/>
+      <stop offset="1" stop-color="#f3f8ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bg)"/>
+  <rect x="4.5" y="4.5" width="55" height="55" rx="15.5" fill="none" stroke="#8ab2e3" stroke-opacity="0.28"/>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#glow)"/>
+  <path d="M14 17 25 17 41 31" stroke="#dcecff" stroke-opacity="0.16" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M18 12 32 12 47 25" stroke="#dcecff" stroke-opacity="0.1" stroke-width="1.2" stroke-linecap="round"/>
+  <g stroke="#f5f9ff" stroke-opacity="0.22" stroke-width="1" stroke-linejoin="round">
+    <path d="M33 10 47 23 30 30 18 18Z" fill="url(#topFacet)"/>
+    <path d="M14 29 28 29 45 43 31 43Z" fill="url(#midFacet)"/>
+    <path d="M14 37 27 37 21 52 10 46Z" fill="url(#tailFacet)"/>
+  </g>
+  <path d="M33 10 30 30" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M14 29 31 43" stroke="#eef6ff" stroke-opacity="0.34" stroke-width="1.1" stroke-linecap="round"/>
+</svg>

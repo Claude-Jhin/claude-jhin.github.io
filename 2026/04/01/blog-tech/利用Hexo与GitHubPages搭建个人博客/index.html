@@ -49,7 +49,9 @@
         字
     </button>
 
-    <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
     <a href="/" class="back-btn">
         <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
             viewBox="0 0 24 24">
@@ -60,27 +62,39 @@
     </a>
 </div>
 
-<article class="post-container module"
-    style="position: relative; margin: 80px auto 40px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
-    <h1 style="font-size: 28px; margin-bottom: 8px;">利用 Hexo 与 GitHub Pages 搭建个人博客</h1>
-    <div class="post-meta" style="margin-bottom: 32px;">
-        发布于 2026.04.01
-        
-        /
-        
-        <span style="color: var(--accent);">#Hexo</span>
-        
-        <span style="color: var(--accent);">#GitHub Pages</span>
-        
-        <span style="color: var(--accent);">#SSH</span>
-        
-        <span style="color: var(--accent);">#博客搭建</span>
-        
-        
-    </div>
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">利用 Hexo 与 GitHub Pages 搭建个人博客</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.01
+            
+            /
+            
+            <span style="color: var(--accent);">#Hexo</span>
+            
+            <span style="color: var(--accent);">#GitHub Pages</span>
+            
+            <span style="color: var(--accent);">#SSH</span>
+            
+            <span style="color: var(--accent);">#博客搭建</span>
+            
+            
+        </div>
 
-    <div class="post-content">
-        <p>这篇文章记录一下我重新搭建个人博客的过程。整个方案并不复杂，核心就是两件事：使用 <code>Hexo</code> 负责本地内容管理与静态页面生成，使用 <code>GitHub Pages</code> 负责博客的托管与发布。</p>
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9-Hexo"><span class="post-toc-list-text">为什么选择 Hexo</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9-GitHub-Pages"><span class="post-toc-list-text">为什么选择 GitHub Pages</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E5%9C%B0%E9%A1%B9%E7%9B%AE%E5%87%86%E5%A4%87"><span class="post-toc-list-text">本地项目准备</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE"><span class="post-toc-list-text">基础配置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BD%BF%E7%94%A8-SSH-%E5%AE%8C%E6%88%90-GitHub-%E5%8F%91%E5%B8%83"><span class="post-toc-list-text">使用 SSH 完成 GitHub 发布</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%91%E5%B8%83%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">发布流程</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%87%8D%E6%96%B0%E6%95%B4%E7%90%86%E5%8D%9A%E5%AE%A2%E5%86%85%E5%AE%B9%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">重新整理博客内容结构</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E9%A2%98%E4%B8%8E%E9%A3%8E%E6%A0%BC"><span class="post-toc-list-text">主题与风格</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E4%B9%8B%E5%90%8E"><span class="post-toc-list-text">这篇文章之后</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>这篇文章记录一下我重新搭建个人博客的过程。整个方案并不复杂，核心就是两件事：使用 <code>Hexo</code> 负责本地内容管理与静态页面生成，使用 <code>GitHub Pages</code> 负责博客的托管与发布。</p>
 <p>对个人博客来说，这套方案有几个很直接的优点：</p>
 <ul>
 <li>本地写作体验比较轻，适合长期维护</li>
@@ -164,26 +178,40 @@
 </ul>
 <p>这篇文章就作为重新开始后的第一篇记录。</p>
 
-    </div>
+        </div>
 
-    <div class="copyright-box">
-        <strong>版权声明：</strong>除特别说明外，本站文章均采用 <a
-            href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a> 协议发布。
-    </div>
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
 
-    <div class="post-navigation">
-        
-        <a href="/2026/04/02/blog-tech/%E5%8D%9A%E5%AE%A2%E5%AD%97%E4%BD%93%E6%96%B9%E6%A1%88%E8%AE%B0%E5%BD%95%EF%BC%9A%E9%80%89%E6%8B%A9LXGW%20Neo%20XiHei%E4%BD%9C%E4%B8%BA%E4%B8%BB%E5%AD%97%E4%BD%93/" class="nav-prev">
-            <span class="nav-label">&larr; 上一篇</span>
-            <span class="nav-title">博客字体方案记录：选择 LXGW Neo XiHei 作为主字体</span>
-        </a>
-        
+        <div class="post-navigation">
+            
+            <a href="/2026/04/02/blog-tech/%E5%8D%9A%E5%AE%A2%E5%AD%97%E4%BD%93%E6%96%B9%E6%A1%88%E8%AE%B0%E5%BD%95%EF%BC%9A%E9%80%89%E6%8B%A9LXGW%20Neo%20XiHei%E4%BD%9C%E4%B8%BA%E4%B8%BB%E5%AD%97%E4%BD%93/" class="nav-prev">
+                <span class="nav-label">&larr; 上一篇</span>
+                <span class="nav-title">博客字体方案记录：选择 LXGW Neo XiHei 作为主字体</span>
+            </a>
+            
 
-        
-        <div class="nav-next empty"></div>
-        
-    </div>
-</article>
+            
+            <div class="nav-next empty"></div>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9-Hexo"><span class="post-toc-list-text">为什么选择 Hexo</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9-GitHub-Pages"><span class="post-toc-list-text">为什么选择 GitHub Pages</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E5%9C%B0%E9%A1%B9%E7%9B%AE%E5%87%86%E5%A4%87"><span class="post-toc-list-text">本地项目准备</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE"><span class="post-toc-list-text">基础配置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BD%BF%E7%94%A8-SSH-%E5%AE%8C%E6%88%90-GitHub-%E5%8F%91%E5%B8%83"><span class="post-toc-list-text">使用 SSH 完成 GitHub 发布</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%91%E5%B8%83%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">发布流程</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%87%8D%E6%96%B0%E6%95%B4%E7%90%86%E5%8D%9A%E5%AE%A2%E5%86%85%E5%AE%B9%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">重新整理博客内容结构</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E9%A2%98%E4%B8%8E%E9%A3%8E%E6%A0%BC"><span class="post-toc-list-text">主题与风格</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E4%B9%8B%E5%90%8E"><span class="post-toc-list-text">这篇文章之后</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
 
 
         <div class="global-footer">
