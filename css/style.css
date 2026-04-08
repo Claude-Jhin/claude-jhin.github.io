@@ -406,6 +406,27 @@ a {
     padding: 18px 20px;
     max-height: calc(100vh - 148px);
     overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(110, 142, 181, 0.55) transparent;
+}
+
+.post-toc-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.post-toc-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.post-toc-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(110, 142, 181, 0.42);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.post-toc-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(110, 142, 181, 0.72);
 }
 
 .post-toc-head {
@@ -463,15 +484,30 @@ a {
     display: block;
     border: none !important;
     color: var(--text-muted);
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin: 0 -8px;
+    transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 .post-toc-nav .post-toc-list-link:hover {
     color: var(--accent);
+    background: rgba(110, 142, 181, 0.08);
+}
+
+.post-toc-nav .post-toc-list-link.is-active {
+    color: var(--accent);
+    background: rgba(110, 142, 181, 0.14);
 }
 
 .post-toc-nav .post-toc-list-level-2 > .post-toc-list-link {
     color: var(--text-main);
     font-weight: 600;
+}
+
+.post-toc-nav .post-toc-list-level-2 > .post-toc-list-link.is-active {
+    color: var(--accent);
+    font-weight: 700;
 }
 
 .post-toc-nav .post-toc-list-level-3 > .post-toc-list-link {
