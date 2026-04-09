@@ -1,0 +1,323 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OpenGL 学习专栏 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/columns" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回专栏
+    </a>
+</div>
+
+<article class="post-container module column-shell">
+    
+    <header class="column-hero">
+        <div class="column-hero-top">
+            <div>
+                <p class="columns-kicker">系列内容</p>
+                <h1 class="columns-title">OpenGL 学习专栏</h1>
+            </div>
+            <span class="column-badge">连载中</span>
+        </div>
+
+        <p class="columns-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+
+        <div class="column-overview-meta">
+            <span>当前阶段：基础入门</span>
+            <span>已发布 2 / 9</span>
+        </div>
+
+        <div class="column-progress large" aria-hidden="true">
+            <span style="width: 22%"></span>
+        </div>
+    </header>
+
+    
+    <section class="column-section">
+        <h2 class="column-section-title">这一栏想解决什么</h2>
+        <ul class="column-goals">
+            
+            <li>建立从窗口、上下文到渲染输出的完整认知</li>
+            
+            <li>用系列文章的方式沉淀 LearnOpenGL 的学习过程</li>
+            
+            <li>为后续纹理、变换、摄像机、光照和模型加载打基础</li>
+            
+        </ul>
+    </section>
+    
+
+    
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">系列大纲</h2>
+            <p class="column-section-note">后续文章会沿着这条路线持续补齐。</p>
+        </div>
+
+        <div class="column-outline">
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">1</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">从窗口到第一个三角形</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">创建窗口、初始化 GLAD、理解渲染循环，以及第一个三角形是如何被画出来的。</p>
+                    
+                    <a class="column-outline-link" href="/2026/04/08/graphics-notes/opengl-01-from-window-to-triangle/">从创建窗口到第一个三角形：我的 OpenGL 入门笔记 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">2</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">着色器、顶点属性与 Uniform</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">从外部 Shader 文件、属性布局和 uniform 传值入手，真正理解 CPU 与 GPU 是如何协作画图的。</p>
+                    
+                    <a class="column-outline-link" href="/2026/04/09/graphics-notes/opengl-02-shaders-attributes-uniform/">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item">
+                <div class="column-outline-index">3</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">坐标系统与变换</h3>
+                        <span class="column-outline-state">待更新</span>
+                    </div>
+                    <p class="column-outline-summary">理解局部空间、世界空间、观察空间，以及矩阵变换在渲染中的作用。</p>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item">
+                <div class="column-outline-index">4</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">纹理与采样</h3>
+                        <span class="column-outline-state">待更新</span>
+                    </div>
+                    <p class="column-outline-summary">认识纹理对象、采样方式和纹理坐标，把图像真正贴到模型上。</p>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item">
+                <div class="column-outline-index">5</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">摄像机与视图矩阵</h3>
+                        <span class="column-outline-state">待更新</span>
+                    </div>
+                    <p class="column-outline-summary">用更可控的方式观察场景，理解相机、视图矩阵与移动逻辑。</p>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item">
+                <div class="column-outline-index">6</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">光照基础</h3>
+                        <span class="column-outline-state">待更新</span>
+                    </div>
+                    <p class="column-outline-summary">从环境光、漫反射、镜面反射开始，建立最基础的光照模型认知。</p>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item">
+                <div class="column-outline-index">7</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">材质与贴图光照</h3>
+                        <span class="column-outline-state">待更新</span>
+                    </div>
+                    <p class="column-outline-summary">把材质参数和纹理结合起来，让光照结果更接近真实物体。</p>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item">
+                <div class="column-outline-index">8</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">模型加载与渲染</h3>
+                        <span class="column-outline-state">待更新</span>
+                    </div>
+                    <p class="column-outline-summary">从单个三角形走向真实模型，理解资源组织与渲染流程。</p>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item">
+                <div class="column-outline-index">9</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">高级 OpenGL 实践</h3>
+                        <span class="column-outline-state">待更新</span>
+                    </div>
+                    <p class="column-outline-summary">持续记录在帧缓冲、后处理、实例化等主题上的学习与实践。</p>
+                    
+                </div>
+            </article>
+            
+        </div>
+    </section>
+    
+
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">已发布文章</h2>
+            <p class="column-section-note">按专栏顺序排列，适合从上往下连续阅读。</p>
+        </div>
+
+        
+        <div class="archive-list column-post-list">
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 1 篇</span>
+                <div class="column-post-main">
+                    <a href="/2026/04/08/graphics-notes/opengl-01-from-window-to-triangle/">从创建窗口到第一个三角形：我的 OpenGL 入门笔记</a>
+                    <span class="post-meta">2026.04.08</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 2 篇</span>
+                <div class="column-post-main">
+                    <a href="/2026/04/09/graphics-notes/opengl-02-shaders-attributes-uniform/">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</a>
+                    <span class="post-meta">2026.04.09</span>
+                </div>
+            </div>
+            
+        </div>
+        
+    </section>
+    
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            
+<script src="/js/codeblocks.js"></script>
+
+            
+<script src="/js/toc.js"></script>
+
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

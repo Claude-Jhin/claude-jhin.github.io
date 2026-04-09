@@ -1,0 +1,508 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.09
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#Shader</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#GLSL</span>
+            
+            <span style="color: var(--accent);">#Uniform</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 2 篇</span>
+                <span>已发布 2 / 9</span>
+                
+                <span>阶段：基础入门</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 22%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%9D%80%E8%89%B2%E5%99%A8%E8%BF%99%E4%B8%80%E8%8A%82%E5%BE%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">为什么着色器这一节很关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E5%88%B0%E5%BA%95%E5%AD%A6%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一节到底学了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E4%BB%8E-Shader-%E6%96%87%E4%BB%B6%E6%9C%AC%E8%BA%AB%E5%BC%80%E5%A7%8B%E7%9C%8B"><span class="post-toc-list-text">先从 Shader 文件本身开始看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">顶点着色器在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">片元着色器在做什么</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#C-%E4%BB%A3%E7%A0%81%E6%98%AF%E6%80%8E%E4%B9%88%E6%8A%8A-Shader-%E7%94%A8%E8%B5%B7%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">C++ 代码是怎么把 Shader 用起来的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%B0%81%E8%A3%85%E4%B8%80%E4%B8%AA-Shader-%E7%B1%BB"><span class="post-toc-list-text">为什么要封装一个 Shader 类</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">构造函数做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#use-%E5%92%8C-setFloat-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E6%84%8F%E4%B9%89"><span class="post-toc-list-text">use() 和 setFloat() 为什么有意义</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E6%95%B0%E6%8D%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BB%8E-3-%E4%B8%AA-float-%E5%8F%98%E6%88%90%E4%BA%86-6-%E4%B8%AA-float"><span class="post-toc-list-text">顶点数据为什么从 3 个 float 变成了 6 个 float</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glVertexAttribPointer-%E7%BB%88%E4%BA%8E%E4%B8%8D%E5%86%8D%E5%8F%AA%E6%98%AF%E8%83%8C-API-%E4%BA%86"><span class="post-toc-list-text">glVertexAttribPointer(...) 终于不再只是背 API 了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#uniform-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">uniform 到底是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E9%A1%B5%E7%9C%9F%E6%AD%A3%E6%8A%8A%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF%E6%89%93%E9%80%9A%E4%BA%86"><span class="post-toc-list-text">这一页真正把哪条链路打通了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E9%A1%B6%E7%82%B9%E5%B1%9E%E6%80%A7%E5%92%8C-uniform-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="post-toc-list-text">1. 顶点属性和 uniform 的区别</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-out-%E5%92%8C-in-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">2. out 和 in 的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Shader-%E7%B1%BB%E5%B9%B6%E6%B2%A1%E6%9C%89%E6%94%B9%E5%8F%98-OpenGL-%E5%8E%9F%E7%90%86%EF%BC%8C%E5%8F%AA%E6%98%AF%E6%8A%8A%E6%A0%B7%E6%9D%BF%E4%BB%A3%E7%A0%81%E6%94%B6%E8%B5%B7%E6%9D%A5%E4%BA%86"><span class="post-toc-list-text">3. Shader 类并没有改变 OpenGL 原理，只是把样板代码收起来了</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E5%AF%B9-Shader-%E7%9A%84%E7%90%86%E8%A7%A3%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%E5%8F%98%E5%8C%96"><span class="post-toc-list-text">到目前为止，我对 Shader 的理解发生了什么变化</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E6%94%B6%E5%B0%BE%E6%97%B6%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">这一节收尾时，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">下一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>在刚开始学 OpenGL 的时候，我对 Shader 的理解其实非常抽象。</p>
+<p>我知道它是“运行在 GPU 上的小程序”，也知道顶点着色器和片元着色器是现代 OpenGL 的核心，但如果让我回答一个更具体的问题，比如：</p>
+<p>“顶点颜色是怎么从 C++ 代码一路传到屏幕上的？”</p>
+<p>或者：</p>
+<p>“为什么一个 <code>uniform</code> 变量就能让整个三角形动起来？”</p>
+<p>那时其实并没有真正想清楚。</p>
+<p>这一篇文章记录的，就是我继续沿着 LearnOpenGL 学到“着色器”这一节时，逐渐把这些问题串起来的过程。</p>
+<p>对应的本地项目是：</p>
+<ul>
+<li><code>projects/learnopengl/learnopengl/04_shaders</code></li>
+</ul>
+<p>这一次我不再把 Shader 源码直接写死在 <code>.cpp</code> 字符串里，而是把它们拆到了独立文件中，并且第一次在顶点数据里加入了“颜色属性”，再通过 <code>uniform</code> 做了一个最小的动态效果。</p>
+<p>如果说上一篇文章解决的是“OpenGL 程序怎样跑起来”，那么这一篇更像是在回答：</p>
+<p>“OpenGL 程序真正画图时，CPU 和 GPU 到底是怎么配合的？”</p>
+<h2 id="为什么着色器这一节很关键">为什么着色器这一节很关键</h2>
+<p>OpenGL 的前两步，更多是在建立外壳：</p>
+<ul>
+<li>创建窗口</li>
+<li>创建上下文</li>
+<li>加载 OpenGL 函数</li>
+<li>搭建渲染循环</li>
+</ul>
+<p>而到了 Shader 这一节，程序才第一次真正开始触碰“图形内容本身”。</p>
+<p>因为从这里开始，画面上的变化不再只是来自固定颜色清屏，而是来自 GPU 上运行的程序。</p>
+<p>这意味着：</p>
+<ul>
+<li>顶点放在哪里，不再是 OpenGL 帮你默认决定的</li>
+<li>像素是什么颜色，也不再是 OpenGL 自动给的</li>
+<li>这些事情都需要你明确地写在 Shader 里</li>
+</ul>
+<p>从这个角度看，Shader 不是 OpenGL 的某个附属知识点，它就是现代 OpenGL 的核心。</p>
+<h2 id="这一节到底学了什么">这一节到底学了什么</h2>
+<p>在这次实践里，我重点做了 4 件事：</p>
+<ol>
+<li>把顶点着色器和片元着色器拆到外部文件里</li>
+<li>写了一个最小的 <code>Shader</code> 类来统一读取、编译和链接 Shader</li>
+<li>让每个顶点同时携带“位置 + 颜色”两类属性</li>
+<li>用 <code>uniform</code> 从 CPU 向 GPU 传一个每帧变化的偏移量</li>
+</ol>
+<p>看起来只是几步小改动，但它们其实刚好覆盖了着色器这一节最重要的几个核心概念：</p>
+<ul>
+<li>Shader 是怎样组织的</li>
+<li>顶点属性是怎样送进顶点着色器的</li>
+<li>顶点着色器和片元着色器是怎样通过 <code>out/in</code> 协作的</li>
+<li><code>uniform</code> 又是怎样从 CPU 传给 GPU 的</li>
+</ul>
+<h2 id="先从-Shader-文件本身开始看">先从 Shader 文件本身开始看</h2>
+<p>这次我没有把 Shader 继续写在 C++ 的长字符串里，而是拆成了两个文件：</p>
+<ul>
+<li><code>shaders/shader.vs</code></li>
+<li><code>shaders/shader.fs</code></li>
+</ul>
+<h3 id="顶点着色器在做什么">顶点着色器在做什么</h3>
+<p>顶点着色器文件里有几个非常关键的输入输出：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">0</span>) <span class="keyword">in</span> <span class="type">vec3</span> aPos;</span><br><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">1</span>) <span class="keyword">in</span> <span class="type">vec3</span> aColor;</span><br><span class="line"></span><br><span class="line"><span class="keyword">out</span> <span class="type">vec3</span> ourColor;</span><br><span class="line"></span><br><span class="line"><span class="keyword">uniform</span> <span class="type">float</span> xOffset;</span><br></pre></td></tr></table></figure>
+<p>这里的信息量其实很大。</p>
+<p>首先，它说明这个顶点着色器接收两份输入：</p>
+<ul>
+<li><code>aPos</code>：顶点位置</li>
+<li><code>aColor</code>：顶点颜色</li>
+</ul>
+<p>其次，它说明这个着色器会把颜色通过 <code>out vec3 ourColor</code> 传给后面的片元着色器。</p>
+<p>最后，它还声明了一个 <code>uniform float xOffset</code>，这个值不是来自某个具体顶点，而是来自 CPU 端在每一帧统一设置的全局输入。</p>
+<p>在 <code>main()</code> 里，顶点着色器做了两件事：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = <span class="type">vec4</span>(aPos.x + xOffset, aPos.y, aPos.z, <span class="number">1.0</span>);</span><br><span class="line">ourColor = aColor;</span><br></pre></td></tr></table></figure>
+<p>第一句表示：</p>
+<ul>
+<li>把顶点位置写到 <code>gl_Position</code></li>
+<li>并在 <code>x</code> 方向额外加上一个偏移量</li>
+</ul>
+<p>第二句表示：</p>
+<ul>
+<li>把当前顶点携带的颜色传递给后面的片元阶段</li>
+</ul>
+<p>也就是说，顶点着色器在这里负责两件事：</p>
+<ol>
+<li>决定顶点放到哪里</li>
+<li>把颜色这个属性继续往后传</li>
+</ol>
+<h3 id="片元着色器在做什么">片元着色器在做什么</h3>
+<p>片元着色器比顶点着色器更短：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">in</span> <span class="type">vec3</span> ourColor;</span><br><span class="line"><span class="keyword">out</span> <span class="type">vec4</span> FragColor;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    FragColor = <span class="type">vec4</span>(ourColor, <span class="number">1.0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它做的事情非常直接：</p>
+<ul>
+<li>接收从顶点着色器传过来的颜色</li>
+<li>把这个颜色写成最终像素颜色</li>
+</ul>
+<p>这里有一个非常值得注意的点：</p>
+<p>片元着色器拿到的 <code>ourColor</code> 并不是简单照搬某个顶点的颜色，而是经过了图元插值之后的结果。</p>
+<p>因为三角形有 3 个顶点，每个顶点颜色都不一样，所以在三角形内部的每个片元上，颜色会平滑过渡。</p>
+<p>这也是为什么最终看到的不是一个纯色三角形，而是带有渐变效果的三角形。</p>
+<h2 id="C-代码是怎么把-Shader-用起来的">C++ 代码是怎么把 Shader 用起来的</h2>
+<p>这一节里，我第一次正式写了一个自己的 <code>Shader</code> 类。</p>
+<p>对应文件是：</p>
+<ul>
+<li><code>Shader.h</code></li>
+</ul>
+<p>这个类做的事情，本质上就是把下面这几步打包起来：</p>
+<ol>
+<li>从文件读取 Shader 源码</li>
+<li>创建顶点着色器对象和片元着色器对象</li>
+<li>编译两个 Shader</li>
+<li>链接成一个可用的 Program</li>
+<li>提供一些方便设置 <code>uniform</code> 的辅助函数</li>
+</ol>
+<h3 id="为什么要封装一个-Shader-类">为什么要封装一个 <code>Shader</code> 类</h3>
+<p>如果不做封装，每次使用 Shader 都要重复写：</p>
+<ul>
+<li>打开文件</li>
+<li>读取源码</li>
+<li><code>glCreateShader</code></li>
+<li><code>glShaderSource</code></li>
+<li><code>glCompileShader</code></li>
+<li>检查编译错误</li>
+<li><code>glCreateProgram</code></li>
+<li><code>glAttachShader</code></li>
+<li><code>glLinkProgram</code></li>
+<li>检查链接错误</li>
+</ul>
+<p>这些流程本身没有问题，但它们都属于很标准、很重复的样板代码。</p>
+<p>所以把它们放进 <code>Shader</code> 类里，带来的好处很明显：</p>
+<ol>
+<li>主程序逻辑更清晰</li>
+<li>Shader 的读取、编译、链接过程集中管理</li>
+<li>后面增加更多 Shader 文件时更容易复用</li>
+</ol>
+<h3 id="构造函数做了什么">构造函数做了什么</h3>
+<p><code>Shader</code> 类的构造函数做的事情可以概括成一句话：</p>
+<p>“从两个文件路径出发，构造出一个可用的 Shader Program。”</p>
+<p>它先用 <code>ifstream</code> 把 <code>shader.vs</code> 和 <code>shader.fs</code> 读成字符串，然后分别创建顶点着色器和片元着色器对象，再完成编译和链接。</p>
+<p>如果中间哪一步失败，就会把驱动返回的错误日志打印出来。</p>
+<p>这一点非常重要，因为 Shader 出问题时，最常见的表现就是“窗口正常、程序正常、但画面什么都没有”。</p>
+<p>这时候如果没有编译和链接日志，排错会非常痛苦。</p>
+<h3 id="use-和-setFloat-为什么有意义"><code>use()</code> 和 <code>setFloat()</code> 为什么有意义</h3>
+<p>在这个 <code>Shader</code> 类里，目前我用到的最常用两个方法是：</p>
+<ul>
+<li><code>use()</code></li>
+<li><code>setFloat()</code></li>
+</ul>
+<p><code>use()</code> 本质上就是对 <code>glUseProgram(ID)</code> 的简单封装，它让主程序的语义更清楚：</p>
+<p>“现在开始使用这套着色器程序。”</p>
+<p>而 <code>setFloat()</code> 则封装了 <code>glUniform1f(...)</code> 这类操作。</p>
+<p>这意味着，主程序可以像这样写：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shader.<span class="built_in">use</span>();</span><br><span class="line">shader.<span class="built_in">setFloat</span>(<span class="string">&quot;xOffset&quot;</span>, xOffset);</span><br></pre></td></tr></table></figure>
+<p>从阅读体验上来说，这比直接到处写 <code>glGetUniformLocation(...)</code> 和 <code>glUniform1f(...)</code> 清晰很多，也更像在用一个“对象”而不是在操作一堆零散的 OpenGL 状态。</p>
+<h2 id="顶点数据为什么从-3-个-float-变成了-6-个-float">顶点数据为什么从 3 个 float 变成了 6 个 float</h2>
+<p>上一篇里，我画三角形时每个顶点只包含位置：</p>
+<ul>
+<li><code>x</code></li>
+<li><code>y</code></li>
+<li><code>z</code></li>
+</ul>
+<p>而在这一节里，每个顶点变成了：</p>
+<ul>
+<li><code>x</code></li>
+<li><code>y</code></li>
+<li><code>z</code></li>
+<li><code>r</code></li>
+<li><code>g</code></li>
+<li><code>b</code></li>
+</ul>
+<p>也就是说，每个顶点现在包含两类属性：</p>
+<ol>
+<li>位置</li>
+<li>颜色</li>
+</ol>
+<p>这一步的意义很大，因为它让我第一次真正意识到：</p>
+<p>“顶点并不只是位置，它可以携带很多不同类型的信息。”</p>
+<p>后面继续学下去，顶点里还可能有：</p>
+<ul>
+<li>法线</li>
+<li>纹理坐标</li>
+<li>切线</li>
+<li>骨骼权重</li>
+</ul>
+<p>而这一节中的颜色属性，就是最简单的一个入门版本。</p>
+<h2 id="glVertexAttribPointer-终于不再只是背-API-了"><code>glVertexAttribPointer(...)</code> 终于不再只是背 API 了</h2>
+<p>这一节里我觉得最值得慢下来理解的，还是 <code>glVertexAttribPointer(...)</code>。</p>
+<p>程序里现在有两次调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">0</span>, <span class="number">3</span>, GL_FLOAT, GL_FALSE, <span class="number">6</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>), <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="number">0</span>));</span><br><span class="line"><span class="built_in">glEnableVertexAttribArray</span>(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">1</span>, <span class="number">3</span>, GL_FLOAT, GL_FALSE, <span class="number">6</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>), <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)));</span><br><span class="line"><span class="built_in">glEnableVertexAttribArray</span>(<span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>第一组配置的是位置属性：</p>
+<ul>
+<li><code>location = 0</code></li>
+<li>3 个 float</li>
+<li>一个顶点总步长是 6 个 float</li>
+<li>从起始位置开始读</li>
+</ul>
+<p>第二组配置的是颜色属性：</p>
+<ul>
+<li><code>location = 1</code></li>
+<li>也是 3 个 float</li>
+<li>步长仍然是 6 个 float</li>
+<li>但要跳过前面 3 个 float 的位置数据，从颜色部分开始读</li>
+</ul>
+<p>直到自己把这两组属性都写出来，我才真正开始理解这个 API 的含义：</p>
+<p>它不是在“随便填一串参数”，而是在明确告诉 OpenGL：</p>
+<p>“当前 VBO 里这段交错排列的数据，应该如何拆分成不同的顶点属性。”</p>
+<p>这也是为什么顶点着色器里的这两句会和它一一对应：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">0</span>) <span class="keyword">in</span> <span class="type">vec3</span> aPos;</span><br><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">1</span>) <span class="keyword">in</span> <span class="type">vec3</span> aColor;</span><br></pre></td></tr></table></figure>
+<p>到这里，CPU 侧的顶点数据布局和 GPU 侧 Shader 输入声明才真正接到了一起。</p>
+<h2 id="uniform-到底是什么"><code>uniform</code> 到底是什么</h2>
+<p><code>uniform</code> 是这一节里另一个非常关键的概念。</p>
+<p>在当前这个例子里，顶点着色器声明了：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uniform</span> <span class="type">float</span> xOffset;</span><br></pre></td></tr></table></figure>
+<p>而 C++ 侧每一帧都会这么做：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">float</span> timeValue = <span class="built_in">static_cast</span>&lt;<span class="type">float</span>&gt;(<span class="built_in">glfwGetTime</span>());</span><br><span class="line"><span class="type">const</span> <span class="type">float</span> xOffset = std::<span class="built_in">sin</span>(timeValue) * <span class="number">0.25f</span>;</span><br><span class="line">shader.<span class="built_in">setFloat</span>(<span class="string">&quot;xOffset&quot;</span>, xOffset);</span><br></pre></td></tr></table></figure>
+<p>这意味着：</p>
+<ul>
+<li>CPU 每帧根据时间计算一个偏移量</li>
+<li>再把这个值传给 GPU</li>
+<li>GPU 里的顶点着色器用这个值去修改顶点位置</li>
+</ul>
+<p>所以这个三角形看起来会左右轻微摆动。</p>
+<p>这里我觉得最值得记住的一点是：</p>
+<p><code>uniform</code> 不是“每个顶点各有一份的数据”，而是“当前这次绘制统一使用的一份数据”。</p>
+<p>换句话说，它更像是这次 draw call 的全局参数。</p>
+<p>这和顶点属性有本质区别：</p>
+<ul>
+<li>顶点属性：每个顶点都有自己的值</li>
+<li><code>uniform</code>：整次绘制共享同一个值</li>
+</ul>
+<p>把这两类输入区分开，是我在这一节里最大的收获之一。</p>
+<h2 id="这一页真正把哪条链路打通了">这一页真正把哪条链路打通了</h2>
+<p>如果把这次的程序逻辑压缩成一句话，那么我现在对它的理解是：</p>
+<ul>
+<li>C++ 代码准备了带位置和颜色的顶点数据</li>
+<li>通过 VBO 把这些数据上传到 GPU</li>
+<li>通过 VAO 告诉 OpenGL 如何解释这些数据</li>
+<li>通过 Shader Program 让 GPU 知道顶点该怎么处理、颜色该怎么输出</li>
+<li>通过 <code>uniform</code> 把每一帧的偏移量传给顶点着色器</li>
+<li>最后通过 <code>glDrawArrays</code> 发出绘制命令</li>
+</ul>
+<p>如果再进一步把它拆成一条更直观的流程，可以写成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">CPU 顶点数组：位置 + 颜色</span><br><span class="line">-&gt; VBO：上传数据到 GPU</span><br><span class="line">-&gt; VAO：记录属性布局</span><br><span class="line">-&gt; shader.vs / shader.fs：编译并链接成 Shader Program</span><br><span class="line">-&gt; CPU 每帧计算 xOffset</span><br><span class="line">-&gt; uniform xOffset：传入顶点着色器</span><br><span class="line">-&gt; glDrawArrays：发出绘制命令</span><br><span class="line">-&gt; 顶点着色器处理位置和颜色</span><br><span class="line">-&gt; 图元装配与光栅化</span><br><span class="line">-&gt; 片元着色器输出插值后的颜色</span><br><span class="line">-&gt; 写入帧缓冲</span><br><span class="line">-&gt; glfwSwapBuffers：显示到窗口</span><br></pre></td></tr></table></figure>
+<p>这条链路看起来还是很基础，但它已经比上一篇完整了很多，因为颜色、文件读取和 <code>uniform</code> 都真正参与进来了。</p>
+<h2 id="这一节最容易混淆的几个点">这一节最容易混淆的几个点</h2>
+<h3 id="1-顶点属性和-uniform-的区别">1. 顶点属性和 <code>uniform</code> 的区别</h3>
+<ul>
+<li>顶点属性：每个顶点一份</li>
+<li><code>uniform</code>：整次绘制共享一份</li>
+</ul>
+<h3 id="2-out-和-in-的关系">2. <code>out</code> 和 <code>in</code> 的关系</h3>
+<ul>
+<li>顶点着色器的 <code>out</code> 会传给片元着色器的 <code>in</code></li>
+<li>中间会经过插值，而不是简单地原样拷贝某一个顶点的值</li>
+</ul>
+<h3 id="3-Shader-类并没有改变-OpenGL-原理，只是把样板代码收起来了">3. <code>Shader</code> 类并没有改变 OpenGL 原理，只是把样板代码收起来了</h3>
+<p>封装之后代码更清楚了，但底层依然还是：</p>
+<ul>
+<li>读文件</li>
+<li>编译 Shader</li>
+<li>链接 Program</li>
+<li>设置 <code>uniform</code></li>
+</ul>
+<h2 id="到目前为止，我对-Shader-的理解发生了什么变化">到目前为止，我对 Shader 的理解发生了什么变化</h2>
+<p>学这一节之前，我对 Shader 的印象更像是：</p>
+<p>“OpenGL 里必须有的某种特殊代码。”</p>
+<p>学完这一节之后，我开始更具体地理解它：</p>
+<ul>
+<li>顶点着色器负责处理顶点输入，并决定顶点最终位置</li>
+<li>片元着色器负责决定屏幕上每个像素的颜色</li>
+<li>Shader Program 是把这两者连接起来的一套完整 GPU 程序</li>
+<li><code>uniform</code> 是 CPU 和 GPU 之间非常重要的一种参数传递方式</li>
+<li>顶点属性则是另一条输入通道，它们是按顶点逐个送入顶点着色器的</li>
+</ul>
+<p>换句话说，这一节让我第一次不只是“会用 Shader”，而是开始知道 Shader 代码为什么要这么写。</p>
+<h2 id="这一节收尾时，我确认自己已经掌握的东西">这一节收尾时，我确认自己已经掌握的东西</h2>
+<p>截至现在，我希望自己至少已经真正掌握了下面这些点：</p>
+<ol>
+<li>知道如何从文件读取并构建一个 Shader Program</li>
+<li>知道 <code>layout(location = N)</code> 必须和 <code>glVertexAttribPointer(N, ...)</code> 对上</li>
+<li>知道一个顶点可以同时携带多种属性</li>
+<li>知道 <code>out/in</code> 会在 Shader 阶段之间传递数据</li>
+<li>知道 <code>uniform</code> 是 CPU 发给 GPU 的全局输入</li>
+<li>知道真正触发绘制的依然是 draw call，而不是前面那些准备动作</li>
+</ol>
+<h2 id="下一步">下一步</h2>
+<p>继续往下学时，我会特别关注两件事：</p>
+<ol>
+<li>Shader 如何继续和纹理、变换矩阵这些内容结合起来</li>
+<li>顶点属性在后面的纹理坐标、法线等场景里会怎样继续扩展</li>
+</ol>
+<p>因为我已经能感觉到，后面的很多内容其实都只是这一节的自然延伸：</p>
+<ul>
+<li>颜色属性会变成纹理坐标、法线等更多属性</li>
+<li><code>uniform float</code> 会变成矩阵、向量、材质参数等更多输入</li>
+<li>片元着色器也会从“输出固定颜色”逐渐进化成“做真正的光照计算”</li>
+</ul>
+<h2 id="结语">结语</h2>
+<p>如果上一篇文章让我第一次理解了 OpenGL 程序是怎么“跑起来”的，那么这一篇更像是让我第一次看清：</p>
+<p>OpenGL 程序到底是怎么“开始真正画东西”的。</p>
+<p>而 Shader、顶点属性和 <code>uniform</code>，正是这条链路里最重要的三个入口。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <div class="nav-prev empty"></div>
+            
+
+            
+            <a href="/2026/04/08/graphics-notes/opengl-01-from-window-to-triangle/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">从创建窗口到第一个三角形：我的 OpenGL 入门笔记</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%9D%80%E8%89%B2%E5%99%A8%E8%BF%99%E4%B8%80%E8%8A%82%E5%BE%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">为什么着色器这一节很关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E5%88%B0%E5%BA%95%E5%AD%A6%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一节到底学了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E4%BB%8E-Shader-%E6%96%87%E4%BB%B6%E6%9C%AC%E8%BA%AB%E5%BC%80%E5%A7%8B%E7%9C%8B"><span class="post-toc-list-text">先从 Shader 文件本身开始看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">顶点着色器在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">片元着色器在做什么</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#C-%E4%BB%A3%E7%A0%81%E6%98%AF%E6%80%8E%E4%B9%88%E6%8A%8A-Shader-%E7%94%A8%E8%B5%B7%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">C++ 代码是怎么把 Shader 用起来的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%B0%81%E8%A3%85%E4%B8%80%E4%B8%AA-Shader-%E7%B1%BB"><span class="post-toc-list-text">为什么要封装一个 Shader 类</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">构造函数做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#use-%E5%92%8C-setFloat-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E6%84%8F%E4%B9%89"><span class="post-toc-list-text">use() 和 setFloat() 为什么有意义</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E6%95%B0%E6%8D%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BB%8E-3-%E4%B8%AA-float-%E5%8F%98%E6%88%90%E4%BA%86-6-%E4%B8%AA-float"><span class="post-toc-list-text">顶点数据为什么从 3 个 float 变成了 6 个 float</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glVertexAttribPointer-%E7%BB%88%E4%BA%8E%E4%B8%8D%E5%86%8D%E5%8F%AA%E6%98%AF%E8%83%8C-API-%E4%BA%86"><span class="post-toc-list-text">glVertexAttribPointer(...) 终于不再只是背 API 了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#uniform-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">uniform 到底是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E9%A1%B5%E7%9C%9F%E6%AD%A3%E6%8A%8A%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF%E6%89%93%E9%80%9A%E4%BA%86"><span class="post-toc-list-text">这一页真正把哪条链路打通了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E9%A1%B6%E7%82%B9%E5%B1%9E%E6%80%A7%E5%92%8C-uniform-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="post-toc-list-text">1. 顶点属性和 uniform 的区别</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-out-%E5%92%8C-in-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">2. out 和 in 的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Shader-%E7%B1%BB%E5%B9%B6%E6%B2%A1%E6%9C%89%E6%94%B9%E5%8F%98-OpenGL-%E5%8E%9F%E7%90%86%EF%BC%8C%E5%8F%AA%E6%98%AF%E6%8A%8A%E6%A0%B7%E6%9D%BF%E4%BB%A3%E7%A0%81%E6%94%B6%E8%B5%B7%E6%9D%A5%E4%BA%86"><span class="post-toc-list-text">3. Shader 类并没有改变 OpenGL 原理，只是把样板代码收起来了</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E5%AF%B9-Shader-%E7%9A%84%E7%90%86%E8%A7%A3%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%E5%8F%98%E5%8C%96"><span class="post-toc-list-text">到目前为止，我对 Shader 的理解发生了什么变化</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E6%94%B6%E5%B0%BE%E6%97%B6%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">这一节收尾时，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">下一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            
+<script src="/js/codeblocks.js"></script>
+
+            
+<script src="/js/toc.js"></script>
+
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
