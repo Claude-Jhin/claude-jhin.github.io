@@ -1019,10 +1019,6 @@ a {
     padding: 18px;
 }
 
-.column-outline-item.is-complete {
-    border-color: rgba(110, 142, 181, 0.38);
-}
-
 .column-outline-index {
     display: flex;
     align-items: center;
@@ -1035,6 +1031,47 @@ a {
     color: var(--accent);
     font-size: 14px;
     font-weight: 700;
+    transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.column-outline-item.is-complete .column-outline-index {
+    border-color: rgba(110, 142, 181, 0.42);
+    background: rgba(110, 142, 181, 0.18);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px rgba(110, 142, 181, 0.14);
+}
+
+.column-outline-item:not(.is-complete) .column-outline-index {
+    border-style: dashed;
+    border-color: rgba(120, 132, 148, 0.46);
+    background: transparent;
+    color: rgba(189, 198, 211, 0.8);
+}
+
+.column-outline-state {
+    gap: 6px;
+}
+
+.column-outline-state::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.88;
+}
+
+.column-outline-item.is-complete .column-outline-state {
+    border-color: rgba(110, 142, 181, 0.32);
+    background: rgba(110, 142, 181, 0.16);
+    color: var(--accent);
+}
+
+.column-outline-item:not(.is-complete) .column-outline-state {
+    border-style: dashed;
+    border-color: rgba(120, 132, 148, 0.4);
+    background: rgba(116, 128, 146, 0.08);
+    color: rgba(193, 201, 213, 0.78);
 }
 
 .column-outline-summary {
