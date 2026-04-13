@@ -1,0 +1,509 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从矩阵到视角：OpenGL 变换、坐标系统与摄像机 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260410e">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.13
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Transform</span>
+            
+            <span style="color: var(--accent);">#Camera</span>
+            
+            <span style="color: var(--accent);">#GLM</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 4 篇</span>
+                <span>已发布 4 / 8</span>
+                
+                <span>阶段：基础入门</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 50%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%89%E8%8A%82%E5%BA%94%E8%AF%A5%E6%94%BE%E5%9C%A8%E4%B8%80%E8%B5%B7%E7%9C%8B"><span class="post-toc-list-text">为什么这三节应该放在一起看</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E5%8F%98%E6%8D%A2%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第一部分：变换到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GLM-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E9%87%8C%E5%BE%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">GLM 为什么在这里很重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%9F%A9%E9%98%B5%E9%A1%BA%E5%BA%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%BD%B1%E5%93%8D%E7%BB%93%E6%9E%9C"><span class="post-toc-list-text">矩阵顺序为什么会影响结果</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%80%E4%B8%AA%E9%A1%B6%E7%82%B9%E4%BC%9A%E7%BB%8F%E5%8E%86%E8%BF%99%E4%B9%88%E5%A4%9A%E7%A9%BA%E9%97%B4"><span class="post-toc-list-text">第二部分：为什么一个顶点会经历这么多空间</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#model%E3%80%81view%E3%80%81projection-%E5%88%B0%E5%BA%95%E5%90%84%E8%87%AA%E7%AE%A1%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">model、view、projection 到底各自管什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#model"><span class="post-toc-list-text">model</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#view"><span class="post-toc-list-text">view</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#projection"><span class="post-toc-list-text">projection</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E7%AA%81%E7%84%B6%E5%8F%98%E5%BE%97%E4%B8%8D%E5%8F%AF%E7%BC%BA%E5%B0%91"><span class="post-toc-list-text">深度测试为什么在这一节突然变得不可缺少</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%80%E8%8A%82%E5%BC%80%E5%A7%8B%E8%AE%A9%E6%88%91%E7%9C%9F%E6%AD%A3%E6%9C%89%E4%BA%86%E2%80%9C%E4%B8%89%E7%BB%B4%E2%80%9D%E7%9A%84%E6%84%9F%E8%A7%89"><span class="post-toc-list-text">为什么这一节开始让我真正有了“三维”的感觉</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E6%91%84%E5%83%8F%E6%9C%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E8%BF%99%E4%B8%89%E8%8A%82%E7%9A%84%E8%87%AA%E7%84%B6%E7%BB%88%E7%82%B9"><span class="post-toc-list-text">第三部分：摄像机为什么是这三节的自然终点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glm-lookAt-%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">glm::lookAt(...) 到底在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98%E3%80%81%E9%BC%A0%E6%A0%87%E3%80%81%E6%BB%9A%E8%BD%AE%E5%88%86%E5%88%AB%E5%9C%A8%E6%8E%A7%E5%88%B6%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">键盘、鼠标、滚轮分别在控制什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98"><span class="post-toc-list-text">键盘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%BC%A0%E6%A0%87"><span class="post-toc-list-text">鼠标</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%BB%9A%E8%BD%AE"><span class="post-toc-list-text">滚轮</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#deltaTime-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E6%91%84%E5%83%8F%E6%9C%BA%E9%87%8C%E6%9C%80%E5%AE%B9%E6%98%93%E8%A2%AB%E4%BD%8E%E4%BC%B0%E7%9A%84%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">deltaTime 为什么是摄像机里最容易被低估的细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%8C%E4%B8%89%E6%9D%A1%E7%BA%BF%E7%BB%88%E4%BA%8E%E5%90%88%E5%B9%B6%E4%BA%86"><span class="post-toc-list-text">到这里，三条线终于合并了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E7%9C%9F%E6%AD%A3%E6%89%93%E9%80%9A%E4%BA%86%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF"><span class="post-toc-list-text">这三节真正打通了哪条链路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这三节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-model%E3%80%81view%E3%80%81projection-%E9%83%BD%E6%98%AF%E7%9F%A9%E9%98%B5%EF%BC%8C%E4%BD%86%E8%81%8C%E8%B4%A3%E5%AE%8C%E5%85%A8%E4%B8%8D%E5%90%8C"><span class="post-toc-list-text">1. model、view、projection 都是矩阵，但职责完全不同</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%9B%B8%E6%9C%BA%E7%A7%BB%E5%8A%A8%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E4%B8%8D%E6%98%AF%E2%80%9C%E7%9B%B8%E6%9C%BA%E5%AF%B9%E8%B1%A1%E8%87%AA%E5%B7%B1%E7%9C%9F%E7%9A%84%E8%A2%AB%E7%94%BB%E5%87%BA%E6%9D%A5%E4%BA%86%E2%80%9D"><span class="post-toc-list-text">2. 相机移动，本质上不是“相机对象自己真的被画出来了”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%BB%9A%E8%BD%AE%E7%BC%A9%E6%94%BE%E4%B8%8D%E7%AD%89%E4%BA%8E%E7%9B%B8%E6%9C%BA%E5%89%8D%E8%BF%9B"><span class="post-toc-list-text">3. 滚轮缩放不等于相机前进</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E7%9C%9F%E6%AD%A3%E7%9A%84%E4%B8%89%E7%BB%B4%E5%9C%BA%E6%99%AF%E5%BF%85%E9%A1%BB%E8%80%83%E8%99%91%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">4. 真正的三维场景必须考虑深度测试</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">到目前为止，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学到 LearnOpenGL 的入门部分中段时，我明显感觉到内容开始“连起来”了。</p>
+<p>前面的窗口、三角形、着色器、纹理，更多是在回答这些问题：</p>
+<ul>
+<li>OpenGL 程序怎么跑起来</li>
+<li>顶点数据怎么送进 GPU</li>
+<li>Shader 怎么决定颜色</li>
+<li>图片怎么参与渲染</li>
+</ul>
+<p>而从“变换”开始，问题突然换了一个层次：</p>
+<ul>
+<li>一个物体为什么会出现在那个位置</li>
+<li>为什么它会旋转、缩放、远近变化</li>
+<li>相机移动时，场景为什么看起来会跟着变</li>
+<li>三维点最终又是怎样落到二维屏幕上的</li>
+</ul>
+<p>这一篇笔记把三个章节合在一起记录：</p>
+<ul>
+<li>变换</li>
+<li>坐标系统</li>
+<li>摄像机</li>
+</ul>
+<p>对应的本地项目分别是：</p>
+<ul>
+<li><code>projects/learnopengl/learnopengl/06_transformations</code></li>
+<li><code>projects/learnopengl/learnopengl/07_coordinate_systems</code></li>
+<li><code>projects/learnopengl/learnopengl/08_camera</code></li>
+</ul>
+<p>之所以把这三节放在一起，是因为它们本来就在回答同一件事：</p>
+<p>“场景中的物体和相机，究竟是怎样通过矩阵被组织起来的。”</p>
+<p>如果说前面的入门章节是在搭一个渲染程序，那么从这里开始，OpenGL 才真正进入“空间”的部分。</p>
+<h2 id="为什么这三节应该放在一起看">为什么这三节应该放在一起看</h2>
+<p>如果单看“变换”，你会学到：</p>
+<ul>
+<li>如何让一个物体平移、旋转、缩放</li>
+<li>如何把这些操作写成矩阵</li>
+<li>如何把矩阵传进顶点着色器</li>
+</ul>
+<p>如果单看“坐标系统”，你会学到：</p>
+<ul>
+<li>一个顶点为什么不止属于一个空间</li>
+<li><code>model / view / projection</code> 三个矩阵怎样分工</li>
+<li>为什么远处物体会看起来更小</li>
+</ul>
+<p>如果单看“摄像机”，你会学到：</p>
+<ul>
+<li><code>view</code> 矩阵不一定手写死</li>
+<li>它可以由相机位置和朝向实时生成</li>
+<li>鼠标、键盘、滚轮怎样控制观察方式</li>
+</ul>
+<p>但把这三节连起来看，逻辑会清楚得多：</p>
+<ol>
+<li>先学会让单个物体动起来</li>
+<li>再学会把物体放进一个完整的三维空间链路里</li>
+<li>最后再学会从“固定观察”升级到“可交互摄像机”</li>
+</ol>
+<p>也就是说，这三节其实共同完成了一次认知升级：</p>
+<p>从“我在画一个东西”，到“我在组织一个三维场景”。</p>
+<h2 id="第一部分：变换到底解决了什么问题">第一部分：变换到底解决了什么问题</h2>
+<p>刚开始学 OpenGL 的时候，顶点坐标通常是写死的。</p>
+<p>如果一个三角形的三个顶点写在某几个位置，它就只能老老实实待在那里。想让它挪一下位置，最直接的办法似乎就是改顶点数组。</p>
+<p>但这种方法很快就会变得笨重：</p>
+<ul>
+<li>平移一次，要改所有顶点</li>
+<li>旋转一次，要重新算所有坐标</li>
+<li>缩放一次，还是要动所有数据</li>
+</ul>
+<p>这时候，矩阵的价值就体现出来了。</p>
+<p>矩阵的意义不在于“它长得像一张 4x4 表”，而在于：</p>
+<p>“它把对顶点的批量几何操作，统一变成了一次规则明确的数学变换。”</p>
+<p>在 <code>06_transformations</code> 里，我第一次正式把这个过程接进渲染代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 transform = glm::<span class="built_in">mat4</span>(<span class="number">1.0f</span>);</span><br><span class="line">transform = glm::<span class="built_in">translate</span>(transform, glm::<span class="built_in">vec3</span>(<span class="number">0.5f</span>, <span class="number">-0.5f</span>, <span class="number">0.0f</span>));</span><br><span class="line">transform = glm::<span class="built_in">rotate</span>(transform, <span class="built_in">static_cast</span>&lt;<span class="type">float</span>&gt;(<span class="built_in">glfwGetTime</span>()), glm::<span class="built_in">vec3</span>(<span class="number">0.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>));</span><br></pre></td></tr></table></figure>
+<p>这段代码做的事其实非常纯粹：</p>
+<ul>
+<li>从单位矩阵开始</li>
+<li>先叠加平移</li>
+<li>再叠加旋转</li>
+</ul>
+<p>然后通过：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glUniformMatrix4fv</span>(...)</span><br></pre></td></tr></table></figure>
+<p>把矩阵传给顶点着色器，再在 Shader 里做：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = transform * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>这一步让我第一次真正理解：</p>
+<p>物体的位置变化，并不是靠“改顶点数组”实现的，而是靠“用矩阵重新解释这些顶点”。</p>
+<p>顶点本身没变，变的是它们通过什么坐标变换进入屏幕。</p>
+<h2 id="GLM-为什么在这里很重要">GLM 为什么在这里很重要</h2>
+<p>这一阶段我也正式把 <code>GLM</code> 接进了工程。</p>
+<p>它的存在非常合理，因为如果没有一个专门的数学库，这几节会被大量矩阵细节拖得很重。</p>
+<p><code>GLM</code> 最直接的价值有三个：</p>
+<ol>
+<li>它提供了和图形学高度贴合的类型</li>
+<li>它把平移、旋转、缩放这些常见操作都封装好了</li>
+<li>它和 OpenGL 的矩阵传递方式天然契合</li>
+</ol>
+<p>例如：</p>
+<ul>
+<li><code>glm::mat4</code></li>
+<li><code>glm::translate(...)</code></li>
+<li><code>glm::rotate(...)</code></li>
+<li><code>glm::perspective(...)</code></li>
+<li><code>glm::lookAt(...)</code></li>
+<li><code>glm::value_ptr(...)</code></li>
+</ul>
+<p>这让我可以把注意力放在“我想做什么变换”，而不是把时间全花在手写矩阵元素上。</p>
+<h2 id="矩阵顺序为什么会影响结果">矩阵顺序为什么会影响结果</h2>
+<p>“变换”这一节里，最值得停下来想清楚的一点，就是矩阵顺序。</p>
+<p>代码里看起来是：</p>
+<ul>
+<li>先 <code>translate</code></li>
+<li>再 <code>rotate</code></li>
+</ul>
+<p>但真正作用在顶点上时，顺序并不是简单从上到下读。</p>
+<p>因为在顶点着色器里，最终计算是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = transform * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>对于这类矩阵乘法，最右边的操作先作用到顶点上。</p>
+<p>也正因为如此，同样是“平移 + 旋转”，顺序不同，最终结果会完全不一样。</p>
+<p>这件事在当时对我影响很大，因为它让我第一次意识到：</p>
+<p>图形学里的很多“效果差异”，并不是因为 API 变了，而是因为数学顺序变了。</p>
+<p>这也是下一节“坐标系统”会进一步放大的主题。</p>
+<h2 id="第二部分：为什么一个顶点会经历这么多空间">第二部分：为什么一个顶点会经历这么多空间</h2>
+<p>到了 <code>07_coordinate_systems</code>，我开始真正接触这样一条变换链：</p>
+<p><code>local -&gt; world -&gt; view -&gt; projection</code></p>
+<p>也就是：</p>
+<ul>
+<li>局部空间</li>
+<li>世界空间</li>
+<li>观察空间</li>
+<li>投影/裁剪相关空间</li>
+</ul>
+<p>这一步最大的变化，是我不再只看“一个矩阵能不能让物体动起来”，而是开始问：</p>
+<p>“一个顶点从原始定义到最终显示，中间到底经历了哪些坐标系统？”</p>
+<p>这时候，Shader 里最核心的一句就变成了：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = projection * view * model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>这句可以说是这三节的主轴。</p>
+<h2 id="model、view、projection-到底各自管什么"><code>model</code>、<code>view</code>、<code>projection</code> 到底各自管什么</h2>
+<p>这三个矩阵刚开始看起来都像“把顶点乘一下”，很容易混在一起。</p>
+<p>但一旦把它们和空间概念对起来，分工就很清楚了。</p>
+<h3 id="model"><code>model</code></h3>
+<p><code>model</code> 决定的是：</p>
+<p>“这个物体在世界里摆在哪里。”</p>
+<p>也就是把物体从自己的局部空间，放到整个场景的世界空间里。</p>
+<p>在 <code>07_coordinate_systems</code> 里，我用一组位置数组来放 10 个立方体：</p>
+<ul>
+<li>有的在前面</li>
+<li>有的更远</li>
+<li>有的偏左偏右</li>
+</ul>
+<p>每个立方体都是同一个标准立方体，但通过不同的 <code>model</code> 矩阵，它们被放到了世界里的不同位置。</p>
+<h3 id="view"><code>view</code></h3>
+<p><code>view</code> 决定的是：</p>
+<p>“相机怎么看这个世界。”</p>
+<p>在坐标系统这一节里，我最开始是通过把整个场景向后平移，来模拟相机站在前面看。</p>
+<p>也就是说，<code>view</code> 矩阵负责把世界空间转换成观察空间。</p>
+<h3 id="projection"><code>projection</code></h3>
+<p><code>projection</code> 决定的是：</p>
+<p>“怎样把三维点投到二维屏幕上。”</p>
+<p>这里最重要的是透视投影。</p>
+<p>我第一次真正把“远小近大”这件事，和一行具体代码联系起来：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 projection = glm::<span class="built_in">perspective</span>(glm::<span class="built_in">radians</span>(<span class="number">45.0f</span>), aspect, <span class="number">0.1f</span>, <span class="number">100.0f</span>);</span><br></pre></td></tr></table></figure>
+<p>这一步并不是在“移动物体”，而是在改变三维空间怎样被映射到屏幕。</p>
+<h2 id="深度测试为什么在这一节突然变得不可缺少">深度测试为什么在这一节突然变得不可缺少</h2>
+<p>一旦从二维平面进入三维立方体场景，就会遇到一个新问题：</p>
+<p>前后遮挡关系怎么处理？</p>
+<p>如果不开启深度测试，OpenGL 只会按绘制顺序覆盖颜色，结果就会很混乱：</p>
+<ul>
+<li>后画的面可能盖住前画的面</li>
+<li>明明更远的物体反而显示在前面</li>
+</ul>
+<p>所以在 <code>07_coordinate_systems</code> 里，真正进入 3D 的一个标志是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_DEPTH_TEST);</span><br></pre></td></tr></table></figure>
+<p>这句看起来简单，但意义很大。</p>
+<p>它意味着渲染不再只是“按顺序涂颜色”，而是开始真的考虑空间中的前后关系。</p>
+<h2 id="为什么这一节开始让我真正有了“三维”的感觉">为什么这一节开始让我真正有了“三维”的感觉</h2>
+<p>在前面的变换里，虽然已经有矩阵，但对象本质上还是一个平面矩形。</p>
+<p>而到了坐标系统这节，我第一次在同一个画面里看到：</p>
+<ul>
+<li>多个立方体</li>
+<li>不同的深度位置</li>
+<li>透视投影带来的远近变化</li>
+<li>深度测试带来的遮挡关系</li>
+</ul>
+<p>也就是从这一刻开始，我对“这是一个三维场景”有了更真实的感受。</p>
+<p>因为三维不只是多了一个 <code>z</code> 坐标，而是多了：</p>
+<ul>
+<li>世界中的摆放关系</li>
+<li>相机视角</li>
+<li>投影方式</li>
+<li>深度遮挡</li>
+</ul>
+<p>这几件事合在一起，空间感才真正成立。</p>
+<h2 id="第三部分：摄像机为什么是这三节的自然终点">第三部分：摄像机为什么是这三节的自然终点</h2>
+<p>如果说前两节是在学习“空间如何被组织”，那么 <code>08_camera</code> 做的事情，就是把“观察者”也正式加入这个系统。</p>
+<p>这一步的关键变化不是 <code>model</code>，也不是 <code>projection</code>，而是 <code>view</code>。</p>
+<p>上一节里，<code>view</code> 还是手动写死的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">view = glm::<span class="built_in">translate</span>(view, glm::<span class="built_in">vec3</span>(<span class="number">0.0f</span>, <span class="number">0.0f</span>, <span class="number">-3.0f</span>));</span><br></pre></td></tr></table></figure>
+<p>到了摄像机这一节，它升级成了：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> glm::mat4 view = glm::<span class="built_in">lookAt</span>(gCameraPos, gCameraPos + gCameraFront, gCameraUp);</span><br></pre></td></tr></table></figure>
+<p>这意味着，观察矩阵不再是一个固定值，而是由相机状态实时生成。</p>
+<p>而这正是“摄像机”这个章节真正的本质。</p>
+<h2 id="glm-lookAt-到底在做什么"><code>glm::lookAt(...)</code> 到底在做什么</h2>
+<p><code>lookAt</code> 的三个参数其实非常直观：</p>
+<ul>
+<li>相机在哪：<code>gCameraPos</code></li>
+<li>相机朝哪看：<code>gCameraPos + gCameraFront</code></li>
+<li>哪边算上：<code>gCameraUp</code></li>
+</ul>
+<p>也就是说，它是在根据相机的位置和朝向，自动构造观察矩阵。</p>
+<p>这里我最大的收获是：</p>
+<p>相机本身并不是某种“特殊对象”，它本质上就是一组状态：</p>
+<ul>
+<li>位置</li>
+<li>朝向</li>
+<li>上方向</li>
+</ul>
+<p>只要这组状态确定了，<code>view</code> 矩阵就可以被算出来。</p>
+<h2 id="键盘、鼠标、滚轮分别在控制什么">键盘、鼠标、滚轮分别在控制什么</h2>
+<p>摄像机这一节的交互让我把“相机状态”理解得更具体了。</p>
+<h3 id="键盘">键盘</h3>
+<p><code>W/A/S/D</code> 控制的是相机位置。</p>
+<p>也就是说：</p>
+<ul>
+<li><code>W/S</code> 沿前方向前后移动</li>
+<li><code>A/D</code> 沿右方向左右移动</li>
+</ul>
+<p>这里我第一次比较明确地看到：</p>
+<p>“左右”并不是固定的世界坐标方向，而是由当前视角动态算出来的。</p>
+<h3 id="鼠标">鼠标</h3>
+<p>鼠标控制的是视角方向。</p>
+<p>代码里用 <code>yaw</code> 和 <code>pitch</code> 来表示水平和垂直转角，再通过三角函数把它们转成 <code>gCameraFront</code>。</p>
+<p>这一步非常关键，因为它把“鼠标移动”变成了一个真正的方向向量更新过程。</p>
+<h3 id="滚轮">滚轮</h3>
+<p>滚轮控制的是 <code>fov</code>，也就是视野角。</p>
+<p>它并不是把相机位置往前推，而是通过投影矩阵改变“看到的范围”。</p>
+<p>所以滚轮带来的那种“拉近 / 拉远”的感觉，本质上是投影变化，而不是位移变化。</p>
+<h2 id="deltaTime-为什么是摄像机里最容易被低估的细节"><code>deltaTime</code> 为什么是摄像机里最容易被低估的细节</h2>
+<p>在摄像机这一节里，还有一个特别重要但容易被忽略的点：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gDeltaTime = currentFrame - gLastFrame;</span><br></pre></td></tr></table></figure>
+<p>它解决的是帧率相关的问题。</p>
+<p>如果不乘 <code>deltaTime</code>，相机每一帧都会走固定距离，那么：</p>
+<ul>
+<li>高帧率机器移动会更快</li>
+<li>低帧率机器移动会更慢</li>
+</ul>
+<p>而乘上 <code>deltaTime</code> 之后，速度就变成了“每秒走多少”，而不是“每帧走多少”。</p>
+<p>这虽然不是坐标系统本身，但却是摄像机能不能正常工作的一个非常现实的工程细节。</p>
+<h2 id="到这里，三条线终于合并了">到这里，三条线终于合并了</h2>
+<p>如果把这三节的内容压缩成一条主线，我现在会这样理解：</p>
+<ol>
+<li><code>model</code> 负责把物体从局部空间放进世界</li>
+<li><code>view</code> 负责把世界转换成相机看到的样子</li>
+<li><code>projection</code> 负责把三维投到二维屏幕</li>
+<li><code>camera</code> 则让 <code>view</code> 从静态矩阵变成可交互生成的矩阵</li>
+</ol>
+<p>也就是说：</p>
+<ul>
+<li>“变换”让我理解了矩阵怎样作用于物体</li>
+<li>“坐标系统”让我理解了顶点会经过哪些空间</li>
+<li>“摄像机”让我理解了观察者本身如何进入这个系统</li>
+</ul>
+<p>这时候再回头看 Shader 里的那一句：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = projection * view * model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>它就不再只是一条需要背下来的模板，而是已经能拆出清楚的含义：</p>
+<ul>
+<li>先决定物体在世界里在哪里</li>
+<li>再决定相机怎么看它</li>
+<li>再决定如何把它投到屏幕上</li>
+</ul>
+<h2 id="这三节真正打通了哪条链路">这三节真正打通了哪条链路</h2>
+<p>如果写成一条完整流程，大概是这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">局部空间中的原始顶点</span><br><span class="line">-&gt; model 矩阵</span><br><span class="line">-&gt; 世界空间</span><br><span class="line">-&gt; view 矩阵</span><br><span class="line">-&gt; 观察空间</span><br><span class="line">-&gt; projection 矩阵</span><br><span class="line">-&gt; 裁剪空间</span><br><span class="line">-&gt; 透视除法与视口变换</span><br><span class="line">-&gt; 屏幕上的像素</span><br><span class="line"></span><br><span class="line">相机位置 gCameraPos</span><br><span class="line">-&gt; view 矩阵</span><br><span class="line">相机朝向 gCameraFront</span><br><span class="line">-&gt; view 矩阵</span><br><span class="line">相机上方向 gCameraUp</span><br><span class="line">-&gt; view 矩阵</span><br><span class="line"></span><br><span class="line">键盘输入</span><br><span class="line">-&gt; 相机位置</span><br><span class="line">鼠标输入</span><br><span class="line">-&gt; 相机朝向</span><br><span class="line">滚轮输入</span><br><span class="line">-&gt; projection / fov</span><br></pre></td></tr></table></figure>
+<p>这里最重要的变化是：</p>
+<p><code>view</code> 不再是死的，而是由相机状态和输入实时驱动的。</p>
+<h2 id="这三节最容易混淆的几个点">这三节最容易混淆的几个点</h2>
+<h3 id="1-model、view、projection-都是矩阵，但职责完全不同">1. <code>model</code>、<code>view</code>、<code>projection</code> 都是矩阵，但职责完全不同</h3>
+<ul>
+<li><code>model</code>：物体在哪</li>
+<li><code>view</code>：相机怎么看</li>
+<li><code>projection</code>：怎么投到屏幕</li>
+</ul>
+<h3 id="2-相机移动，本质上不是“相机对象自己真的被画出来了”">2. 相机移动，本质上不是“相机对象自己真的被画出来了”</h3>
+<p>更准确地说，是观察矩阵根据相机状态重新生成了。</p>
+<h3 id="3-滚轮缩放不等于相机前进">3. 滚轮缩放不等于相机前进</h3>
+<p>当前例子里，滚轮改的是 <code>fov</code>，属于投影变化，不是位置变化。</p>
+<h3 id="4-真正的三维场景必须考虑深度测试">4. 真正的三维场景必须考虑深度测试</h3>
+<p>否则前后遮挡关系会错乱。</p>
+<h2 id="到目前为止，我确认自己已经掌握的东西">到目前为止，我确认自己已经掌握的东西</h2>
+<p>把这三节放在一起看，到这里我希望自己至少已经真正掌握了这些点：</p>
+<ol>
+<li>知道为什么图形学里需要矩阵来做几何变换</li>
+<li>知道 <code>model / view / projection</code> 三个矩阵各自负责什么</li>
+<li>知道一个顶点为什么会经历多个空间</li>
+<li>知道透视投影为什么会让远处物体更小</li>
+<li>知道 <code>glm::lookAt(...)</code> 是怎样生成观察矩阵的</li>
+<li>知道摄像机的移动、转向和缩放分别影响什么</li>
+</ol>
+<h2 id="结语">结语</h2>
+<p>如果前面的章节让我学会了“把东西画出来”，那么这三节真正让我开始理解了：</p>
+<p>图形学里的“空间”到底是怎么被组织出来的。</p>
+<p>物体不是随便摆在屏幕上的，相机也不是某个抽象概念。它们都通过矩阵和坐标系统，被纳入到同一条严格而统一的变换链路里。</p>
+<p>而我现在也越来越能感觉到，后面的很多内容，无论是光照、模型加载还是更复杂的场景渲染，其实都会继续站在这三节打下的基础上往前走。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <div class="nav-prev empty"></div>
+            
+
+            
+            <a href="/2026/04/13/graphics-notes/opengl-03-textures-stb-image-and-samplers/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">从颜色到贴图：OpenGL 纹理、采样器与 `stb_image` 入门</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%89%E8%8A%82%E5%BA%94%E8%AF%A5%E6%94%BE%E5%9C%A8%E4%B8%80%E8%B5%B7%E7%9C%8B"><span class="post-toc-list-text">为什么这三节应该放在一起看</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E5%8F%98%E6%8D%A2%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第一部分：变换到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GLM-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E9%87%8C%E5%BE%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">GLM 为什么在这里很重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%9F%A9%E9%98%B5%E9%A1%BA%E5%BA%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%BD%B1%E5%93%8D%E7%BB%93%E6%9E%9C"><span class="post-toc-list-text">矩阵顺序为什么会影响结果</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%80%E4%B8%AA%E9%A1%B6%E7%82%B9%E4%BC%9A%E7%BB%8F%E5%8E%86%E8%BF%99%E4%B9%88%E5%A4%9A%E7%A9%BA%E9%97%B4"><span class="post-toc-list-text">第二部分：为什么一个顶点会经历这么多空间</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#model%E3%80%81view%E3%80%81projection-%E5%88%B0%E5%BA%95%E5%90%84%E8%87%AA%E7%AE%A1%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">model、view、projection 到底各自管什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#model"><span class="post-toc-list-text">model</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#view"><span class="post-toc-list-text">view</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#projection"><span class="post-toc-list-text">projection</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E7%AA%81%E7%84%B6%E5%8F%98%E5%BE%97%E4%B8%8D%E5%8F%AF%E7%BC%BA%E5%B0%91"><span class="post-toc-list-text">深度测试为什么在这一节突然变得不可缺少</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%80%E8%8A%82%E5%BC%80%E5%A7%8B%E8%AE%A9%E6%88%91%E7%9C%9F%E6%AD%A3%E6%9C%89%E4%BA%86%E2%80%9C%E4%B8%89%E7%BB%B4%E2%80%9D%E7%9A%84%E6%84%9F%E8%A7%89"><span class="post-toc-list-text">为什么这一节开始让我真正有了“三维”的感觉</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E6%91%84%E5%83%8F%E6%9C%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E8%BF%99%E4%B8%89%E8%8A%82%E7%9A%84%E8%87%AA%E7%84%B6%E7%BB%88%E7%82%B9"><span class="post-toc-list-text">第三部分：摄像机为什么是这三节的自然终点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glm-lookAt-%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">glm::lookAt(...) 到底在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98%E3%80%81%E9%BC%A0%E6%A0%87%E3%80%81%E6%BB%9A%E8%BD%AE%E5%88%86%E5%88%AB%E5%9C%A8%E6%8E%A7%E5%88%B6%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">键盘、鼠标、滚轮分别在控制什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98"><span class="post-toc-list-text">键盘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%BC%A0%E6%A0%87"><span class="post-toc-list-text">鼠标</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%BB%9A%E8%BD%AE"><span class="post-toc-list-text">滚轮</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#deltaTime-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E6%91%84%E5%83%8F%E6%9C%BA%E9%87%8C%E6%9C%80%E5%AE%B9%E6%98%93%E8%A2%AB%E4%BD%8E%E4%BC%B0%E7%9A%84%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">deltaTime 为什么是摄像机里最容易被低估的细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%8C%E4%B8%89%E6%9D%A1%E7%BA%BF%E7%BB%88%E4%BA%8E%E5%90%88%E5%B9%B6%E4%BA%86"><span class="post-toc-list-text">到这里，三条线终于合并了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E7%9C%9F%E6%AD%A3%E6%89%93%E9%80%9A%E4%BA%86%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF"><span class="post-toc-list-text">这三节真正打通了哪条链路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这三节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-model%E3%80%81view%E3%80%81projection-%E9%83%BD%E6%98%AF%E7%9F%A9%E9%98%B5%EF%BC%8C%E4%BD%86%E8%81%8C%E8%B4%A3%E5%AE%8C%E5%85%A8%E4%B8%8D%E5%90%8C"><span class="post-toc-list-text">1. model、view、projection 都是矩阵，但职责完全不同</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%9B%B8%E6%9C%BA%E7%A7%BB%E5%8A%A8%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E4%B8%8D%E6%98%AF%E2%80%9C%E7%9B%B8%E6%9C%BA%E5%AF%B9%E8%B1%A1%E8%87%AA%E5%B7%B1%E7%9C%9F%E7%9A%84%E8%A2%AB%E7%94%BB%E5%87%BA%E6%9D%A5%E4%BA%86%E2%80%9D"><span class="post-toc-list-text">2. 相机移动，本质上不是“相机对象自己真的被画出来了”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%BB%9A%E8%BD%AE%E7%BC%A9%E6%94%BE%E4%B8%8D%E7%AD%89%E4%BA%8E%E7%9B%B8%E6%9C%BA%E5%89%8D%E8%BF%9B"><span class="post-toc-list-text">3. 滚轮缩放不等于相机前进</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E7%9C%9F%E6%AD%A3%E7%9A%84%E4%B8%89%E7%BB%B4%E5%9C%BA%E6%99%AF%E5%BF%85%E9%A1%BB%E8%80%83%E8%99%91%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">4. 真正的三维场景必须考虑深度测试</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">到目前为止，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/codeblocks.js?v=20260410e"></script>
+            <script src="/js/toc.js?v=20260410e"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

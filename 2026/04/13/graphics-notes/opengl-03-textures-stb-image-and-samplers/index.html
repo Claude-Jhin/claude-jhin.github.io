@@ -1,0 +1,529 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从颜色到贴图：OpenGL 纹理、采样器与 `stb_image` 入门 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260410e">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从颜色到贴图：OpenGL 纹理、采样器与 `stb_image` 入门</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.13
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Texture</span>
+            
+            <span style="color: var(--accent);">#stb_image</span>
+            
+            <span style="color: var(--accent);">#Sampler</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 3 篇</span>
+                <span>已发布 4 / 8</span>
+                
+                <span>阶段：基础入门</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 38%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BA%B9%E7%90%86%E8%BF%99%E4%B8%80%E8%8A%82%E5%BE%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">为什么纹理这一节很关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一节到底做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E4%B8%89%E8%A7%92%E5%BD%A2%E5%8F%98%E6%88%90%E7%9F%A9%E5%BD%A2%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E6%AC%A1%E5%A4%9A%E4%BA%86-EBO"><span class="post-toc-list-text">从三角形变成矩形：为什么这次多了 EBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E6%95%B0%E6%8D%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%88%E5%A4%9A%E4%BA%86%E4%B8%80%E7%BB%84%E7%BA%B9%E7%90%86%E5%9D%90%E6%A0%87"><span class="post-toc-list-text">顶点数据为什么又多了一组纹理坐标</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glVertexAttribPointer-%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%88%E8%BF%9B%E4%BA%86%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">glVertexAttribPointer(...) 在这一节又进了一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E9%87%8C%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">顶点着色器在这一节里做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E9%9C%80%E8%A6%81-stb-image"><span class="post-toc-list-text">为什么还需要 stb_image</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9B%BE%E7%89%87%E5%8A%A0%E8%BD%BD%E5%90%8E%E8%BF%98%E8%A6%81%E7%BF%BB%E8%BD%AC%E4%B8%80%E6%AC%A1"><span class="post-toc-list-text">为什么图片加载后还要翻转一次</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%9B%E5%BB%BA%E7%BA%B9%E7%90%86%E5%AF%B9%E8%B1%A1%E6%97%B6%EF%BC%8COpenGL-%E7%9C%9F%E6%AD%A3%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">创建纹理对象时，OpenGL 真正在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GL-TEXTURE-WRAP-%E5%92%8C-GL-TEXTURE-MIN-MAG-FILTER-%E5%88%B0%E5%BA%95%E5%9C%A8%E6%8E%A7%E5%88%B6%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">GL_TEXTURE_WRAP_* 和 GL_TEXTURE_MIN&#x2F;MAG_FILTER 到底在控制什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BA%B9%E7%90%86%E7%8E%AF%E7%BB%95%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">纹理环绕方式</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BA%B9%E7%90%86%E8%BF%87%E6%BB%A4%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">纹理过滤方式</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-container-jpg-%E7%94%A8-GL-RGB%EF%BC%8Cawesomeface-png-%E7%94%A8-GL-RGBA"><span class="post-toc-list-text">为什么 container.jpg 用 GL_RGB，awesomeface.png 用 GL_RGBA</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#sampler2D-%E7%BB%88%E4%BA%8E%E4%B8%8D%E5%86%8D%E5%8F%AA%E6%98%AF%E4%B8%80%E4%B8%AA%E9%99%8C%E7%94%9F%E7%B1%BB%E5%9E%8B%E5%90%8D"><span class="post-toc-list-text">sampler2D 终于不再只是一个陌生类型名</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E8%A6%81-glActiveTexture-GL-TEXTURE0-1"><span class="post-toc-list-text">为什么还要 glActiveTexture(GL_TEXTURE0&#x2F;1)</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#mix-%E8%BF%99%E4%B8%80%E5%8F%A5%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BE%88%E6%9C%89%E4%BB%A3%E8%A1%A8%E6%80%A7"><span class="post-toc-list-text">mix(...) 这一句为什么很有代表性</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E5%9C%A8%E6%9C%AC%E5%9C%B0%E5%B7%A5%E7%A8%8B%E9%87%8C%E9%A2%9D%E5%A4%96%E5%81%9A%E7%9A%84%E4%B8%80%E4%B8%AA%E5%B0%8F%E4%BC%98%E5%8C%96"><span class="post-toc-list-text">这次在本地工程里额外做的一个小优化</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E9%A1%B5%E7%9C%9F%E6%AD%A3%E6%89%93%E9%80%9A%E4%BA%86%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF"><span class="post-toc-list-text">这一页真正打通了哪条链路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%BA%B9%E7%90%86%E5%AF%B9%E8%B1%A1%E5%92%8C%E5%9B%BE%E7%89%87%E6%96%87%E4%BB%B6%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">1. 纹理对象和图片文件不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%BA%B9%E7%90%86%E5%AF%B9%E8%B1%A1%E5%92%8C%E7%BA%B9%E7%90%86%E5%8D%95%E5%85%83%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">2. 纹理对象和纹理单元不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%BA%B9%E7%90%86%E5%9D%90%E6%A0%87%E4%B8%8D%E6%98%AF%E5%B1%8F%E5%B9%95%E5%9D%90%E6%A0%87"><span class="post-toc-list-text">3. 纹理坐标不是屏幕坐标</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-stb-image-%E5%92%8C-OpenGL-%E7%9A%84%E8%81%8C%E8%B4%A3%E4%B8%8D%E5%90%8C"><span class="post-toc-list-text">4. stb_image 和 OpenGL 的职责不同</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">到目前为止，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">下一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学完着色器之后，我很自然地遇到了下一个问题：</p>
+<p>如果 GPU 已经能根据顶点数据和 Shader 画出一个带颜色渐变的三角形，那么我们要怎样把一张真正的图片贴到图形上？</p>
+<p>这就是 LearnOpenGL 里“纹理”这一节要解决的问题。</p>
+<p>对应的参考页面是：<a target="_blank" rel="noopener" href="https://learnopengl-cn.github.io/01%20Getting%20started/06%20Textures/">LearnOpenGL CN - 纹理</a></p>
+<p>这一节我在本地做了一个更贴近原教程的版本，项目路径是：</p>
+<ul>
+<li><code>projects/learnopengl/learnopengl/05_textures</code></li>
+</ul>
+<p>这次我不再只是在代码里生成一张最小纹理，而是把教程里的两张图片真正接进了 OpenGL：</p>
+<ul>
+<li><code>container.jpg</code></li>
+<li><code>awesomeface.png</code></li>
+</ul>
+<p>当这个矩形最终被画出来时，我第一次比较完整地把这条链路串起来了：</p>
+<ul>
+<li>图片文件如何读进内存</li>
+<li>图片数据如何上传到 GPU</li>
+<li>纹理坐标如何和顶点绑定</li>
+<li><code>sampler2D</code> 如何在片元着色器里完成采样</li>
+<li>两张纹理又是怎样通过 <code>mix</code> 混到一起的</li>
+</ul>
+<p>如果说上一节“着色器”让我真正开始理解 CPU 和 GPU 的配合方式，那么这一节则让我开始理解：</p>
+<p>“屏幕上的细节，究竟是怎样从一张磁盘上的图片一路走到片元颜色里的。”</p>
+<h2 id="为什么纹理这一节很关键">为什么纹理这一节很关键</h2>
+<p>只靠顶点颜色，能做的事情其实很有限。</p>
+<p>你可以画出红绿蓝渐变的三角形，也可以通过 <code>uniform</code> 做一些动态变化，但如果想表现真实物体的表面细节，只靠顶点颜色远远不够。</p>
+<p>因为顶点数量通常很少，而表面细节通常很多。</p>
+<p>这时候，纹理就成了最自然的答案：</p>
+<ul>
+<li>把颜色信息预先存进一张图片</li>
+<li>再在渲染时按坐标去采样这张图片</li>
+<li>最终把采样结果作为片元颜色的一部分</li>
+</ul>
+<p>从这个角度看，纹理并不是“给物体贴图这么简单”。</p>
+<p>它本质上是：</p>
+<p>“把大量表面信息从顶点数据里解耦出来，改成通过采样读取。”</p>
+<p>这也是为什么后面继续学下去时，纹理不只会表示颜色，还会表示：</p>
+<ul>
+<li>法线</li>
+<li>高度</li>
+<li>镜面反射信息</li>
+<li>阴影信息</li>
+<li>环境信息</li>
+</ul>
+<p>所以这节看起来只是“给矩形贴两张图”，实际上它是在为后面很多高级主题打基础。</p>
+<h2 id="这一节到底做了什么">这一节到底做了什么</h2>
+<p>这次本地项目里，我主要做了 6 件事：</p>
+<ol>
+<li>用 <code>EBO</code> 画了一个矩形，而不是继续只画单个三角形</li>
+<li>给每个顶点加上了纹理坐标属性</li>
+<li>使用 <code>stb_image</code> 从磁盘加载真实图片</li>
+<li>创建了两个 OpenGL 纹理对象</li>
+<li>把两张纹理分别绑定到纹理单元 <code>0</code> 和 <code>1</code></li>
+<li>在片元着色器里通过 <code>mix</code> 混合采样结果</li>
+</ol>
+<p>这 6 件事连起来，刚好就是“纹理这一节”的骨架。</p>
+<h2 id="从三角形变成矩形：为什么这次多了-EBO">从三角形变成矩形：为什么这次多了 <code>EBO</code></h2>
+<p>这一节里，图形不再是一个三角形，而是一个矩形。</p>
+<p>矩形在 OpenGL 里通常会拆成两个三角形来画，所以我这次的顶点数据变成了 4 个顶点，索引数据则告诉 GPU 应该怎样把它们组装成两个三角形。</p>
+<p>也就是说：</p>
+<ul>
+<li>顶点数组负责提供“有哪些点”</li>
+<li>索引数组负责提供“这些点如何组成三角形”</li>
+</ul>
+<p>这样做的好处很直接：</p>
+<p>矩形的两个三角形可以复用顶点，而不是把重复顶点再写一遍。</p>
+<p>这也是我第一次更明确地感受到 <code>EBO</code> 的职责：</p>
+<p>它并不存放顶点属性本身，而是存放“顶点之间的引用关系”。</p>
+<h2 id="顶点数据为什么又多了一组纹理坐标">顶点数据为什么又多了一组纹理坐标</h2>
+<p>在这一节里，每个顶点包含三类信息：</p>
+<ul>
+<li>位置</li>
+<li>颜色</li>
+<li>纹理坐标</li>
+</ul>
+<p>其中最重要的新成员就是纹理坐标。</p>
+<p>纹理坐标通常记作 <code>u, v</code>，也就是二维坐标。它们不是顶点在屏幕上的位置，而是：</p>
+<p>“当前顶点对应纹理图片上的哪个位置。”</p>
+<p>例如一个矩形的四个角，通常会对应到图片的四个角：</p>
+<ul>
+<li>左下角对应 <code>(0.0, 0.0)</code></li>
+<li>右下角对应 <code>(1.0, 0.0)</code></li>
+<li>左上角对应 <code>(0.0, 1.0)</code></li>
+<li>右上角对应 <code>(1.0, 1.0)</code></li>
+</ul>
+<p>这样，当光栅化阶段在矩形内部生成片元时，GPU 就会自动插值这些纹理坐标，最终为每个片元算出一个对应的采样位置。</p>
+<p>也就是说，纹理坐标和前一节的颜色传递，其实在机制上很像：</p>
+<ul>
+<li>都是从顶点出发</li>
+<li>都会经过插值</li>
+<li>最后在片元着色器里被使用</li>
+</ul>
+<p>只不过这一次，插值后的不是颜色，而是“去图片上取样的位置”。</p>
+<h2 id="glVertexAttribPointer-在这一节又进了一步"><code>glVertexAttribPointer(...)</code> 在这一节又进了一步</h2>
+<p>这一节里，顶点布局变成了：</p>
+<ul>
+<li>3 个 float 表示位置</li>
+<li>3 个 float 表示颜色</li>
+<li>2 个 float 表示纹理坐标</li>
+</ul>
+<p>所以每个顶点一共是 8 个 float。</p>
+<p>也正因为如此，<code>glVertexAttribPointer(...)</code> 里的 <code>stride</code> 和 <code>offset</code> 也跟着变了。</p>
+<p>其中最关键的新配置是纹理坐标这一组：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">2</span>, <span class="number">2</span>, GL_FLOAT, GL_FALSE, <span class="number">8</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>), <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="number">6</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)));</span><br><span class="line"><span class="built_in">glEnableVertexAttribArray</span>(<span class="number">2</span>);</span><br></pre></td></tr></table></figure>
+<p>它的含义是：</p>
+<ul>
+<li><code>location = 2</code></li>
+<li>每个顶点读取 2 个 <code>float</code></li>
+<li>每个顶点的总步长是 8 个 <code>float</code></li>
+<li>从第 7 个和第 8 个 <code>float</code> 开始读，也就是纹理坐标段</li>
+</ul>
+<p>这又一次提醒我：</p>
+<p><code>glVertexAttribPointer(...)</code> 不是某种机械背诵的模板，而是在精确描述“VBO 里的数据该怎样拆出来给 Shader 用”。</p>
+<h2 id="顶点着色器在这一节里做了什么">顶点着色器在这一节里做了什么</h2>
+<p>这一节的顶点着色器反而比上一节更简单了。</p>
+<p>它的职责主要只有两件事：</p>
+<ol>
+<li>把顶点位置写给 <code>gl_Position</code></li>
+<li>把纹理坐标传给片元着色器</li>
+</ol>
+<p>也就是说，顶点着色器这次不再专注“产生一个有趣的视觉效果”，而是更像一个数据中转站：</p>
+<ul>
+<li>顶点位置照常参与顶点处理</li>
+<li>纹理坐标继续向后传</li>
+</ul>
+<p>这种变化也让我更清楚地理解了一个事实：</p>
+<p>顶点着色器不一定总是在“做复杂计算”，很多时候它只是负责把合适的数据传到后面的阶段。</p>
+<h2 id="为什么还需要-stb-image">为什么还需要 <code>stb_image</code></h2>
+<p>学到这里时，我有一个很直接的问题：</p>
+<p>OpenGL 既然能创建纹理对象，为什么不能直接“读图片文件”？</p>
+<p>答案是：OpenGL 负责的是图形 API，它并不负责解析 JPG、PNG 这类图片格式。</p>
+<p>所以如果想把磁盘上的图片变成 GPU 能用的像素数据，就需要一个额外的图片加载库。</p>
+<p>这次我使用的是 <code>stb_image</code>。</p>
+<p>它的作用可以概括成一句话：</p>
+<p>“把 JPG、PNG 这些图片文件解析成一块连续的像素内存。”</p>
+<p>当 <code>stbi_load(...)</code> 返回成功后，我拿到的是：</p>
+<ul>
+<li>图片宽度</li>
+<li>图片高度</li>
+<li>通道数</li>
+<li>指向像素数据的指针</li>
+</ul>
+<p>而这些信息，正是 <code>glTexImage2D(...)</code> 所需要的输入。</p>
+<p>所以 <code>stb_image</code> 解决的是“文件格式解析”问题，OpenGL 解决的是“把像素数据交给 GPU”问题。</p>
+<p>两者职责并不重叠，但刚好接在一起。</p>
+<h2 id="为什么图片加载后还要翻转一次">为什么图片加载后还要翻转一次</h2>
+<p>这节里一个非常容易忽视、但又很关键的细节是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">stbi_set_flip_vertically_on_load</span>(<span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+<p>第一次看到这句时，我最直接的感受是：“为什么图片还要翻转？”</p>
+<p>后来理解下来，其实是在处理坐标系差异。</p>
+<p>多数图片文件会把左上角视为原点，而 OpenGL 纹理坐标默认把左下角视为 <code>(0, 0)</code>。</p>
+<p>如果不处理这个差异，图片通常就会出现上下颠倒的问题。</p>
+<p>所以这句代码并不是某种“经验魔法”，它本质上是在做一次坐标系对齐。</p>
+<p>这也是我在这一节里第一次明显感受到：</p>
+<p>图形学里很多看起来奇怪的细节，其实背后都是不同坐标系统之间的转换问题。</p>
+<h2 id="创建纹理对象时，OpenGL-真正在做什么">创建纹理对象时，OpenGL 真正在做什么</h2>
+<p>这一节里，我真正开始把“纹理对象”理解成一个完整状态对象，而不只是一张图片。</p>
+<p>创建纹理时，流程大致是这样的：</p>
+<ol>
+<li><code>glGenTextures(...)</code> 创建纹理对象 ID</li>
+<li><code>glBindTexture(GL_TEXTURE_2D, texture)</code> 绑定这个纹理对象</li>
+<li><code>glTexParameteri(...)</code> 设置采样与边界行为</li>
+<li><code>glTexImage2D(...)</code> 上传图片像素</li>
+<li><code>glGenerateMipmap(...)</code> 生成 mipmap</li>
+</ol>
+<p>这里最值得注意的是：</p>
+<p>纹理对象不只是“像素数据本身”，它还携带很多和采样相关的状态，比如：</p>
+<ul>
+<li>边界如何处理</li>
+<li>缩小时如何过滤</li>
+<li>放大时如何过滤</li>
+</ul>
+<p>也就是说，OpenGL 里的纹理对象更像是：</p>
+<p>“图片数据 + 采样规则”的组合。</p>
+<h2 id="GL-TEXTURE-WRAP-和-GL-TEXTURE-MIN-MAG-FILTER-到底在控制什么"><code>GL_TEXTURE_WRAP_*</code> 和 <code>GL_TEXTURE_MIN/MAG_FILTER</code> 到底在控制什么</h2>
+<p>这一节里我第一次认真去理解这几个参数，而不是只把它们当作教程里固定要抄的几行代码。</p>
+<h3 id="纹理环绕方式">纹理环绕方式</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);</span><br></pre></td></tr></table></figure>
+<p>它们控制的是：</p>
+<p>如果纹理坐标超出了 <code>[0, 1]</code> 范围，OpenGL 应该怎样处理。</p>
+<p><code>GL_REPEAT</code> 的含义是重复纹理。</p>
+<p>这在当前这个例子里不算特别明显，但一旦把纹理坐标改得超过 <code>1.0</code>，就能立刻看到平铺效果。</p>
+<h3 id="纹理过滤方式">纹理过滤方式</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);</span><br></pre></td></tr></table></figure>
+<p>它们控制的是：</p>
+<p>当纹理被缩小或放大时，采样结果应该如何插值。</p>
+<p><code>GL_LINEAR</code> 会让结果更平滑，而不是像像素块一样生硬。</p>
+<p>这也让我第一次更明确地意识到：</p>
+<p>“采样图片”并不是简单地取某一个像素，它背后还牵涉到如何从离散像素中估计连续结果的问题。</p>
+<h2 id="为什么-container-jpg-用-GL-RGB，awesomeface-png-用-GL-RGBA">为什么 <code>container.jpg</code> 用 <code>GL_RGB</code>，<code>awesomeface.png</code> 用 <code>GL_RGBA</code></h2>
+<p>这次加载两张图片时，我特意把两者分开理解：</p>
+<ul>
+<li><code>container.jpg</code> 没有透明通道，所以使用 <code>RGB</code></li>
+<li><code>awesomeface.png</code> 带透明通道，所以使用 <code>RGBA</code></li>
+</ul>
+<p>这个区别非常重要，因为它直接决定了 <code>glTexImage2D(...)</code> 里像素格式该怎样写。</p>
+<p>如果格式和图片真实通道不匹配，轻则显示效果不对，重则会出现更难排查的问题。</p>
+<p>这一点让我对“通道数”这个概念第一次有了更具体的感受：</p>
+<p>图片文件格式并不只是扩展名不同，它还影响 GPU 应该怎样理解上传进去的数据。</p>
+<h2 id="sampler2D-终于不再只是一个陌生类型名"><code>sampler2D</code> 终于不再只是一个陌生类型名</h2>
+<p>片元着色器里最关键的两行是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uniform</span> <span class="type">sampler2D</span> texture1;</span><br><span class="line"><span class="keyword">uniform</span> <span class="type">sampler2D</span> texture2;</span><br></pre></td></tr></table></figure>
+<p>学到这里时，我开始真正把 <code>sampler2D</code> 理解成：</p>
+<p>“一个可以按纹理坐标去采样二维纹理的接口。”</p>
+<p>它本身不是图片，也不是颜色，更不是某个普通变量。</p>
+<p>它更像是 Shader 端访问纹理对象的入口。</p>
+<p>而真正把它们和 OpenGL 里的纹理对象对应起来的，是 C++ 侧这两句：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shader.<span class="built_in">setInt</span>(<span class="string">&quot;texture1&quot;</span>, <span class="number">0</span>);</span><br><span class="line">shader.<span class="built_in">setInt</span>(<span class="string">&quot;texture2&quot;</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>这表示：</p>
+<ul>
+<li><code>texture1</code> 这个采样器去读纹理单元 <code>0</code></li>
+<li><code>texture2</code> 这个采样器去读纹理单元 <code>1</code></li>
+</ul>
+<p>于是，片元着色器里的名字才和 CPU 侧实际绑定的纹理对象建立起关系。</p>
+<p>这一步我之前一直是“知道要写”，但这次才算真正理解它在连什么。</p>
+<h2 id="为什么还要-glActiveTexture-GL-TEXTURE0-1">为什么还要 <code>glActiveTexture(GL_TEXTURE0/1)</code></h2>
+<p>既然已经有两个纹理对象了，为什么绘制前还要写：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glActiveTexture</span>(GL_TEXTURE0);</span><br><span class="line"><span class="built_in">glBindTexture</span>(GL_TEXTURE_2D, texture1);</span><br><span class="line"><span class="built_in">glActiveTexture</span>(GL_TEXTURE1);</span><br><span class="line"><span class="built_in">glBindTexture</span>(GL_TEXTURE_2D, texture2);</span><br></pre></td></tr></table></figure>
+<p>理解下来之后，我会把它看成两步：</p>
+<ol>
+<li>先选中当前操作的是哪个纹理单元</li>
+<li>再把某个纹理对象绑定到这个单元上</li>
+</ol>
+<p>也就是说，纹理对象和纹理单元不是同一个概念：</p>
+<ul>
+<li>纹理对象：真正持有图片数据和采样状态</li>
+<li>纹理单元：Shader 采样器访问纹理时使用的“插槽”</li>
+</ul>
+<p>把这两个概念分开之后，<code>sampler2D</code> 和 <code>glActiveTexture(...)</code> 的关系就清楚很多了。</p>
+<h2 id="mix-这一句为什么很有代表性"><code>mix(...)</code> 这一句为什么很有代表性</h2>
+<p>这一节最终的片元着色器非常短：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="built_in">mix</span>(<span class="built_in">texture</span>(texture1, TexCoord), <span class="built_in">texture</span>(texture2, TexCoord), <span class="number">0.2</span>);</span><br></pre></td></tr></table></figure>
+<p>但它几乎把这一节最重要的东西都浓缩进去了。</p>
+<p>这句代码表示：</p>
+<ol>
+<li>用同一组纹理坐标分别去采样两张纹理</li>
+<li>按 <code>0.2</code> 的权重混合它们</li>
+<li>把混合结果写成最终片元颜色</li>
+</ol>
+<p>从效果上看，它只是把笑脸和箱子叠到了一起。</p>
+<p>但从学习角度看，这一句已经同时包含了：</p>
+<ul>
+<li>纹理坐标插值</li>
+<li>采样器访问</li>
+<li>多纹理绑定</li>
+<li>颜色混合</li>
+</ul>
+<p>所以我会把它看作“纹理这一节的最小总结语句”。</p>
+<h2 id="这次在本地工程里额外做的一个小优化">这次在本地工程里额外做的一个小优化</h2>
+<p>为了让项目在 Visual Studio 里更稳定，这次我没有依赖工作目录去找 Shader 和图片，而是用了 <code>std::filesystem</code> 和 <code>__FILE__</code> 去拼接路径。</p>
+<p>这样做的好处是：</p>
+<p>无论程序从哪里启动，Shader 文件和图片资源都能稳定定位到项目目录下的 <code>shaders</code> 和 <code>textures</code> 文件夹。</p>
+<p>这不属于纹理理论本身，但属于很实用的工程细节。</p>
+<p>它让我更清楚地意识到：</p>
+<p>学习图形 API 时，除了理解渲染原理，也要顺手养成一些能减少环境问题的工程习惯。</p>
+<h2 id="这一页真正打通了哪条链路">这一页真正打通了哪条链路</h2>
+<p>如果把这次的完整流程压缩成一条主线，我会这样理解：</p>
+<ul>
+<li>顶点数据提供位置和纹理坐标</li>
+<li><code>VAO/VBO/EBO</code> 负责把这些数据组织好并送进渲染管线</li>
+<li><code>stb_image</code> 把 JPG/PNG 解析成像素数据</li>
+<li>OpenGL 纹理对象把这些像素数据上传到 GPU</li>
+<li>纹理单元把多个纹理对象组织成可供 Shader 访问的输入</li>
+<li>顶点着色器把纹理坐标传下去</li>
+<li>片元着色器通过 <code>sampler2D</code> 采样并混合两张纹理</li>
+<li>最终把结果写到屏幕上</li>
+</ul>
+<p>如果把它写成一条更稳定的文字流程，大概是这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">磁盘中的 JPG/PNG 图片</span><br><span class="line">-&gt; stb_image：解析成像素内存</span><br><span class="line">-&gt; glTexImage2D：上传到 GPU 纹理对象</span><br><span class="line">-&gt; 纹理对象 texture1 / texture2</span><br><span class="line">-&gt; 纹理单元 GL_TEXTURE0 / GL_TEXTURE1</span><br><span class="line">-&gt; sampler2D texture1 / texture2</span><br><span class="line"></span><br><span class="line">CPU 顶点数组：位置 + 颜色 + 纹理坐标</span><br><span class="line">-&gt; VBO / EBO</span><br><span class="line">-&gt; VAO：记录顶点布局</span><br><span class="line">-&gt; 顶点着色器</span><br><span class="line">-&gt; 插值后的 TexCoord</span><br><span class="line">-&gt; 片元着色器 texture(...)</span><br><span class="line">-&gt; mix 两张纹理</span><br><span class="line">-&gt; FragColor</span><br><span class="line">-&gt; 写入帧缓冲并显示</span><br></pre></td></tr></table></figure>
+<h2 id="这一节最容易混淆的几个点">这一节最容易混淆的几个点</h2>
+<h3 id="1-纹理对象和图片文件不是一回事">1. 纹理对象和图片文件不是一回事</h3>
+<ul>
+<li>图片文件是磁盘上的资源</li>
+<li>纹理对象是 GPU 侧可被采样的数据对象</li>
+</ul>
+<h3 id="2-纹理对象和纹理单元不是一回事">2. 纹理对象和纹理单元不是一回事</h3>
+<ul>
+<li>纹理对象持有数据</li>
+<li>纹理单元是 Shader 采样器读取纹理时用的插槽</li>
+</ul>
+<h3 id="3-纹理坐标不是屏幕坐标">3. 纹理坐标不是屏幕坐标</h3>
+<p>纹理坐标描述的是“去纹理图片的哪里取样”，不是“顶点在窗口里的位置”。</p>
+<h3 id="4-stb-image-和-OpenGL-的职责不同">4. <code>stb_image</code> 和 OpenGL 的职责不同</h3>
+<ul>
+<li><code>stb_image</code> 负责读懂图片格式</li>
+<li>OpenGL 负责把像素数据变成可渲染的纹理</li>
+</ul>
+<h2 id="到目前为止，我确认自己已经掌握的东西">到目前为止，我确认自己已经掌握的东西</h2>
+<p>截至这一节收尾时，我希望自己至少已经真正掌握了下面这些点：</p>
+<ol>
+<li>知道为什么顶点里需要增加纹理坐标</li>
+<li>知道 <code>EBO</code> 在矩形绘制里的作用</li>
+<li>知道 <code>stb_image</code> 为什么存在，以及它和 OpenGL 的分工</li>
+<li>知道 <code>glTexParameteri(...)</code> 在控制什么</li>
+<li>知道 <code>sampler2D</code>、纹理单元和纹理对象之间的关系</li>
+<li>知道双纹理混合的最小流程是怎样串起来的</li>
+</ol>
+<h2 id="下一步">下一步</h2>
+<p>继续往下学时，我最关注的已经不再只是“怎样显示一张纹理”，而是：</p>
+<ol>
+<li>纹理如何和变换矩阵一起作用在物体上</li>
+<li>纹理坐标在更复杂模型里是怎样组织的</li>
+<li>多张纹理在材质系统里会如何继续扩展</li>
+</ol>
+<p>因为到这里为止，我已经明显感觉到：</p>
+<p>后面的很多内容，其实都是在这节基础上继续往前推。</p>
+<ul>
+<li>单张纹理会扩展成多纹理</li>
+<li>颜色贴图会扩展成更多类型的贴图</li>
+<li>片元着色器里的简单 <code>mix</code> 会扩展成更复杂的材质和光照计算</li>
+</ul>
+<h2 id="结语">结语</h2>
+<p>如果“着色器”这一节让我第一次理解了 GPU 程序怎样决定顶点位置和片元颜色，那么“纹理”这一节则让我第一次真正理解：</p>
+<p>图片数据是怎样参与渲染的。</p>
+<p>它不再只是“把一张图贴到矩形上”这么简单，而是让我开始看清：</p>
+<p>顶点坐标、纹理坐标、采样器、纹理对象和片元颜色，究竟是怎样一步一步连到一起的。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <a href="/2026/04/13/graphics-notes/opengl-04-transformations-coordinate-systems-camera/" class="nav-prev">
+                <span class="nav-label">&larr; 上一篇</span>
+                <span class="nav-title">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</span>
+            </a>
+            
+
+            
+            <a href="/2026/04/09/graphics-notes/opengl-02-shaders-attributes-uniform/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BA%B9%E7%90%86%E8%BF%99%E4%B8%80%E8%8A%82%E5%BE%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">为什么纹理这一节很关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一节到底做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E4%B8%89%E8%A7%92%E5%BD%A2%E5%8F%98%E6%88%90%E7%9F%A9%E5%BD%A2%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E6%AC%A1%E5%A4%9A%E4%BA%86-EBO"><span class="post-toc-list-text">从三角形变成矩形：为什么这次多了 EBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E6%95%B0%E6%8D%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%88%E5%A4%9A%E4%BA%86%E4%B8%80%E7%BB%84%E7%BA%B9%E7%90%86%E5%9D%90%E6%A0%87"><span class="post-toc-list-text">顶点数据为什么又多了一组纹理坐标</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glVertexAttribPointer-%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%88%E8%BF%9B%E4%BA%86%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">glVertexAttribPointer(...) 在这一节又进了一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E9%87%8C%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">顶点着色器在这一节里做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E9%9C%80%E8%A6%81-stb-image"><span class="post-toc-list-text">为什么还需要 stb_image</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9B%BE%E7%89%87%E5%8A%A0%E8%BD%BD%E5%90%8E%E8%BF%98%E8%A6%81%E7%BF%BB%E8%BD%AC%E4%B8%80%E6%AC%A1"><span class="post-toc-list-text">为什么图片加载后还要翻转一次</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%9B%E5%BB%BA%E7%BA%B9%E7%90%86%E5%AF%B9%E8%B1%A1%E6%97%B6%EF%BC%8COpenGL-%E7%9C%9F%E6%AD%A3%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">创建纹理对象时，OpenGL 真正在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GL-TEXTURE-WRAP-%E5%92%8C-GL-TEXTURE-MIN-MAG-FILTER-%E5%88%B0%E5%BA%95%E5%9C%A8%E6%8E%A7%E5%88%B6%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">GL_TEXTURE_WRAP_* 和 GL_TEXTURE_MIN&#x2F;MAG_FILTER 到底在控制什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BA%B9%E7%90%86%E7%8E%AF%E7%BB%95%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">纹理环绕方式</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BA%B9%E7%90%86%E8%BF%87%E6%BB%A4%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">纹理过滤方式</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-container-jpg-%E7%94%A8-GL-RGB%EF%BC%8Cawesomeface-png-%E7%94%A8-GL-RGBA"><span class="post-toc-list-text">为什么 container.jpg 用 GL_RGB，awesomeface.png 用 GL_RGBA</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#sampler2D-%E7%BB%88%E4%BA%8E%E4%B8%8D%E5%86%8D%E5%8F%AA%E6%98%AF%E4%B8%80%E4%B8%AA%E9%99%8C%E7%94%9F%E7%B1%BB%E5%9E%8B%E5%90%8D"><span class="post-toc-list-text">sampler2D 终于不再只是一个陌生类型名</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E8%A6%81-glActiveTexture-GL-TEXTURE0-1"><span class="post-toc-list-text">为什么还要 glActiveTexture(GL_TEXTURE0&#x2F;1)</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#mix-%E8%BF%99%E4%B8%80%E5%8F%A5%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BE%88%E6%9C%89%E4%BB%A3%E8%A1%A8%E6%80%A7"><span class="post-toc-list-text">mix(...) 这一句为什么很有代表性</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E5%9C%A8%E6%9C%AC%E5%9C%B0%E5%B7%A5%E7%A8%8B%E9%87%8C%E9%A2%9D%E5%A4%96%E5%81%9A%E7%9A%84%E4%B8%80%E4%B8%AA%E5%B0%8F%E4%BC%98%E5%8C%96"><span class="post-toc-list-text">这次在本地工程里额外做的一个小优化</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E9%A1%B5%E7%9C%9F%E6%AD%A3%E6%89%93%E9%80%9A%E4%BA%86%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF"><span class="post-toc-list-text">这一页真正打通了哪条链路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%BA%B9%E7%90%86%E5%AF%B9%E8%B1%A1%E5%92%8C%E5%9B%BE%E7%89%87%E6%96%87%E4%BB%B6%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">1. 纹理对象和图片文件不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%BA%B9%E7%90%86%E5%AF%B9%E8%B1%A1%E5%92%8C%E7%BA%B9%E7%90%86%E5%8D%95%E5%85%83%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">2. 纹理对象和纹理单元不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%BA%B9%E7%90%86%E5%9D%90%E6%A0%87%E4%B8%8D%E6%98%AF%E5%B1%8F%E5%B9%95%E5%9D%90%E6%A0%87"><span class="post-toc-list-text">3. 纹理坐标不是屏幕坐标</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-stb-image-%E5%92%8C-OpenGL-%E7%9A%84%E8%81%8C%E8%B4%A3%E4%B8%8D%E5%90%8C"><span class="post-toc-list-text">4. stb_image 和 OpenGL 的职责不同</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">到目前为止，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">下一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/codeblocks.js?v=20260410e"></script>
+            <script src="/js/toc.js?v=20260410e"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
