@@ -1,0 +1,558 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE引擎中的延迟渲染主流程（二）：后处理如何接管最终输出 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">UE引擎中的延迟渲染主流程（二）：后处理如何接管最终输出</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.13
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#UE Rendering</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Deferred Rendering</span>
+            
+            <span style="color: var(--accent);">#PostProcessing</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE 渲染源码拆解</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
+            <div class="series-meta">
+                <span>第 3 篇</span>
+                <span>已发布 5 / 5</span>
+                
+                <span>阶段：主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 60%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-rendering/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E5%9C%BA%E6%99%AF%E7%BB%93%E6%9E%9C%E5%88%B0%E6%9C%80%E7%BB%88%E8%BE%93%E5%87%BA"><span class="post-toc-list-text">一条主线：从场景结果到最终输出</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#1-%E5%90%8E%E5%A4%84%E7%90%86%E4%BB%8E%E5%93%AA%E9%87%8C%E6%8E%A5%E6%89%8B"><span class="post-toc-list-text">1. 后处理从哪里接手</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#2-%E4%B8%80%E8%BF%9B%E5%85%A5%E5%90%8E%E5%A4%84%E7%90%86%EF%BC%8C%E5%93%AA%E4%BA%9B%E8%B5%84%E6%BA%90%E5%B7%B2%E7%BB%8F%E5%9C%A8%E6%89%8B%E9%87%8C"><span class="post-toc-list-text">2. 一进入后处理，哪些资源已经在手里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#3-SceneColor-%E6%98%AF%E8%BF%99%E6%9D%A1%E9%93%BE%E9%87%8C%E7%9A%84%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E8%B5%84%E6%BA%90"><span class="post-toc-list-text">3. SceneColor 是这条链里的核心工作资源</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#4-PassSequence%EF%BC%9A%E5%90%8E%E5%A4%84%E7%90%86%E4%B8%8D%E6%98%AF%E4%B8%80%E5%A0%86-if%EF%BC%8C%E8%80%8C%E6%98%AF%E4%B8%80%E6%9D%A1%E6%98%BE%E5%BC%8F%E8%BE%93%E5%87%BA%E9%93%BE"><span class="post-toc-list-text">4. PassSequence：后处理不是一堆 if，而是一条显式输出链</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#5-%E4%B8%BA%E4%BB%80%E4%B9%88-TAA-TSR-%E4%BC%9A%E5%9C%A8%E5%90%8E%E5%A4%84%E7%90%86%E9%87%8C"><span class="post-toc-list-text">5. 为什么 TAA &#x2F; TSR 会在后处理里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#6-SeparateTranslucency-%E6%98%AF%E6%80%8E%E4%B9%88%E5%B9%B6%E5%9B%9E%E4%B8%BB%E9%A2%9C%E8%89%B2%E7%9A%84"><span class="post-toc-list-text">6. SeparateTranslucency 是怎么并回主颜色的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#7-Motion-Blur-%E4%BB%8D%E7%84%B6%E6%98%AF%E5%9C%A8%E6%B6%88%E8%B4%B9-SceneColor-Depth-Velocity"><span class="post-toc-list-text">7. Motion Blur 仍然是在消费 SceneColor &#x2F; Depth &#x2F; Velocity</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#8-%E6%9B%9D%E5%85%89%E3%80%81Histogram%E3%80%81Local-Exposure%E3%80%81Bloom-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%83%BD%E5%9C%A8-Tonemap-%E5%89%8D"><span class="post-toc-list-text">8. 曝光、Histogram、Local Exposure、Bloom 为什么都在 Tonemap 前</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#9-Tonemap-%E6%98%AF%E6%95%B4%E6%9D%A1%E5%90%8E%E5%A4%84%E7%90%86%E9%93%BE%E9%87%8C%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E5%88%86%E7%95%8C%E7%82%B9"><span class="post-toc-list-text">9. Tonemap 是整条后处理链里最重要的分界点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#10-FXAA-SMAA%E3%80%81%E5%8F%AF%E8%A7%86%E5%8C%96%E4%B8%8E%E8%B0%83%E8%AF%95%E9%98%B6%E6%AE%B5%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B9%9F%E6%94%BE%E5%9C%A8%E5%90%8E%E5%A4%84%E7%90%86%E9%87%8C"><span class="post-toc-list-text">10. FXAA &#x2F; SMAA、可视化与调试阶段，为什么也放在后处理里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#11-ViewFamilyOutput%EF%BC%9A%E8%BF%99%E6%9D%A1%E9%93%BE%E4%BB%8E%E4%B8%80%E5%BC%80%E5%A7%8B%E5%B0%B1%E7%9F%A5%E9%81%93%E8%87%AA%E5%B7%B1%E7%9A%84%E7%BB%88%E7%82%B9"><span class="post-toc-list-text">11. ViewFamilyOutput：这条链从一开始就知道自己的终点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#12-%E6%8A%8A%E6%95%B4%E4%B8%AA%E8%B5%84%E6%BA%90%E6%B5%81%E6%94%B6%E6%9D%9F%E6%88%90%E4%B8%80%E5%BC%A0%E5%9B%BE"><span class="post-toc-list-text">12. 把整个资源流收束成一张图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E4%BB%A5%E5%B8%A6%E8%B5%B0%E7%9A%84%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">可以带走的结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">写在最后</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE 渲染源码主线拆解<br>
+本文主题：从 <code>AddPostProcessingPasses</code> 到 <code>ViewFamilyOutput</code></p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>上一篇文章把主场景 Deferred Renderer 的前半段主线串了起来，从 <code>RenderViewFamily_RenderThread</code> 一直到 <code>Fog / Cloud / Water / Translucency</code>。<br>
+到那一步为止，一帧画面在视觉上已经很接近完整结果了，但它还没有真正走完“输出”这条链。</p>
+<p>这一篇只做一件事：</p>
+<p><strong>把 UE 的 <code>PostProcessing</code> 读成一条真正的输出流水线。</strong></p>
+<p>很多人在看后处理时，容易把它理解成一组附加特效：TAA、Bloom、Tonemap、FXAA、Debug Overlay、Upscale。<br>
+但如果直接看源码，会发现 UE 的后处理并不是“最后加几个效果”，而是：</p>
+<blockquote>
+<p>以 <code>SceneColor</code> 为核心工作资源，持续消费深度、速度、透明分离结果、曝光和 Bloom 等中间资源，最终把这一帧写入 <code>ViewFamilyOutput</code> 的输出链。</p>
+</blockquote>
+<p>对应的源码入口有两个：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/DeferredShadingRenderer.cpp:3943</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:347</code></li>
+</ul>
+<p>前者负责把控制权交给后处理，后者才是后处理主线真正展开的地方。</p>
+<hr>
+<h2 id="一条主线：从场景结果到最终输出">一条主线：从场景结果到最终输出</h2>
+<p>先把后处理这条链的骨架放出来：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;DeferredShadingRenderer::Render&quot;] --&gt; B[&quot;AddPostProcessingPasses&quot;]</span><br><span class="line">    B --&gt; C[&quot;SceneColor / SceneDepth / Velocity / SeparateTranslucency&quot;]</span><br><span class="line">    C --&gt; D[&quot;BeforeDOF / DOF / SeparateTranslucency Composition&quot;]</span><br><span class="line">    D --&gt; E[&quot;TAA / TSR / Temporal Upscaler&quot;]</span><br><span class="line">    E --&gt; F[&quot;MotionBlur&quot;]</span><br><span class="line">    F --&gt; G[&quot;Histogram / EyeAdaptation / LocalExposure / Bloom&quot;]</span><br><span class="line">    G --&gt; H[&quot;Tonemap&quot;]</span><br><span class="line">    H --&gt; I[&quot;FXAA / SMAA / AfterTonemap Materials / Visualize&quot;]</span><br><span class="line">    I --&gt; J[&quot;PrimaryUpscale / SecondaryUpscale / Output&quot;]</span><br><span class="line">    J --&gt; K[&quot;ViewFamilyOutput&quot;]</span><br></pre></td></tr></table></figure>
+<p>如果换一种更偏资源流的说法，这条链可以理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;接近完整的 HDR SceneColor&quot;] --&gt; B[&quot;时序重建&quot;]</span><br><span class="line">    B --&gt; C[&quot;运动与景深处理&quot;]</span><br><span class="line">    C --&gt; D[&quot;曝光与 Bloom 等亮度链&quot;]</span><br><span class="line">    D --&gt; E[&quot;Tonemap&quot;]</span><br><span class="line">    E --&gt; F[&quot;输出域图像处理&quot;]</span><br><span class="line">    F --&gt; G[&quot;分辨率适配与最终输出&quot;]</span><br></pre></td></tr></table></figure>
+<p>这两张图就是本文的主线。</p>
+<hr>
+<h2 id="1-后处理从哪里接手">1. 后处理从哪里接手</h2>
+<p>在 <code>DeferredShadingRenderer</code> 的后半段，Renderer 会对每个 <code>View</code> 调用：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/DeferredShadingRenderer.cpp:3943</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">AddPostProcessingPasses</span>(...)</span><br></pre></td></tr></table></figure>
+<p>这一步很重要，因为它说明：</p>
+<ul>
+<li>前面的几何、光照、环境、透明阶段，到这里都已经基本结束</li>
+<li>后处理接手的对象，不再是 mesh 或 GBuffer 的建立过程</li>
+<li>接手的是一张已经经历过大部分渲染阶段的场景结果</li>
+</ul>
+<p>也就是说，<code>PostProcessing</code> 在整帧中的位置，不是“某个孤立特效模块”，而是<strong>整帧最后的统一接管点</strong>。</p>
+<hr>
+<h2 id="2-一进入后处理，哪些资源已经在手里">2. 一进入后处理，哪些资源已经在手里</h2>
+<p><code>AddPostProcessingPasses(...)</code> 的定义在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:347</code></li>
+</ul>
+<p>函数开头最关键的几行是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:381</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:382</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:383</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:385</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:388</code></li>
+</ul>
+<p>也就是：</p>
+<ul>
+<li><code>ViewFamilyOutput</code></li>
+<li><code>ViewFamilyDepthOutput</code></li>
+<li><code>SceneDepth</code></li>
+<li><code>Velocity</code></li>
+<li><code>PostDOFTranslucencyResources</code></li>
+</ul>
+<p>这几项资源非常有代表性。它们说明后处理从一开始就同时依赖：</p>
+<ul>
+<li>场景颜色输出目标</li>
+<li>场景深度</li>
+<li>运动向量</li>
+<li>分离透明结果</li>
+<li>当前 view 的输出语义</li>
+</ul>
+<p>如果只看功能名，后处理容易显得很杂；但从资源角度看，它其实非常统一：</p>
+<blockquote>
+<p>它接手了一组已经由前面主线建立好的关键资源，然后围绕这些资源不断做重建、合成、转换和输出。</p>
+</blockquote>
+<hr>
+<h2 id="3-SceneColor-是这条链里的核心工作资源">3. <code>SceneColor</code> 是这条链里的核心工作资源</h2>
+<p>理解后处理最重要的入口，不是某个具体 pass，而是这句注释：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:395</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Scene color is updated incrementally through the post process pipeline.</span></span><br></pre></td></tr></table></figure>
+<p>这句基本就是 <code>PostProcessing.cpp</code> 的总纲。</p>
+<p>围绕这句注释，代码里又明确建立了几个关键变量：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:399</code> <code>SceneColorBeforeTonemapSlice</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:400</code> <code>SceneColorAfterTonemap</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:403</code> <code>OriginalSceneColor</code></li>
+</ul>
+<p>这说明在后处理阶段，<code>SceneColor</code> 至少有 4 种重要语义：</p>
+<ul>
+<li>当前正在被不断改写的工作纹理</li>
+<li>刚进入后处理时的原始场景颜色</li>
+<li>Tonemap 之前的 HDR 场景颜色</li>
+<li>Tonemap 之后的输出域颜色</li>
+</ul>
+<p>所以后处理真正的阅读姿势不是“这个 pass 做了什么特效”，而是：</p>
+<p><strong>当前这一步把 <code>SceneColor</code> 从什么状态变成了什么状态。</strong></p>
+<hr>
+<h2 id="4-PassSequence：后处理不是一堆-if，而是一条显式输出链">4. <code>PassSequence</code>：后处理不是一堆 if，而是一条显式输出链</h2>
+<p>后处理最值得注意的组织结构，是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:546</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">TOverridePassSequence&lt;EPass&gt; <span class="title">PassSequence</span><span class="params">(ViewFamilyOutput)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>后面会继续做：</p>
+<ul>
+<li><code>SetNames(...)</code></li>
+<li><code>SetEnabled(...)</code></li>
+<li><code>Finalize()</code></li>
+</ul>
+<p>相关位置包括：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:528</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:546</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:727</code></li>
+</ul>
+<p>这说明 UE 并不是把后处理硬编码成一条固定死的链，而是先：</p>
+<ol>
+<li>定义一组标准后处理阶段</li>
+<li>根据 <code>View</code>、<code>ShowFlags</code>、AA 模式、Debug 模式、ViewExtension、Post Process Material Chain 等条件决定哪些阶段启用</li>
+<li>再把启用的阶段串成一条有效输出链</li>
+</ol>
+<p>所以 <code>PostProcessing</code> 的工程结构，更像是：</p>
+<blockquote>
+<p>一个以 <code>ViewFamilyOutput</code> 为终点的可裁剪、可覆盖、可插拔输出序列。</p>
+</blockquote>
+<p>这也是为什么它能同时容纳：</p>
+<ul>
+<li>TAA / TSR</li>
+<li>Motion Blur</li>
+<li>Tonemap</li>
+<li>FXAA / SMAA</li>
+<li>各种 Visualization</li>
+<li>Editor Primitive 叠加</li>
+<li>Upscale</li>
+<li>AlphaInvert</li>
+</ul>
+<hr>
+<h2 id="5-为什么-TAA-TSR-会在后处理里">5. 为什么 TAA / TSR 会在后处理里</h2>
+<p>很多人第一次看 UE 后处理，会对这一点最困惑：</p>
+<p><strong>为什么 TAA / TSR 不在前面的主渲染阶段里，而是在后处理链里？</strong></p>
+<p>关键位置在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:977</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:984</code></li>
+</ul>
+<p>分别对应：</p>
+<ul>
+<li><code>AddMainTemporalSuperResolutionPasses(...)</code></li>
+<li><code>AddGen4MainTemporalAAPasses(...)</code></li>
+</ul>
+<p>这两类 pass 的输入不是 mesh，不是 GBuffer 建立过程，而是：</p>
+<ul>
+<li>当前帧的 <code>SceneColor</code></li>
+<li><code>SceneDepth</code></li>
+<li><code>SceneVelocity</code></li>
+<li>历史帧数据</li>
+<li>分离透明结果</li>
+</ul>
+<p>从本质上说，TAA / TSR 处理的是：</p>
+<blockquote>
+<p><strong>如何在屏幕空间和时间维度上重建更稳定的最终图像。</strong></p>
+</blockquote>
+<p>这已经完全属于输出链问题，而不是几何或光照建立问题。</p>
+<p>所以它们在后处理里，不是例外，反而很自然。</p>
+<hr>
+<h2 id="6-SeparateTranslucency-是怎么并回主颜色的">6. <code>SeparateTranslucency</code> 是怎么并回主颜色的</h2>
+<p>在后处理中，还有一条很容易被忽略的资源支线：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:388</code> <code>PostDOFTranslucencyResources</code></li>
+</ul>
+<p>后面围绕它的关键逻辑在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:831</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:870</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:908</code></li>
+</ul>
+<p>这一段说明：</p>
+<ul>
+<li>前面有些透明结果并不是直接写进主场景颜色</li>
+<li>它们可能先被单独保存</li>
+<li>到后处理链的某个合适时机，再决定怎样 compose 回 <code>SceneColor</code></li>
+</ul>
+<p>之所以要这样做，是因为它们会和：</p>
+<ul>
+<li>DOF</li>
+<li>TSR</li>
+<li>Material Chain</li>
+<li>Post-DOF / Post-MotionBlur 的透明路径</li>
+</ul>
+<p>这些步骤发生耦合。</p>
+<p>所以后处理链还承担了另一项职责：</p>
+<blockquote>
+<p><strong>把前面为正确性而暂时分离保存的图像结果，在合适的时机重新并回主颜色。</strong></p>
+</blockquote>
+<hr>
+<h2 id="7-Motion-Blur-仍然是在消费-SceneColor-Depth-Velocity">7. Motion Blur 仍然是在消费 <code>SceneColor / Depth / Velocity</code></h2>
+<p>Motion Blur 的主调用位置在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1091</code></li>
+</ul>
+<p>它吃进去的关键输入包括：</p>
+<ul>
+<li><code>SceneColor</code></li>
+<li><code>SceneDepth</code></li>
+<li><code>SceneVelocity</code></li>
+<li>某些情况下的 <code>VelocityFlattenTextures</code></li>
+</ul>
+<p>这说明 Motion Blur 虽然在用户视角下是一个“效果”，但在源码结构上，它本质上是：</p>
+<blockquote>
+<p><strong>基于已有场景颜色和运动信息，对当前输出图像做时序相关模糊处理的输出阶段。</strong></p>
+</blockquote>
+<p>它不是独立于主链之外的额外修饰，而是主输出链中的一环。</p>
+<hr>
+<h2 id="8-曝光、Histogram、Local-Exposure、Bloom-为什么都在-Tonemap-前">8. 曝光、Histogram、Local Exposure、Bloom 为什么都在 Tonemap 前</h2>
+<p>这一段是后处理最像“资源生产链”的部分。</p>
+<p>关键位置包括：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1230</code> <code>AddHistogramPass(...)</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1264</code> <code>AddBasicEyeAdaptationPass(...)</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1275</code> <code>AddHistogramEyeAdaptationPass(...)</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1330</code> <code>AddFFTBloomPass(...)</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1388</code> <code>AddGaussianBloomPasses(...)</code></li>
+</ul>
+<p>这几段共同说明：</p>
+<ul>
+<li>后处理不是只改一张现成的图</li>
+<li>它会先对 <code>SceneColor</code> 降采样</li>
+<li>再生成 Histogram、EyeAdaptation、LocalExposure、Bloom 等中间资源</li>
+<li>最后把这些资源喂给 Tonemap</li>
+</ul>
+<p>所以这里的逻辑更像：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;SceneColor&quot;] --&gt; B[&quot;Downsample Chain&quot;]</span><br><span class="line">    B --&gt; C[&quot;Histogram / EyeAdaptation&quot;]</span><br><span class="line">    B --&gt; D[&quot;LocalExposure&quot;]</span><br><span class="line">    B --&gt; E[&quot;Bloom&quot;]</span><br><span class="line">    C --&gt; F[&quot;Tonemap&quot;]</span><br><span class="line">    D --&gt; F</span><br><span class="line">    E --&gt; F</span><br></pre></td></tr></table></figure>
+<p>这些东西必须在 Tonemap 前，是因为它们处理的仍然是 HDR 场景结果，而不是最终输出图像。</p>
+<hr>
+<h2 id="9-Tonemap-是整条后处理链里最重要的分界点">9. Tonemap 是整条后处理链里最重要的分界点</h2>
+<p>Tonemap 主调用在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1473</code></li>
+</ul>
+<p>而在这之前，代码已经明确保存了：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1401</code> <code>SceneColorBeforeTonemapSlice</code></li>
+</ul>
+<p>Tonemap 完成后，又显式记录：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1483</code> <code>SceneColorAfterTonemap = SceneColor</code></li>
+</ul>
+<p>这说明 Tonemap 不是普通一环，而是整条链的语义分界线：</p>
+<ul>
+<li>Tonemap 前，<code>SceneColor</code> 更接近 HDR 场景结果</li>
+<li>Tonemap 后，<code>SceneColor</code> 更接近显示设备和最终输出图像</li>
+</ul>
+<p>这也是为什么 <code>AfterTonemapping</code> 的材质链会同时读到：</p>
+<ul>
+<li><code>PreTonemapHDRColor</code></li>
+<li><code>PostTonemapHDRColor</code></li>
+</ul>
+<p>对应位置在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1515</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1516</code></li>
+</ul>
+<hr>
+<h2 id="10-FXAA-SMAA、可视化与调试阶段，为什么也放在后处理里">10. FXAA / SMAA、可视化与调试阶段，为什么也放在后处理里</h2>
+<p>Tonemap 之后，后处理并没有结束。</p>
+<p>接下来还会继续处理：</p>
+<ul>
+<li>FXAA / SMAA</li>
+<li>AfterTonemapping 的 Post Process Material Chain</li>
+<li>VisualizeHDR</li>
+<li>VisualizeMotionVectors</li>
+<li>PixelInspector</li>
+<li>SelectionOutline</li>
+<li>EditorPrimitive</li>
+<li>VirtualShadowMap / Nanite / GBuffer 等各类可视化</li>
+</ul>
+<p>相关位置包括：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1483</code> 之后的整段</li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1503</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1828</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1866</code></li>
+</ul>
+<p>这说明 <code>PostProcessing</code> 在工程上的职责不只是“做最终图像美化”，它还是：</p>
+<ul>
+<li>最终显示叠加层</li>
+<li>调试可视化层</li>
+<li>编辑器复合层</li>
+</ul>
+<p>也就是说，<strong>凡是应该在图像即将输出前统一处理的东西，最后都会汇入这里。</strong></p>
+<hr>
+<h2 id="11-ViewFamilyOutput：这条链从一开始就知道自己的终点">11. <code>ViewFamilyOutput</code>：这条链从一开始就知道自己的终点</h2>
+<p>后处理一开头就创建了：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:381</code> <code>ViewFamilyOutput</code></li>
+</ul>
+<p>后面的 <code>PassSequence</code> 也是围绕它建立的：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:546</code></li>
+</ul>
+<p>真正能看出“整条链就是以它为终点”的，是后面的几条检查：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:1970</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessing.cpp:2003</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">check</span>(SceneColor == ViewFamilyOutput);</span><br></pre></td></tr></table></figure>
+<p>这几行非常有代表性。它们说明：</p>
+<blockquote>
+<p>无论中间经历多少 pass、多少中间纹理、多少 slice 和 override，最后 <code>SceneColor</code> 都必须回到 <code>ViewFamilyOutput</code>。</p>
+</blockquote>
+<p>从工程设计上看，这就是“输出链”最明确的定义。</p>
+<hr>
+<h2 id="12-把整个资源流收束成一张图">12. 把整个资源流收束成一张图</h2>
+<p>如果把后处理最关键的资源流压成一张图，大概就是这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;OriginalSceneColor&quot;] --&gt; B[&quot;SceneColor&quot;]</span><br><span class="line">    B --&gt; C[&quot;BeforeDOF / DOF / SeparateTranslucency&quot;]</span><br><span class="line">    C --&gt; D[&quot;SceneColorSlice&quot;]</span><br><span class="line">    D --&gt; E[&quot;TAA / TSR&quot;]</span><br><span class="line">    E --&gt; F[&quot;MotionBlur&quot;]</span><br><span class="line">    F --&gt; G[&quot;Downsample Chain&quot;]</span><br><span class="line">    G --&gt; H[&quot;Histogram / EyeAdaptation / LocalExposure / Bloom&quot;]</span><br><span class="line">    F --&gt; I[&quot;SceneColorBeforeTonemap&quot;]</span><br><span class="line">    H --&gt; J[&quot;Tonemap&quot;]</span><br><span class="line">    I --&gt; J</span><br><span class="line">    J --&gt; K[&quot;SceneColorAfterTonemap&quot;]</span><br><span class="line">    K --&gt; L[&quot;FXAA / SMAA / AfterTonemap / Visualize&quot;]</span><br><span class="line">    L --&gt; M[&quot;PrimaryUpscale / SecondaryUpscale&quot;]</span><br><span class="line">    M --&gt; N[&quot;ViewFamilyOutput&quot;]</span><br></pre></td></tr></table></figure>
+<p>这张图最重要的不是细节，而是它把后处理的本质说清楚了：</p>
+<p><strong>后处理并不是一堆互不相干的效果，而是一条以 <code>SceneColor</code> 为核心工作资源、最终导向 <code>ViewFamilyOutput</code> 的输出流水线。</strong></p>
+<hr>
+<h2 id="可以带走的结论">可以带走的结论</h2>
+<ol>
+<li><code>PostProcessing</code> 在 UE 里不是附加模块，而是整帧真正的最终输出链。</li>
+<li><code>AddPostProcessingPasses(...)</code> 接手的对象不是 mesh，而是已经经过光照、环境和透明合成后的场景结果。</li>
+<li><code>SceneColor</code> 是这条链里的核心工作资源，会在多个阶段被持续改写。</li>
+<li><code>SceneDepth</code>、<code>Velocity</code>、<code>SeparateTranslucency</code> 不是边角输入，而是时序重建、景深、运动模糊和透明合成的核心依赖。</li>
+<li><code>PassSequence</code> 说明后处理在工程上是一条显式组织、可覆盖、可裁剪的输出序列。</li>
+<li>TAA / TSR 之所以属于后处理，是因为它们处理的是图像重建和历史帧稳定，而不是几何绘制。</li>
+<li>Histogram、EyeAdaptation、Local Exposure、Bloom 是 Tonemap 前的重要输入链。</li>
+<li>Tonemap 是整条输出链最关键的语义分界点。</li>
+<li>FXAA / SMAA、可视化、编辑器叠加和 Upscale 都属于“图像即将输出前的统一接管层”。</li>
+<li><code>ViewFamilyOutput</code> 是整条后处理链明确的最终落点。</li>
+</ol>
+<hr>
+<h2 id="写在最后">写在最后</h2>
+<p>如果把前一篇和这一篇合在一起看，UE 主场景 Deferred Renderer 的大骨架就已经基本完整了：</p>
+<ul>
+<li>前半段负责建立深度、GBuffer 和受光后的场景表达</li>
+<li>后半段负责环境、透明与体积合成</li>
+<li>最后由后处理链把整帧结果转换成真正的输出图像</li>
+</ul>
+<p>到这一步，再回头看 <code>FDeferredShadingSceneRenderer::Render(...)</code>，它就不再像一大段难以下口的 if / pass / feature 分支，而会更像一条组织严密的整帧调度链。</p>
+<p>下一步如果继续沿这条系列往后写，最自然的方向有两个：</p>
+<ul>
+<li>回到更底层，专门拆 RDG / RenderCore / RHI 是怎样把这些 pass 组织和提交到 GPU 上的</li>
+<li>继续沿主渲染骨架往外扩，分别看 Lumen、Nanite、Virtual Shadow Maps 是怎样插入这条主线的</li>
+</ul>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/" class="nav-prev">
+                <span class="nav-label">&larr; 上一篇</span>
+                <span class="nav-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</span>
+            </a>
+            
+
+            
+            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E5%9C%BA%E6%99%AF%E7%BB%93%E6%9E%9C%E5%88%B0%E6%9C%80%E7%BB%88%E8%BE%93%E5%87%BA"><span class="post-toc-list-text">一条主线：从场景结果到最终输出</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#1-%E5%90%8E%E5%A4%84%E7%90%86%E4%BB%8E%E5%93%AA%E9%87%8C%E6%8E%A5%E6%89%8B"><span class="post-toc-list-text">1. 后处理从哪里接手</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#2-%E4%B8%80%E8%BF%9B%E5%85%A5%E5%90%8E%E5%A4%84%E7%90%86%EF%BC%8C%E5%93%AA%E4%BA%9B%E8%B5%84%E6%BA%90%E5%B7%B2%E7%BB%8F%E5%9C%A8%E6%89%8B%E9%87%8C"><span class="post-toc-list-text">2. 一进入后处理，哪些资源已经在手里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#3-SceneColor-%E6%98%AF%E8%BF%99%E6%9D%A1%E9%93%BE%E9%87%8C%E7%9A%84%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E8%B5%84%E6%BA%90"><span class="post-toc-list-text">3. SceneColor 是这条链里的核心工作资源</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#4-PassSequence%EF%BC%9A%E5%90%8E%E5%A4%84%E7%90%86%E4%B8%8D%E6%98%AF%E4%B8%80%E5%A0%86-if%EF%BC%8C%E8%80%8C%E6%98%AF%E4%B8%80%E6%9D%A1%E6%98%BE%E5%BC%8F%E8%BE%93%E5%87%BA%E9%93%BE"><span class="post-toc-list-text">4. PassSequence：后处理不是一堆 if，而是一条显式输出链</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#5-%E4%B8%BA%E4%BB%80%E4%B9%88-TAA-TSR-%E4%BC%9A%E5%9C%A8%E5%90%8E%E5%A4%84%E7%90%86%E9%87%8C"><span class="post-toc-list-text">5. 为什么 TAA &#x2F; TSR 会在后处理里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#6-SeparateTranslucency-%E6%98%AF%E6%80%8E%E4%B9%88%E5%B9%B6%E5%9B%9E%E4%B8%BB%E9%A2%9C%E8%89%B2%E7%9A%84"><span class="post-toc-list-text">6. SeparateTranslucency 是怎么并回主颜色的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#7-Motion-Blur-%E4%BB%8D%E7%84%B6%E6%98%AF%E5%9C%A8%E6%B6%88%E8%B4%B9-SceneColor-Depth-Velocity"><span class="post-toc-list-text">7. Motion Blur 仍然是在消费 SceneColor &#x2F; Depth &#x2F; Velocity</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#8-%E6%9B%9D%E5%85%89%E3%80%81Histogram%E3%80%81Local-Exposure%E3%80%81Bloom-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%83%BD%E5%9C%A8-Tonemap-%E5%89%8D"><span class="post-toc-list-text">8. 曝光、Histogram、Local Exposure、Bloom 为什么都在 Tonemap 前</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#9-Tonemap-%E6%98%AF%E6%95%B4%E6%9D%A1%E5%90%8E%E5%A4%84%E7%90%86%E9%93%BE%E9%87%8C%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E5%88%86%E7%95%8C%E7%82%B9"><span class="post-toc-list-text">9. Tonemap 是整条后处理链里最重要的分界点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#10-FXAA-SMAA%E3%80%81%E5%8F%AF%E8%A7%86%E5%8C%96%E4%B8%8E%E8%B0%83%E8%AF%95%E9%98%B6%E6%AE%B5%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B9%9F%E6%94%BE%E5%9C%A8%E5%90%8E%E5%A4%84%E7%90%86%E9%87%8C"><span class="post-toc-list-text">10. FXAA &#x2F; SMAA、可视化与调试阶段，为什么也放在后处理里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#11-ViewFamilyOutput%EF%BC%9A%E8%BF%99%E6%9D%A1%E9%93%BE%E4%BB%8E%E4%B8%80%E5%BC%80%E5%A7%8B%E5%B0%B1%E7%9F%A5%E9%81%93%E8%87%AA%E5%B7%B1%E7%9A%84%E7%BB%88%E7%82%B9"><span class="post-toc-list-text">11. ViewFamilyOutput：这条链从一开始就知道自己的终点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#12-%E6%8A%8A%E6%95%B4%E4%B8%AA%E8%B5%84%E6%BA%90%E6%B5%81%E6%94%B6%E6%9D%9F%E6%88%90%E4%B8%80%E5%BC%A0%E5%9B%BE"><span class="post-toc-list-text">12. 把整个资源流收束成一张图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E4%BB%A5%E5%B8%A6%E8%B5%B0%E7%9A%84%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">可以带走的结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">写在最后</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/codeblocks.js?v=20260410e"></script>
+            <script src="/js/toc.js?v=20260410e"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

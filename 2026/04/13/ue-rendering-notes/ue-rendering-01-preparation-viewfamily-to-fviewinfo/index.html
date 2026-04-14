@@ -1,0 +1,901 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE引擎中的渲染准备工作：视图描述是如何生成并交给 Renderer 的 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">UE引擎中的渲染准备工作：视图描述是如何生成并交给 Renderer 的</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.13
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#UE Rendering</span>
+            
+            <span style="color: var(--accent);">#ViewFamily</span>
+            
+            <span style="color: var(--accent);">#FViewInfo</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE 渲染源码拆解</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
+            <div class="series-meta">
+                <span>第 1 篇</span>
+                <span>已发布 5 / 5</span>
+                
+                <span>阶段：主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 20%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-rendering/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E6%9C%AC%E6%96%87%E5%88%B0%E5%BA%95%E5%9C%A8%E8%AE%B2%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">先给结论：本文到底在讲什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E5%85%88%E6%8A%8A%E6%95%B4%E4%BB%B6%E4%BA%8B%E4%B8%B2%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">一条主线：先把整件事串起来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E6%9C%80%E4%B8%8A%E5%B1%82%E5%BC%80%E5%A7%8B%EF%BC%9A%E6%98%AF%E8%B0%81%E5%9C%A8%E9%A9%B1%E5%8A%A8%E8%BF%99%E4%B8%80%E5%B8%A7"><span class="post-toc-list-text">从最上层开始：是谁在驱动这一帧</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#UGameEngine-RedrawViewports"><span class="post-toc-list-text">UGameEngine::RedrawViewports</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FViewport-Draw"><span class="post-toc-list-text">FViewport::Draw</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#UGameViewportClient-Draw"><span class="post-toc-list-text">UGameViewportClient::Draw</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%88%E5%88%9B%E5%BB%BA-ViewFamily%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E5%85%88%E5%88%9B%E5%BB%BA-View"><span class="post-toc-list-text">为什么先创建 ViewFamily，而不是先创建 View</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FSceneViewFamily-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneViewFamily 是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E5%85%88%E6%9C%89-family"><span class="post-toc-list-text">为什么必须先有 family</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FSceneViewFamilyContext-%E7%9A%84%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">FSceneViewFamilyContext 的角色</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneViewFamily-%E5%88%B0%E5%BA%95%E8%A3%85%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneViewFamily 到底装了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B8%B2%E6%9F%93%E7%9B%AE%E6%A0%87%E5%92%8C%E5%9C%BA%E6%99%AF%E5%BD%92%E5%B1%9E"><span class="post-toc-list-text">1. 渲染目标和场景归属</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%85%B1%E4%BA%AB%E6%B8%B2%E6%9F%93%E5%BC%80%E5%85%B3"><span class="post-toc-list-text">2. 共享渲染开关</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%97%B6%E5%BA%8F%E5%92%8C%E5%B8%A7%E4%BF%A1%E6%81%AF"><span class="post-toc-list-text">3. 时序和帧信息</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E4%B8%80%E7%BB%84%E5%85%B7%E4%BD%93%E8%A7%86%E5%9B%BE"><span class="post-toc-list-text">4. 一组具体视图</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9C%A8-ViewFamily-%E4%B9%8B%E4%B8%8A%EF%BC%8CUE-%E8%BF%98%E4%BC%9A%E5%81%9A%E5%93%AA%E4%BA%9B%E5%85%B1%E4%BA%AB%E8%AE%BE%E7%BD%AE"><span class="post-toc-list-text">在 ViewFamily 之上，UE 还会做哪些共享设置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E-ViewFamily-%E5%88%B0%E5%8D%95%E4%B8%AA-View%EF%BC%9A%E5%BC%80%E5%A7%8B%E9%81%8D%E5%8E%86%E7%8E%A9%E5%AE%B6"><span class="post-toc-list-text">从 ViewFamily 到单个 View：开始遍历玩家</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E4%B8%80%E4%B8%AA%E6%9C%AC%E5%9C%B0%E7%8E%A9%E5%AE%B6%E4%B8%8D%E4%B8%80%E5%AE%9A%E5%8F%AA%E7%94%9F%E6%88%90%E4%B8%80%E4%B8%AA-view"><span class="post-toc-list-text">1. 一个本地玩家不一定只生成一个 view</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E8%BF%99%E9%87%8C%E5%BC%80%E5%A7%8B%EF%BC%8CUE-%E6%89%8D%E7%9C%9F%E6%AD%A3%E8%BF%9B%E5%85%A5-per-view-%E9%80%BB%E8%BE%91"><span class="post-toc-list-text">2. 这里开始，UE 才真正进入 per-view 逻辑</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneViewInitOptions%EF%BC%9A%E4%B8%8D%E6%98%AF-View%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E2%80%9C%E6%9E%84%E9%80%A0%E5%8F%82%E6%95%B0%E5%8C%85%E2%80%9D"><span class="post-toc-list-text">FSceneViewInitOptions：不是 View，本质上是“构造参数包”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FSceneViewInitOptions-%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneViewInitOptions 负责什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BB%A7%E6%89%BF-FSceneViewProjectionData"><span class="post-toc-list-text">它为什么继承 FSceneViewProjectionData</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E6%AF%94%E6%8A%95%E5%BD%B1%E6%95%B0%E6%8D%AE%E5%A4%9A%E5%87%BA%E6%9D%A5%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">它比投影数据多出来什么</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#CalcSceneViewInitOptions%EF%BC%9A%E6%8A%8A%E5%BA%95%E5%B1%82%E5%8E%9F%E6%9D%90%E6%96%99%E5%85%88%E8%A3%85%E7%AE%B1"><span class="post-toc-list-text">CalcSceneViewInitOptions：把底层原材料先装箱</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E7%B1%BB%E8%BE%93%E5%85%A5%EF%BC%9A%E6%8A%95%E5%BD%B1%E4%B8%8E%E8%A7%86%E5%8F%A3%E5%87%A0%E4%BD%95"><span class="post-toc-list-text">第一类输入：投影与视口几何</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E7%B1%BB%E8%BE%93%E5%85%A5%EF%BC%9A%E7%9B%B8%E6%9C%BA%E9%99%84%E5%8A%A0%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">第二类输入：相机附加状态</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E7%B1%BB%E8%BE%93%E5%85%A5%EF%BC%9Aview-state-%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="post-toc-list-text">第三类输入：view state 与上下文</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#CalcSceneView%EF%BC%9A%E4%BB%8E%E7%9B%B8%E6%9C%BA%E8%AF%AD%E4%B9%89%E5%88%B0%E6%AD%A3%E5%BC%8F-FSceneView"><span class="post-toc-list-text">CalcSceneView：从相机语义到正式 FSceneView</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E5%85%88%E5%8F%96%E7%9A%84%E6%98%AF-FMinimalViewInfo"><span class="post-toc-list-text">它先取的是 FMinimalViewInfo</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E8%BF%98%E4%BC%9A%E8%A1%A5-hidden-show-only-%E9%80%BB%E8%BE%91"><span class="post-toc-list-text">它还会补 hidden &#x2F; show only 逻辑</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%84%B6%E5%90%8E%E6%89%8D%E7%9C%9F%E6%AD%A3-new-FSceneView"><span class="post-toc-list-text">然后才真正 new FSceneView</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneView-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneView 到底是什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%AE%83%E4%B8%8D%E6%98%AF-CameraActor"><span class="post-toc-list-text">1. 它不是 CameraActor</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%AE%83%E4%B8%8D%E6%98%AF%E6%9C%80%E7%BB%88%E6%89%A7%E8%A1%8C%E5%AF%B9%E8%B1%A1"><span class="post-toc-list-text">2. 它不是最终执行对象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%AE%83%E5%B7%B2%E7%BB%8F%E8%B6%B3%E5%A4%9F%E5%AE%8C%E6%95%B4"><span class="post-toc-list-text">3. 它已经足够完整</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FViewMatrices%EF%BC%9A%E5%85%A8%E6%96%87%E6%9C%80%E5%80%BC%E5%BE%97%E5%8F%8D%E5%A4%8D%E7%9C%8B%E7%9A%84%E9%83%A8%E5%88%86"><span class="post-toc-list-text">FViewMatrices：全文最值得反复看的部分</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E6%80%A7%E7%9C%8B%E6%87%82-FViewMatrices"><span class="post-toc-list-text">一次性看懂 FViewMatrices</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E6%9C%89%E8%BF%99%E4%B9%88%E5%A4%9A%E7%9F%A9%E9%98%B5"><span class="post-toc-list-text">为什么会有这么多矩阵</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%BA%9B%E7%9F%A9%E9%98%B5%E5%9C%A8-CPU-%E4%BE%A7%E5%87%86%E5%A4%87"><span class="post-toc-list-text">为什么这些矩阵在 CPU 侧准备</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#PreViewTranslation-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">PreViewTranslation 为什么重要</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneView-%E6%9E%84%E9%80%A0%E5%AE%8C%E6%88%90%E4%BB%A5%E5%90%8E%EF%BC%8C%E4%BA%8B%E6%83%85%E8%BF%98%E6%B2%A1%E7%BB%93%E6%9D%9F"><span class="post-toc-list-text">FSceneView 构造完成以后，事情还没结束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8E%E5%A4%84%E7%90%86%E9%85%8D%E7%BD%AE%E4%B8%8D%E7%9B%B4%E6%8E%A5%E5%9C%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E9%87%8C%E4%B8%80%E6%AC%A1%E6%80%A7%E5%86%99%E5%AE%8C"><span class="post-toc-list-text">为什么后处理配置不直接在构造函数里一次性写完</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#StartFinalPostprocessSettings"><span class="post-toc-list-text">StartFinalPostprocessSettings</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#OverridePostProcessSettings"><span class="post-toc-list-text">OverridePostProcessSettings</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#EndFinalPostprocessSettings"><span class="post-toc-list-text">EndFinalPostprocessSettings</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%AD%A4%E6%97%B6%E7%9A%84-FSceneView-%E5%B7%B2%E7%BB%8F%E5%AE%8C%E6%95%B4%E4%BA%86%E5%90%97"><span class="post-toc-list-text">此时的 FSceneView 已经完整了吗</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Engine-%E5%88%B0-Renderer-%E7%9A%84%E6%AD%A3%E5%BC%8F%E4%BA%A4%E6%8E%A5%E7%82%B9"><span class="post-toc-list-text">Engine 到 Renderer 的正式交接点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#BeginRenderingViewFamily%EF%BC%9ARenderer-%E6%8E%A5%E6%89%8B%E5%90%8E%E7%9A%84%E7%AC%AC%E4%B8%80%E8%B7%B3%EF%BC%8C%E5%B9%B6%E4%B8%8D%E6%98%AF%E7%AB%8B%E5%88%BB%E5%BC%80%E7%94%BB"><span class="post-toc-list-text">BeginRenderingViewFamily：Renderer 接手后的第一跳，并不是立刻开画</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneRenderer%EF%BC%9ARenderer-%E7%9A%84%E7%BB%84%E7%BB%87%E8%80%85%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E6%9F%90%E4%B8%AA-pass"><span class="post-toc-list-text">FSceneRenderer：Renderer 的组织者，而不是某个 pass</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E-FSceneView-%E5%88%B0-FViewInfo%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-Renderer-%E4%B8%8D%E7%9B%B4%E6%8E%A5%E7%94%A8%E5%89%8D%E8%80%85"><span class="post-toc-list-text">从 FSceneView 到 FViewInfo：为什么 Renderer 不直接用前者</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%A4%9A%E4%B8%80%E5%B1%82-FViewInfo"><span class="post-toc-list-text">为什么要多一层 FViewInfo</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E4%B8%80%E8%BD%AE%E8%81%8C%E8%B4%A3%E5%8D%87%E7%BA%A7"><span class="post-toc-list-text">它本质上是一轮职责升级</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%A6%82%E6%8B%AC%E4%B8%A4%E8%80%85%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">一句话概括两者关系</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FViewInfo-%E5%88%B0%E5%BA%95%E6%AF%94-FSceneView-%E5%A4%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FViewInfo 到底比 FSceneView 多了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E8%BF%99%E9%87%8C%E4%B8%BA%E6%AD%A2%EF%BC%8CRenderThread-%E5%85%B6%E5%AE%9E%E8%BF%98%E6%B2%A1%E7%9C%9F%E6%AD%A3%E5%BC%80%E5%A7%8B%E2%80%9C%E6%89%A7%E8%A1%8C%E6%B8%B2%E6%9F%93%E2%80%9D"><span class="post-toc-list-text">到这里为止，RenderThread 其实还没真正开始“执行渲染”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B4%E7%AF%87%E6%96%87%E7%AB%A0%EF%BC%8C%E5%85%B6%E5%AE%9E%E9%83%BD%E5%8F%AF%E4%BB%A5%E5%8E%8B%E7%BC%A9%E6%88%90%E8%BF%99%E5%BC%A0%E5%9B%BE"><span class="post-toc-list-text">整篇文章，其实都可以压缩成这张图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%80%BC%E5%BE%97%E5%B8%A6%E8%B5%B0%E7%9A%84-8-%E4%B8%AA%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">最值得带走的 8 个结论</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E4%B8%80%E5%B8%A7%E4%B8%BB%E5%9C%BA%E6%99%AF%E6%B8%B2%E6%9F%93%E5%9C%A8-Engine-%E4%BE%A7%E7%9A%84%E9%87%8D%E8%A6%81%E5%85%A5%E5%8F%A3%E6%98%AF-UGameViewportClient-Draw"><span class="post-toc-list-text">1. 一帧主场景渲染在 Engine 侧的重要入口是 UGameViewportClient::Draw</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-UE-%E5%85%88%E5%88%9B%E5%BB%BA-ViewFamily%EF%BC%8C%E5%86%8D%E5%88%9B%E5%BB%BA%E5%85%B7%E4%BD%93-View"><span class="post-toc-list-text">2. UE 先创建 ViewFamily，再创建具体 View</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-FSceneViewInitOptions-%E4%B8%8D%E6%98%AF%E6%9C%80%E7%BB%88%E8%A7%86%E5%9B%BE%E5%AF%B9%E8%B1%A1%EF%BC%8C%E8%80%8C%E6%98%AF%E6%9E%84%E9%80%A0%E5%8F%82%E6%95%B0%E5%8C%85"><span class="post-toc-list-text">3. FSceneViewInitOptions 不是最终视图对象，而是构造参数包</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-FSceneView-%E6%98%AF-Engine-%E4%BE%A7%E6%AD%A3%E5%BC%8F%E7%9A%84%E8%A7%86%E5%9B%BE%E6%8F%8F%E8%BF%B0"><span class="post-toc-list-text">4. FSceneView 是 Engine 侧正式的视图描述</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-FViewMatrices-%E6%98%AF%E8%A7%86%E5%9B%BE%E6%95%B0%E5%AD%A6%E9%AA%A8%E6%9E%B6"><span class="post-toc-list-text">5. FViewMatrices 是视图数学骨架</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#6-%E5%90%8E%E5%A4%84%E7%90%86%E9%85%8D%E7%BD%AE%E6%98%AF%E5%9C%A8-FSceneView-%E5%8A%A0%E5%85%A5-family-%E4%B9%8B%E5%90%8E%E5%86%8D%E7%81%8C%E8%BF%9B%E5%8E%BB%E7%9A%84"><span class="post-toc-list-text">6. 后处理配置是在 FSceneView 加入 family 之后再灌进去的</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#7-Renderer-%E6%8E%A5%E6%89%8B%E5%90%8E%EF%BC%8C%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5%E4%BB%8D%E7%84%B6%E4%B8%BB%E8%A6%81%E5%8F%91%E7%94%9F%E5%9C%A8-GameThread"><span class="post-toc-list-text">7. Renderer 接手后，第一阶段仍然主要发生在 GameThread</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#8-Renderer-%E7%9C%9F%E6%AD%A3%E4%BD%BF%E7%94%A8%E7%9A%84%E6%98%AF-FViewInfo%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8E%9F%E5%A7%8B%E7%9A%84-FSceneView"><span class="post-toc-list-text">8. Renderer 真正使用的是 FViewInfo，不是原始的 FSceneView</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%83%A8%E5%88%86%E5%80%BC%E5%BE%97%E5%85%88%E7%9C%8B"><span class="post-toc-list-text">结语：为什么这部分值得先看</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE 渲染源码主线拆解<br>
+本文主题：从 <code>ViewFamily</code> 到 <code>FViewInfo</code></p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>很多人第一次读 Unreal Engine 渲染源码，都会先去找这些文件：</p>
+<ul>
+<li><code>DeferredShadingRenderer.cpp</code></li>
+<li><code>BasePassRendering.cpp</code></li>
+<li><code>PostProcessing.cpp</code></li>
+</ul>
+<p>这当然没错，因为这些文件里确实有“真正的渲染流程”。<br>
+但问题也在这里。</p>
+<p>如果一上来就直接扎进 pass 级代码，通常会遇到两个问题：</p>
+<ol>
+<li>你能看见很多渲染阶段，却不清楚这些阶段到底依赖了哪些输入。</li>
+<li>你能看见很多 <code>View</code>、<code>ViewFamily</code>、<code>ViewInfo</code>、<code>SceneRenderer</code>，却不知道它们是从哪里来的，又是在什么时候准备好的。</li>
+</ol>
+<p>于是，整个 Renderer 看起来像一台已经运转起来的机器。你看得见齿轮在转，却不知道它是怎么启动的。</p>
+<p>所以，本文不直接进入 <code>PrePass</code>、<code>BasePass</code> 和光照计算，而是先回答一个更基础的问题：</p>
+<blockquote>
+<p><strong>在真正开始渲染之前，UE 是如何把“这一帧谁在看、怎么看、画到哪、用什么规则画”整理成 Renderer 能消费的数据的？</strong></p>
+</blockquote>
+<p>把这件事看清楚，后面再读 Deferred Renderer，理解成本会低很多。</p>
+<p>本文讨论的主题可以概括为：</p>
+<blockquote>
+<p><strong>视图描述的生成与 Renderer 交接</strong></p>
+</blockquote>
+<p>更通俗一点说，就是标题里的这句话：</p>
+<blockquote>
+<p><strong>UE引擎中的渲染准备工作</strong></p>
+</blockquote>
+<hr>
+<h2 id="先给结论：本文到底在讲什么">先给结论：本文到底在讲什么</h2>
+<p>如果只保留一句话，那么本文讨论的就是：</p>
+<p><strong>UE 不只是“执行渲染”，它还要先把一帧渲染需要的视图数据组织出来。</strong></p>
+<p>展开后可以分成 6 步：</p>
+<ol>
+<li>游戏主视口每帧会从 <code>UGameViewportClient::Draw</code> 开始组织当前这一帧的场景绘制。</li>
+<li>UE 不会一上来就直接创建单个 <code>View</code>，而是先创建一个 <code>FSceneViewFamily</code>，作为一组视图共享的上下文。</li>
+<li>然后 UE 会为每个本地玩家、每个眼睛或每个额外视角，构造出对应的 <code>FSceneViewInitOptions</code>。</li>
+<li>接着 <code>FSceneViewInitOptions</code> 会被真正构造成 <code>FSceneView</code>，并补齐矩阵、裁剪、后处理和各种视图状态。</li>
+<li>当 Engine 把这批 <code>View</code> 交给 Renderer 后，Renderer 会在 GameThread 上把 <code>FSceneView</code> 升级成 <code>FViewInfo</code>。</li>
+<li>最后，经过 <code>SceneRenderBuilder</code> 的组织，这一帧才真正开始进入 RenderThread 和后续的 GPU 执行阶段。</li>
+</ol>
+<p>也就是说，在 UE 中，一帧的开始并不是某个 pass 被执行，而是：</p>
+<p><strong>一个完整的视图系统被构建出来。</strong></p>
+<hr>
+<h2 id="本文讨论范围">本文讨论范围</h2>
+<p>为了让主线尽量清晰，本文只聚焦下面这部分：</p>
+<ul>
+<li>运行时主游戏视口</li>
+<li>常规场景渲染主线</li>
+<li><code>UGameViewportClient::Draw -&gt; FSceneViewFamily -&gt; FSceneView -&gt; FViewInfo</code> 这一条路径</li>
+</ul>
+<p>不重点展开但会顺带提到的内容包括：</p>
+<ul>
+<li><code>SceneCapture</code></li>
+<li>反射捕获</li>
+<li>编辑器视口</li>
+<li>HitProxy 渲染</li>
+<li>后续 Deferred Renderer 的 pass 级执行细节</li>
+</ul>
+<p>换句话说，本文主要回答的是：</p>
+<p><strong>在主场景一帧渲染开始前，CPU 侧到底完成了哪些准备工作。</strong></p>
+<hr>
+<h2 id="一条主线：先把整件事串起来">一条主线：先把整件事串起来</h2>
+<p>先把主线放出来。全文都围绕下面这条链展开：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;UGameEngine::RedrawViewports&quot;] --&gt; B[&quot;FViewport::Draw&quot;]</span><br><span class="line">    B --&gt; C[&quot;UGameViewportClient::Draw&quot;]</span><br><span class="line">    C --&gt; D[&quot;FSceneViewFamilyContext&quot;]</span><br><span class="line">    D --&gt; E[&quot;ULocalPlayer::CalcSceneViewInitOptions&quot;]</span><br><span class="line">    E --&gt; F[&quot;ULocalPlayer::CalcSceneView&quot;]</span><br><span class="line">    F --&gt; G[&quot;FSceneView&quot;]</span><br><span class="line">    G --&gt; H[&quot;ViewFamily.Views&quot;]</span><br><span class="line">    H --&gt; I[&quot;BeginRenderingViewFamily&quot;]</span><br><span class="line">    I --&gt; J[&quot;FSceneRenderer::FSceneRenderer&quot;]</span><br><span class="line">    J --&gt; K[&quot;FViewInfo&quot;]</span><br><span class="line">    K --&gt; L[&quot;FSceneRenderBuilder&quot;]</span><br><span class="line">    L --&gt; M[&quot;RenderViewFamily_RenderThread&quot;]</span><br></pre></td></tr></table></figure>
+<p>如果你已经熟悉现代渲染管线，也可以把这条线理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;游戏逻辑 / Camera / Viewport&quot;] --&gt; B[&quot;Engine 侧组织 ViewFamily 和 View&quot;]</span><br><span class="line">    B --&gt; C[&quot;Renderer 侧升级为 FViewInfo&quot;]</span><br><span class="line">    C --&gt; D[&quot;RenderThread 组织一帧&quot;]</span><br><span class="line">    D --&gt; E[&quot;GPU 执行真正的渲染 pass&quot;]</span><br></pre></td></tr></table></figure>
+<p>这两张图就是全文的骨架。<br>
+后面的内容，本质上都在解释这些箭头分别做了什么。</p>
+<hr>
+<h2 id="从最上层开始：是谁在驱动这一帧">从最上层开始：是谁在驱动这一帧</h2>
+<p>从主游戏视口的角度看，一帧绘制的驱动链大致如下：</p>
+<ul>
+<li><code>UGameEngine::RedrawViewports</code></li>
+<li><code>FViewport::Draw</code></li>
+<li><code>UGameViewportClient::Draw</code></li>
+</ul>
+<p>在当前源码里，对应位置大致是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/GameEngine.cpp</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/UnrealClient.cpp</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/GameViewportClient.cpp</code></li>
+</ul>
+<p>这条链回答了一个基础问题：</p>
+<p><strong>主游戏视口这一帧，是谁把“开始绘制”这件事真正触发起来的。</strong></p>
+<h3 id="UGameEngine-RedrawViewports"><code>UGameEngine::RedrawViewports</code></h3>
+<p>这是上层调度入口。<br>
+在正常游戏运行时，Engine 会在合适的时机调用它，让当前可见的 viewport 开始这一帧的绘制。</p>
+<p>可以把它理解成：</p>
+<p><strong>“这一帧该让各个视口重绘了。”</strong></p>
+<h3 id="FViewport-Draw"><code>FViewport::Draw</code></h3>
+<p>进入 <code>FViewport::Draw</code> 后，UE 会创建 <code>FCanvas</code>，并把真正的绘制工作下发给 <code>ViewportClient-&gt;Draw(...)</code>。<br>
+这一层更像一个通用的“视口绘制外壳”。</p>
+<h3 id="UGameViewportClient-Draw"><code>UGameViewportClient::Draw</code></h3>
+<p>真正和主游戏场景渲染直接相关的工作，从这里开始变得具体。</p>
+<p>因此，如果你研究的是：</p>
+<ul>
+<li>玩家主摄像机画面</li>
+<li>游戏场景是怎么开始一帧渲染的</li>
+<li>Engine 到 Renderer 的第一跳</li>
+</ul>
+<p>那么 <code>UGameViewportClient::Draw</code> 就是最自然的入口。</p>
+<hr>
+<h2 id="为什么先创建-ViewFamily，而不是先创建-View">为什么先创建 <code>ViewFamily</code>，而不是先创建 <code>View</code></h2>
+<p>这里先建立第一个核心认知。</p>
+<p>在 <code>UGameViewportClient::Draw</code> 中，UE 不会先创建某个玩家相机的 <code>FSceneView</code>，而是先创建：</p>
+<p><code>FSceneViewFamilyContext</code></p>
+<p>这个对象背后的基类是 <code>FSceneViewFamily</code>。</p>
+<h3 id="FSceneViewFamily-是什么"><code>FSceneViewFamily</code> 是什么</h3>
+<p>它可以直接理解为：</p>
+<p><strong>一组视图共享的渲染上下文。</strong></p>
+<p>它内部最关键的东西包括：</p>
+<ul>
+<li>这组视图正在观察哪个 <code>Scene</code></li>
+<li>最终画到哪个 <code>RenderTarget</code></li>
+<li>这组视图共享哪些 <code>EngineShowFlags</code></li>
+<li>这一组视图包含哪些 <code>Views</code></li>
+<li>当前帧编号、时间信息、屏幕比例、扩展接口等</li>
+</ul>
+<p>换句话说，<code>FSceneViewFamily</code> 不是某一个摄像机，而是这一批视图共享的壳。</p>
+<h3 id="为什么必须先有-family">为什么必须先有 family</h3>
+<p>原因很简单：一帧里不一定只有一个视图。</p>
+<p>典型场景包括：</p>
+<ul>
+<li>普通单人游戏主相机：通常是 1 个 view</li>
+<li>VR：左右眼至少是 2 个 view</li>
+<li>模拟分屏：多个玩家可能对应多个 view</li>
+<li>主视图之外的特殊视图：某些情况下也可能被纳入同一批构建逻辑</li>
+</ul>
+<p>而这些 view 经常共享：</p>
+<ul>
+<li>同一个 scene</li>
+<li>同一个 render target 体系</li>
+<li>同一套 show flags</li>
+<li>同一帧的时间和屏幕比例设置</li>
+</ul>
+<p>因此，从架构上看，先有 family，再往里面逐个加入具体 view，会比让每个 view 各自维护共享信息更合理，也更利于后续 Renderer 统一处理。</p>
+<h3 id="FSceneViewFamilyContext-的角色"><code>FSceneViewFamilyContext</code> 的角色</h3>
+<p><code>FSceneViewFamilyContext</code> 本身很薄。<br>
+它更像一个作用域对象，主要负责：</p>
+<ul>
+<li>继承 <code>FSceneViewFamily</code></li>
+<li>在当前使用场景里管理 <code>Views</code> 的生命周期</li>
+</ul>
+<p>它的重要性不在于逻辑复杂，而在于它明确表达了这件事：</p>
+<p><strong>这批 <code>View</code> 是临时组织起来的一组视图上下文。</strong></p>
+<hr>
+<h2 id="FSceneViewFamily-到底装了什么"><code>FSceneViewFamily</code> 到底装了什么</h2>
+<p>如果把 <code>FSceneViewFamily</code> 拆开看，大致可以分成四类信息。</p>
+<h3 id="1-渲染目标和场景归属">1. 渲染目标和场景归属</h3>
+<p>这一类最基础：</p>
+<ul>
+<li><code>RenderTarget</code></li>
+<li><code>RenderTargetDepth</code></li>
+<li><code>Scene</code></li>
+</ul>
+<p>它们决定的是：</p>
+<ul>
+<li>这一组视图画到哪</li>
+<li>这一组视图看的是哪个场景</li>
+</ul>
+<h3 id="2-共享渲染开关">2. 共享渲染开关</h3>
+<p>最典型的是：</p>
+<ul>
+<li><code>EngineShowFlags</code></li>
+<li><code>ViewMode</code></li>
+</ul>
+<p>它们决定的是：</p>
+<ul>
+<li>这组视图以什么模式在渲染</li>
+<li>哪些系统开启或关闭</li>
+<li>是否启用特定调试视图</li>
+</ul>
+<h3 id="3-时序和帧信息">3. 时序和帧信息</h3>
+<p>例如：</p>
+<ul>
+<li><code>Time</code></li>
+<li><code>FrameNumber</code></li>
+<li><code>FrameCounter</code></li>
+</ul>
+<p>这些信息后续会继续传到 Renderer 和 RenderThread，成为整帧统一的时间与帧级上下文。</p>
+<h3 id="4-一组具体视图">4. 一组具体视图</h3>
+<p>最关键的成员之一是：</p>
+<ul>
+<li><code>Views</code></li>
+</ul>
+<p>也就是说，<code>FSceneViewFamily</code> 的设计就是“共享配置 + 具体子项”。</p>
+<p>如果用一个简单图来概括：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;FSceneViewFamily&quot;] --&gt; B[&quot;Scene / RenderTarget&quot;]</span><br><span class="line">    A --&gt; C[&quot;EngineShowFlags / ViewMode&quot;]</span><br><span class="line">    A --&gt; D[&quot;Frame / Time / ScreenPercentage&quot;]</span><br><span class="line">    A --&gt; E[&quot;Views[]&quot;]</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="在-ViewFamily-之上，UE-还会做哪些共享设置">在 <code>ViewFamily</code> 之上，UE 还会做哪些共享设置</h2>
+<p>在 <code>UGameViewportClient::Draw</code> 里，family 创建完成以后，UE 还会继续补一批 family 级别的配置。</p>
+<p>这些设置不像 <code>View</code> 那样显眼，但它们决定了后续每个 view 工作在怎样的共同环境里。</p>
+<p>典型内容包括：</p>
+<ul>
+<li><code>ViewMode</code></li>
+<li><code>EngineShowFlags</code> 的覆盖和修正</li>
+<li>Screen Percentage 相关设置</li>
+<li>Dynamic Resolution</li>
+<li>Stereo 渲染相关配置</li>
+<li>HDR 标记</li>
+<li>ViewExtensions</li>
+</ul>
+<p>也就是说，在 single view 出现之前，UE 已经把“这组视图的共同渲染环境”处理了一遍。</p>
+<hr>
+<h2 id="从-ViewFamily-到单个-View：开始遍历玩家">从 <code>ViewFamily</code> 到单个 <code>View</code>：开始遍历玩家</h2>
+<p>当 family 级别的共享配置准备得差不多以后，<code>UGameViewportClient::Draw</code> 才会进入真正的“逐个 view 构造”阶段。</p>
+<p>这里最核心的动作是：</p>
+<ul>
+<li>遍历所有本地玩家</li>
+<li>针对每个玩家决定要创建几个 view</li>
+<li>对每个 view 调用 <code>ULocalPlayer::CalcSceneView</code></li>
+</ul>
+<p>这一步有两个值得注意的点。</p>
+<h3 id="1-一个本地玩家不一定只生成一个-view">1. 一个本地玩家不一定只生成一个 view</h3>
+<p>最典型的情况就是 stereo。</p>
+<p>如果当前是 VR 或立体渲染，那么单个玩家可能对应左右眼两个 view。<br>
+如果是某些分屏或模拟模式，一个玩家也可能拆成多个视图。</p>
+<p>这再次说明：</p>
+<p><strong><code>ViewFamily</code> 并不是一个“装一个 view 的容器”，而是一个真正的“视图集合上下文”。</strong></p>
+<h3 id="2-这里开始，UE-才真正进入-per-view-逻辑">2. 这里开始，UE 才真正进入 per-view 逻辑</h3>
+<p>family 之前处理的是共享问题。<br>
+从 <code>CalcSceneViewInitOptions</code> 和 <code>CalcSceneView</code> 开始，问题变成了：</p>
+<ul>
+<li>这个具体观察者的位置在哪里</li>
+<li>它的相机旋转是什么</li>
+<li>它的投影矩阵是什么</li>
+<li>它有哪些隐藏物体</li>
+<li>它有哪些后处理配置</li>
+</ul>
+<p>也就是说：</p>
+<p><strong>这一步开始，UE 才真正从“这一帧的公共环境”走向“这个视角自己的描述”。</strong></p>
+<hr>
+<h2 id="FSceneViewInitOptions：不是-View，本质上是“构造参数包”"><code>FSceneViewInitOptions</code>：不是 View，本质上是“构造参数包”</h2>
+<p>在这条主线里，<code>FSceneViewInitOptions</code> 很关键，但也很容易被忽略。</p>
+<p>很多人第一次读到它时，会把它和 <code>FSceneView</code> 混在一起。<br>
+其实两者职责完全不同。</p>
+<h3 id="FSceneViewInitOptions-负责什么"><code>FSceneViewInitOptions</code> 负责什么</h3>
+<p>它负责：</p>
+<p><strong>在真正创建 <code>FSceneView</code> 之前，把构造一个 view 所需的原材料先装起来。</strong></p>
+<p>它不是最终对象，而是构造阶段使用的输入描述。</p>
+<h3 id="它为什么继承-FSceneViewProjectionData">它为什么继承 <code>FSceneViewProjectionData</code></h3>
+<p>因为 UE 希望在这个阶段就把最底层的投影几何数据准备好。</p>
+<p>这部分内容包括：</p>
+<ul>
+<li><code>ViewOrigin</code></li>
+<li><code>ViewRotationMatrix</code></li>
+<li><code>ProjectionMatrix</code></li>
+<li><code>ViewRect</code></li>
+<li><code>ConstrainedViewRect</code></li>
+</ul>
+<p>这些数据还不代表一个完整 view，但已经足以构成“从世界到投影空间”的数学基础。</p>
+<h3 id="它比投影数据多出来什么">它比投影数据多出来什么</h3>
+<p><code>FSceneViewInitOptions</code> 又在此基础上补充了更高层的语义：</p>
+<ul>
+<li><code>ViewFamily</code></li>
+<li><code>SceneViewStateInterface</code></li>
+<li><code>ViewActor</code></li>
+<li><code>PlayerIndex</code></li>
+<li><code>StereoPass</code></li>
+<li><code>ViewLocation</code></li>
+<li><code>ViewRotation</code></li>
+<li><code>HiddenPrimitives</code></li>
+<li><code>ShowOnlyPrimitives</code></li>
+<li><code>FOV</code></li>
+<li><code>DesiredFOV</code></li>
+<li><code>FirstPersonParams</code></li>
+<li><code>bIsSceneCapture</code></li>
+<li><code>bIsReflectionCapture</code></li>
+<li><code>bIsPlanarReflection</code></li>
+</ul>
+<p>一句话总结：</p>
+<blockquote>
+<p><strong><code>FSceneViewInitOptions</code> 是“一个 view 应该如何被构造”的输入说明书。</strong></p>
+</blockquote>
+<hr>
+<h2 id="CalcSceneViewInitOptions：把底层原材料先装箱"><code>CalcSceneViewInitOptions</code>：把底层原材料先装箱</h2>
+<p><code>CalcSceneViewInitOptions</code> 负责收集创建 view 所需的底层输入。最适合按来源理解。</p>
+<h3 id="第一类输入：投影与视口几何">第一类输入：投影与视口几何</h3>
+<p>首先，UE 会调用 <code>GetProjectionData(...)</code>，拿到：</p>
+<ul>
+<li>视口矩形</li>
+<li>裁剪后的矩形</li>
+<li>投影矩阵</li>
+<li>视图原点和旋转矩阵</li>
+</ul>
+<p>这部分决定了这个 view 占据哪块屏幕区域，以及以什么投影方式观察世界。</p>
+<h3 id="第二类输入：相机附加状态">第二类输入：相机附加状态</h3>
+<p>接下来会从 <code>PlayerCameraManager</code> 提取一些附加状态，例如：</p>
+<ul>
+<li>fade color</li>
+<li>color scale</li>
+<li>是否发生了 camera cut</li>
+</ul>
+<p>这些数据不属于基础几何，但属于视图语义的一部分。</p>
+<h3 id="第三类输入：view-state-与上下文">第三类输入：view state 与上下文</h3>
+<p>接着，UE 会确保当前 view 拥有可用的 <code>SceneViewStateInterface</code>。很多历史、时序和可见性相关的数据，都依赖这份持久化 state。</p>
+<p>同时还会设置：</p>
+<ul>
+<li><code>ViewActor</code></li>
+<li><code>PlayerIndex</code></li>
+<li><code>LODParameter</code></li>
+<li><code>WorldToMetersScale</code></li>
+<li><code>CursorPos</code></li>
+<li><code>OriginOffsetThisFrame</code></li>
+</ul>
+<p>这些数据共同决定了一件事：这个 view 不是一次性的相机快照，而是当前玩家、当前世界状态和当前时序条件下的正式视角。</p>
+<hr>
+<h2 id="CalcSceneView：从相机语义到正式-FSceneView"><code>CalcSceneView</code>：从相机语义到正式 <code>FSceneView</code></h2>
+<p><code>CalcSceneViewInitOptions</code> 负责准备原材料，<code>CalcSceneView</code> 负责把这些原材料补齐成真正的视图语义，并构造成 <code>FSceneView</code>。</p>
+<h3 id="它先取的是-FMinimalViewInfo">它先取的是 <code>FMinimalViewInfo</code></h3>
+<p><code>CalcSceneView</code> 里会调用 <code>GetViewPoint(ViewInfo)</code>，得到 <code>FMinimalViewInfo</code>。</p>
+<p>这一步补齐了更接近相机语义的内容：</p>
+<ul>
+<li><code>Location</code></li>
+<li><code>Rotation</code></li>
+<li><code>FOV</code></li>
+<li><code>DesiredFOV</code></li>
+<li>first person 参数</li>
+<li>overscan / crop</li>
+</ul>
+<p>这意味着 UE 在这里做的不是机械组装，而是把 Camera、PlayerController、ViewTarget 等高层概念压缩成渲染可用的数据。</p>
+<h3 id="它还会补-hidden-show-only-逻辑">它还会补 hidden / show only 逻辑</h3>
+<p>这里还会补上 hidden / show only 逻辑。view 并不是“看到整个 scene”，它还会带着：</p>
+<ul>
+<li><code>HiddenPrimitives</code></li>
+<li><code>ShowOnlyPrimitives</code></li>
+</ul>
+<p>这一步决定了可见性处理阶段哪些物体被排除，哪些物体是唯一允许出现的。</p>
+<h3 id="然后才真正-new-FSceneView">然后才真正 <code>new FSceneView</code></h3>
+<p>这里有一条很清晰的边界：在这之前，都是构造参数和语义准备；从这里开始，才真正得到一个正式的 <code>FSceneView</code> 对象。</p>
+<hr>
+<h2 id="FSceneView-到底是什么"><code>FSceneView</code> 到底是什么</h2>
+<p>可以用一句话概括 <code>FSceneView</code>：</p>
+<blockquote>
+<p><strong><code>FSceneView</code> 不是相机本身，而是渲染器眼中的“一个观察者如何看世界”的正式描述。</strong></p>
+</blockquote>
+<h3 id="1-它不是-CameraActor">1. 它不是 CameraActor</h3>
+<p>CameraActor、PlayerController、PlayerCameraManager、ViewTarget 都属于更高层的游戏语义。它们共同作用之后，才会在渲染层收敛成一个 <code>FSceneView</code>。</p>
+<h3 id="2-它不是最终执行对象">2. 它不是最终执行对象</h3>
+<p><code>FSceneView</code> 很重要，但它仍然是 Engine 侧的描述对象。Renderer 真正执行时使用的是后面升级出来的 <code>FViewInfo</code>。</p>
+<h3 id="3-它已经足够完整">3. 它已经足够完整</h3>
+<p>虽然它还不是最终执行对象，但已经包含一套完整的视图信息：</p>
+<ul>
+<li>视口矩形</li>
+<li>视图矩阵</li>
+<li>投影矩阵</li>
+<li>相机位置和旋转</li>
+<li>过滤规则</li>
+<li>capture / reflection / stereo 状态</li>
+<li>最终后处理配置</li>
+</ul>
+<p>可以直接把 <code>FSceneView</code> 看成 Engine 侧的一份完整 per-view 渲染描述。</p>
+<hr>
+<h2 id="FViewMatrices：全文最值得反复看的部分"><code>FViewMatrices</code>：全文最值得反复看的部分</h2>
+<p>如果 <code>FSceneView</code> 是正式视图描述，那么 <code>FViewMatrices</code> 就是它的数学骨架。很多问题最后都会回到这里：</p>
+<ul>
+<li>这个矩阵是从哪里来的</li>
+<li>为什么这里有这么多矩阵</li>
+<li><code>PreViewTranslation</code> 到底是什么意思</li>
+<li>为什么投影矩阵会有“按 RHI 调整前后”的区别</li>
+</ul>
+<p>这些问题大多都能在 <code>FViewMatrices::Init</code> 里找到答案。</p>
+<h3 id="一次性看懂-FViewMatrices">一次性看懂 <code>FViewMatrices</code></h3>
+<p><code>FViewMatrices</code> 中最核心的字段可以简单整理成下面这张表。</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ProjectionMatrix</code></td>
+<td>当前 view 真正用于渲染的投影矩阵</td>
+</tr>
+<tr>
+<td><code>InvProjectionMatrix</code></td>
+<td>投影矩阵的逆</td>
+</tr>
+<tr>
+<td><code>ViewMatrix</code></td>
+<td>世界空间到 view 空间的变换</td>
+</tr>
+<tr>
+<td><code>InvViewMatrix</code></td>
+<td>view 空间到世界空间的变换</td>
+</tr>
+<tr>
+<td><code>ViewProjectionMatrix</code></td>
+<td>世界到裁剪空间的完整变换</td>
+</tr>
+<tr>
+<td><code>InvViewProjectionMatrix</code></td>
+<td>裁剪空间反推回世界空间的完整变换</td>
+</tr>
+<tr>
+<td><code>TranslatedViewMatrix</code></td>
+<td>带 <code>PreViewTranslation</code> 的 view 变换</td>
+</tr>
+<tr>
+<td><code>TranslatedViewProjectionMatrix</code></td>
+<td>带 <code>PreViewTranslation</code> 的完整投影变换</td>
+</tr>
+<tr>
+<td><code>ViewOrigin</code></td>
+<td>当前视图在世界中的观察原点</td>
+</tr>
+<tr>
+<td><code>PreViewTranslation</code></td>
+<td>在真正进入投影前，对世界坐标做的平移</td>
+</tr>
+</tbody>
+</table>
+<h3 id="为什么会有这么多矩阵">为什么会有这么多矩阵</h3>
+<p>因为渲染器面对的不是单一任务。它既要：</p>
+<ul>
+<li>把顶点从世界空间投到屏幕上</li>
+</ul>
+<p>也要：</p>
+<ul>
+<li>从屏幕空间重建世界位置</li>
+<li>做反投影</li>
+<li>做可见性和裁剪</li>
+<li>计算各种 screen-space 效果</li>
+<li>处理大世界坐标精度问题</li>
+</ul>
+<p>如果只有一份 <code>ViewProjectionMatrix</code>，很多事情都得在使用现场临时推导。UE 选择在 view 构建阶段就把高频矩阵体系一次性整理出来。</p>
+<h3 id="为什么这些矩阵在-CPU-侧准备">为什么这些矩阵在 CPU 侧准备</h3>
+<p>这里常见的疑问是：矩阵变换不是 GPU 最擅长的吗？为什么还要在 CPU 上算？</p>
+<p>关键在于区分两件事：</p>
+<ol>
+<li><strong>CPU 计算 per-view 常量矩阵</strong></li>
+<li><strong>GPU 用这些矩阵处理海量顶点和像素</strong></li>
+</ol>
+<p>这里 CPU 做的是第一件事。这些矩阵不是给每个顶点单独算的，而是每个 view 只准备一次，再作为 uniform buffer 提供给 GPU。</p>
+<p>这样做很划算，原因有三个：</p>
+<ul>
+<li>这些矩阵是 per-view 的，不是 per-vertex 的，计算量很小。</li>
+<li>CPU 自己在可见性、LOD、视图组织阶段也需要使用这些结果。</li>
+<li>先准备成稳定常量，再交给 GPU，大量后续 shader 都可以复用。</li>
+</ul>
+<p>所以这里并不是“CPU 抢了 GPU 的工作”，而是 CPU 先把视图规则准备好，再交给 GPU 处理海量数据。</p>
+<h3 id="PreViewTranslation-为什么重要"><code>PreViewTranslation</code> 为什么重要</h3>
+<p><code>PreViewTranslation</code> 是 UE 里非常关键的概念。直觉上，世界坐标似乎应该直接参与变换，但 UE 会先把世界整体平移到当前 <code>ViewOrigin</code> 附近。原因很直接：这样可以显著改善浮点精度，尤其是在大世界坐标场景下。于是后续很多计算并不直接基于原始世界位置，而是基于“以当前 view 为中心重新平移过的世界空间”。</p>
+<p>可以简单记成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">原始世界坐标</span><br><span class="line">-&gt; 加上 PreViewTranslation</span><br><span class="line">-&gt; 进入 TranslatedView / TranslatedViewProjection 体系</span><br></pre></td></tr></table></figure>
+<p>这也是为什么 <code>FViewMatrices</code> 不只有普通 <code>ViewMatrix</code>，还会有 <code>TranslatedViewMatrix</code>、<code>TranslatedViewProjectionMatrix</code> 等平移后的版本。</p>
+<hr>
+<h2 id="FSceneView-构造完成以后，事情还没结束"><code>FSceneView</code> 构造完成以后，事情还没结束</h2>
+<p>当 <code>new FSceneView(ViewInitOptions)</code> 发生时，view 的几何和视图空间描述已经齐了，但还缺一块关键内容：</p>
+<p><strong>最终画面风格。</strong></p>
+<p>这里说的“风格”不是艺术意义上的风格，而是：</p>
+<ul>
+<li>Bloom</li>
+<li>Exposure</li>
+<li>Color grading</li>
+<li>Motion blur</li>
+<li>Lens flare</li>
+<li>Tonemapping 相关配置</li>
+<li>各种 post process volume 混合后的最终设置</li>
+</ul>
+<p>这些内容并不是在 <code>FSceneView</code> 构造函数里一次性写完的，而是在它加入 <code>ViewFamily</code> 之后，再走一轮专门的后处理配置收集流程。</p>
+<hr>
+<h2 id="为什么后处理配置不直接在构造函数里一次性写完">为什么后处理配置不直接在构造函数里一次性写完</h2>
+<p>原因很简单：一个最终视图的后处理结果并不来自单一来源，而是多层输入的混合：</p>
+<ul>
+<li>引擎默认值</li>
+<li>项目默认值</li>
+<li>世界中的 <code>PostProcessVolume</code></li>
+<li>Camera 自己带的 post process 设置</li>
+<li>Camera 动画和 modifier 的覆盖</li>
+<li>Stereo 设备的额外修改</li>
+</ul>
+<p>因此，UE 把后处理配置拆成了一个单独阶段：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;StartFinalPostprocessSettings&quot;] --&gt; B[&quot;OverridePostProcessSettings&quot;]</span><br><span class="line">    B --&gt; C[&quot;EndFinalPostprocessSettings&quot;]</span><br></pre></td></tr></table></figure>
+<h3 id="StartFinalPostprocessSettings"><code>StartFinalPostprocessSettings</code></h3>
+<p>这一步负责准备 <code>FinalPostProcessSettings</code> 的基线，包括：</p>
+<ul>
+<li>写入默认值</li>
+<li>应用项目和 CVar 的默认策略</li>
+<li>让 stereo 设备先做一轮初始化修正</li>
+<li>调用世界级别的 post process 设置收集逻辑</li>
+</ul>
+<p>它回答的问题是：如果后面什么都不覆盖，这个 view 默认会长成什么样。</p>
+<h3 id="OverridePostProcessSettings"><code>OverridePostProcessSettings</code></h3>
+<p>这一层负责真正的混合。它不是简单赋值，而是：</p>
+<ul>
+<li>只对被 override 的字段生效</li>
+<li>按权重对数值型参数做 lerp</li>
+<li>对少数枚举或引用类型参数做直接替换</li>
+</ul>
+<p>也就是说，它不是替换整个结构体，而是对最终设置做字段级混合。</p>
+<h3 id="EndFinalPostprocessSettings"><code>EndFinalPostprocessSettings</code></h3>
+<p>最后一步负责收尾和合法化处理：</p>
+<ul>
+<li>根据当前平台和 feature level 做最终修正</li>
+<li>根据 show flags / CVar 把某些项关掉或规整</li>
+<li>保证 <code>FinalPostProcessSettings</code> 成为一个“最终可执行版本”</li>
+</ul>
+<p>后处理阶段的本质，就是把多个来源的 post process 语义合成为当前 view 的最终显示风格。</p>
+<hr>
+<h2 id="此时的-FSceneView-已经完整了吗">此时的 <code>FSceneView</code> 已经完整了吗</h2>
+<p>到这里可以说：对于 Engine 侧来说，<code>FSceneView</code> 已经基本完整了。</p>
+<p>它现在已经同时具备了：</p>
+<ul>
+<li>空间和投影信息</li>
+<li>视图裁剪与过滤信息</li>
+<li>stereo / capture / reflection 等状态</li>
+<li>完整的最终后处理配置</li>
+</ul>
+<p>到了把 <code>ViewFamily</code> 交给 Renderer 的那一刻，Engine 侧交出去的不是半成品，而是一组已经准备好的视图描述。</p>
+<hr>
+<h2 id="Engine-到-Renderer-的正式交接点">Engine 到 Renderer 的正式交接点</h2>
+<p>在 <code>UGameViewportClient::Draw</code> 的后半段，所有玩家的 view 都准备好之后，Engine 会调用：</p>
+<p><code>GetRendererModule().BeginRenderingViewFamily(SceneCanvas, &amp;ViewFamily);</code></p>
+<p>这是一个很清晰的边界。在这个调用之前，问题的主语一直是：</p>
+<ul>
+<li><code>GameViewportClient</code></li>
+<li><code>LocalPlayer</code></li>
+<li><code>SceneView</code></li>
+<li><code>ViewFamily</code></li>
+</ul>
+<p>在这个调用之后，问题的主语开始变成：</p>
+<ul>
+<li><code>RendererModule</code></li>
+<li><code>SceneRenderer</code></li>
+<li><code>ViewInfo</code></li>
+<li><code>SceneRenderBuilder</code></li>
+</ul>
+<p>这一步可以直接看成：</p>
+<blockquote>
+<p><strong>Engine 侧视图准备结束，Renderer 侧场景渲染构建开始。</strong></p>
+</blockquote>
+<hr>
+<h2 id="BeginRenderingViewFamily：Renderer-接手后的第一跳，并不是立刻开画"><code>BeginRenderingViewFamily</code>：Renderer 接手后的第一跳，并不是立刻开画</h2>
+<p><code>BeginRenderingViewFamily</code> 很容易让人误以为“Renderer 现在开始真正绘制了”。源码给出的答案是：还没有。</p>
+<p>在这一步，Renderer 首先做的是：</p>
+<ul>
+<li>检查 <code>ViewFamily</code> 合法性</li>
+<li>确保所有 family 指向同一个 scene</li>
+<li>调用 <code>World-&gt;SendAllEndOfFrameUpdates()</code>，把 world 到 render proxy 的状态同步到最新</li>
+<li>flush canvas</li>
+<li>设置 frame number</li>
+<li>整理 streaming view origins</li>
+<li>准备 upscaler / extension 相关的上下文</li>
+</ul>
+<p>Renderer 接手后的第一阶段，更像是把“已经存在的视图描述”整理成“可以正式开始场景渲染构建”的状态。</p>
+<p>也就是说，从架构上看：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;Engine 侧准备好 ViewFamily / FSceneView&quot;] --&gt; B[&quot;Renderer 侧同步与整理&quot;]</span><br><span class="line">    B --&gt; C[&quot;构建 FSceneRenderer / FViewInfo&quot;]</span><br><span class="line">    C --&gt; D[&quot;RenderThread 真正执行一帧&quot;]</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="FSceneRenderer：Renderer-的组织者，而不是某个-pass"><code>FSceneRenderer</code>：Renderer 的组织者，而不是某个 pass</h2>
+<p>在这条链里，<code>FSceneRenderer</code> 是一个关键类型。<code>FSceneView</code> 描述的是单个观察者如何看世界，<code>FSceneRenderer</code> 则更像是 Renderer 为这一组 view 创建出来的整帧组织者。</p>
+<p>它的构造函数里有一句非常值得记住的检查：</p>
+<p><code>check(IsInGameThread());</code></p>
+<p>这句话明确说明：即使已经进入 Renderer，<code>FSceneRenderer</code> 的构造和准备工作仍然发生在 GameThread。这也再次说明，本文讨论的核心仍然是渲染准备，而不是 GPU 上真正的绘制执行。</p>
+<hr>
+<h2 id="从-FSceneView-到-FViewInfo：为什么-Renderer-不直接用前者">从 <code>FSceneView</code> 到 <code>FViewInfo</code>：为什么 Renderer 不直接用前者</h2>
+<p>当 <code>FSceneRenderer</code> 被构造时，它会遍历 <code>ViewFamily-&gt;Views</code>，然后把每个 <code>FSceneView</code> 复制成 <code>FViewInfo</code>。</p>
+<p>这一步说明，Renderer 不直接以 <code>FSceneView</code> 作为最终执行对象。</p>
+<h3 id="为什么要多一层-FViewInfo">为什么要多一层 <code>FViewInfo</code></h3>
+<p><code>FSceneView</code> 虽然已经是一份完整的视图描述，但它更偏向语义层描述。Renderer 真正执行时，还需要一整套额外的运行时状态。</p>
+<p>这些状态包括：</p>
+<ul>
+<li>primitive visibility map</li>
+<li>primitive relevance map</li>
+<li>static mesh visibility map</li>
+<li>动态 primitive 收集器</li>
+<li>occlusion query 相关状态</li>
+<li>renderer-side 的 uniform cache</li>
+<li>fog / water / translucency 等后续 pass 会用到的额外字段</li>
+</ul>
+<p>这些正是 <code>FViewInfo</code> 要补上的内容。</p>
+<h3 id="它本质上是一轮职责升级">它本质上是一轮职责升级</h3>
+<p>可以把这次变化理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;FSceneView&quot;] --&gt; B[&quot;拷贝基础视图描述&quot;]</span><br><span class="line">    B --&gt; C[&quot;FViewInfo&quot;]</span><br><span class="line">    C --&gt; D[&quot;可见性 / Relevance / Occlusion / Renderer 执行状态&quot;]</span><br></pre></td></tr></table></figure>
+<p>所以，<code>FViewInfo</code> 不是一个“不同的 view”，而是 Renderer 为了真正执行渲染，对 <code>FSceneView</code> 做的一次执行语义升级。</p>
+<h3 id="一句话概括两者关系">一句话概括两者关系</h3>
+<ul>
+<li><code>FSceneView</code>：Engine 侧的正式视图描述</li>
+<li><code>FViewInfo</code>：Renderer 侧的正式执行视图</li>
+</ul>
+<hr>
+<h2 id="FViewInfo-到底比-FSceneView-多了什么"><code>FViewInfo</code> 到底比 <code>FSceneView</code> 多了什么</h2>
+<p>如果把这件事说得再具体一点，可以直接用表格来对照。</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th><code>FSceneView</code></th>
+<th><code>FViewInfo</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>归属</td>
+<td>Engine 侧</td>
+<td>Renderer 侧</td>
+</tr>
+<tr>
+<td>核心职责</td>
+<td>描述一个视角如何看世界</td>
+<td>承载这个视角后续真正渲染执行所需的状态</td>
+</tr>
+<tr>
+<td>是否有矩阵和视图语义</td>
+<td>有</td>
+<td>有，且继承自 <code>FSceneView</code></td>
+</tr>
+<tr>
+<td>是否有可见性和 occlusion 状态</td>
+<td>很少</td>
+<td>大量具备</td>
+</tr>
+<tr>
+<td>是否直接作为 Renderer 的主要工作单元</td>
+<td>否</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<p>最重要的区别可以压缩成一句话：<code>FSceneView</code> 负责“看”，<code>FViewInfo</code> 负责“干活”。</p>
+<hr>
+<h2 id="到这里为止，RenderThread-其实还没真正开始“执行渲染”">到这里为止，RenderThread 其实还没真正开始“执行渲染”</h2>
+<p>即使 <code>ViewFamily</code> 已经交给 Renderer，即使 <code>FSceneRenderer</code> 和 <code>FViewInfo</code> 也已经构造出来了，RenderThread 依旧还没有开始执行真正的帧内 pass。真正把工作推向 RenderThread 的，是后面的：</p>
+<ul>
+<li><code>FSceneRenderBuilder</code></li>
+<li><code>AddRenderer(...)</code></li>
+<li><code>Execute()</code></li>
+</ul>
+<p>也就是说，本文讨论的整个系统，仍然主要处在：</p>
+<p><strong>构建、整理、封装、交接</strong></p>
+<p>而不是：</p>
+<p><strong>执行 PrePass、BasePass、Lighting、PostProcess</strong></p>
+<p>可以用一句话概括：</p>
+<blockquote>
+<p>本文讨论的是“如何把一帧装好”，而不是“如何把一帧画出来”。</p>
+</blockquote>
+<hr>
+<h2 id="整篇文章，其实都可以压缩成这张图">整篇文章，其实都可以压缩成这张图</h2>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;Viewport / World / EngineShowFlags&quot;] --&gt; B[&quot;FSceneViewFamily&quot;]</span><br><span class="line">    B --&gt; C[&quot;每个 LocalPlayer / 每个 Eye&quot;]</span><br><span class="line">    C --&gt; D[&quot;FSceneViewInitOptions&quot;]</span><br><span class="line">    D --&gt; E[&quot;FSceneView&quot;]</span><br><span class="line">    E --&gt; F[&quot;FinalPostProcessSettings&quot;]</span><br><span class="line">    F --&gt; G[&quot;BeginRenderingViewFamily&quot;]</span><br><span class="line">    G --&gt; H[&quot;FSceneRenderer&quot;]</span><br><span class="line">    H --&gt; I[&quot;FViewInfo&quot;]</span><br><span class="line">    I --&gt; J[&quot;SceneRenderBuilder&quot;]</span><br><span class="line">    J --&gt; K[&quot;RenderThread / 后续渲染执行&quot;]</span><br></pre></td></tr></table></figure>
+<p>这张图可以直接翻译成一句话：UE 会先把“视图系统”完整构建出来，再让真正的渲染执行开始。</p>
+<hr>
+<h2 id="最值得带走的-8-个结论">最值得带走的 8 个结论</h2>
+<p>最后，把全文压成 8 个最值得记住的结论。</p>
+<h3 id="1-一帧主场景渲染在-Engine-侧的重要入口是-UGameViewportClient-Draw">1. 一帧主场景渲染在 Engine 侧的重要入口是 <code>UGameViewportClient::Draw</code></h3>
+<p>如果你想研究主游戏视口这一帧是怎么开始组织的，从这里入手最自然。</p>
+<h3 id="2-UE-先创建-ViewFamily，再创建具体-View">2. UE 先创建 <code>ViewFamily</code>，再创建具体 <code>View</code></h3>
+<p>这说明 UE 先解决“一组视图共享什么”，再解决“单个视图长什么样”。</p>
+<h3 id="3-FSceneViewInitOptions-不是最终视图对象，而是构造参数包">3. <code>FSceneViewInitOptions</code> 不是最终视图对象，而是构造参数包</h3>
+<p>它负责在正式创建 <code>FSceneView</code> 之前，先把投影、相机、过滤规则和状态接口等原材料装起来。</p>
+<h3 id="4-FSceneView-是-Engine-侧正式的视图描述">4. <code>FSceneView</code> 是 Engine 侧正式的视图描述</h3>
+<p>它已经包含：</p>
+<ul>
+<li>视图矩阵</li>
+<li>投影矩阵</li>
+<li>view rect</li>
+<li>capture / stereo 等状态</li>
+<li>最终后处理配置</li>
+</ul>
+<h3 id="5-FViewMatrices-是视图数学骨架">5. <code>FViewMatrices</code> 是视图数学骨架</h3>
+<p>它负责整理 <code>ViewMatrix</code>、<code>ProjectionMatrix</code>、<code>ViewProjectionMatrix</code> 以及 <code>PreViewTranslation</code> 等关键变换关系。</p>
+<h3 id="6-后处理配置是在-FSceneView-加入-family-之后再灌进去的">6. 后处理配置是在 <code>FSceneView</code> 加入 family 之后再灌进去的</h3>
+<p>它不是简单复制，而是初始化、混合和收尾修正的三段式流程。</p>
+<h3 id="7-Renderer-接手后，第一阶段仍然主要发生在-GameThread">7. Renderer 接手后，第一阶段仍然主要发生在 GameThread</h3>
+<p><code>BeginRenderingViewFamily</code> 之后，先做同步和整理，再构建 <code>FSceneRenderer</code>。</p>
+<h3 id="8-Renderer-真正使用的是-FViewInfo，不是原始的-FSceneView">8. Renderer 真正使用的是 <code>FViewInfo</code>，不是原始的 <code>FSceneView</code></h3>
+<p><code>FViewInfo</code> 是在 <code>FSceneView</code> 基础上增加 Renderer 执行状态后的正式工作对象。</p>
+<hr>
+<h2 id="结语：为什么这部分值得先看">结语：为什么这部分值得先看</h2>
+<p>最容易产生的误解是：“这不就是渲染前的一点准备工作吗？是不是不如直接去看真正的 pass？”</p>
+<p>恰恰相反。正因为后续所有 pass 都建立在这些 view 数据之上，所以这部分不是边角料，而是 Renderer 的地基。</p>
+<p>如果没有先理解：</p>
+<ul>
+<li><code>FSceneViewFamily</code></li>
+<li><code>FSceneViewInitOptions</code></li>
+<li><code>FSceneView</code></li>
+<li><code>FViewInfo</code></li>
+</ul>
+<p>之间的关系，那么后面看到的 Deferred Renderer 往往只会是一堆复杂函数调用。你知道它在做事，却很难真正知道它为什么能在这里做这件事。</p>
+<p>一旦这条链被看清楚，后面的 <code>PrePass</code>、<code>BasePass</code>、光照与后处理就都有了一个共同前提：它们都是围绕已经准备好的 view 在展开。</p>
+<p>如果把全文最重要的收获压缩成一句话，就是：</p>
+<blockquote>
+<p>在 UE 中，一帧渲染真正开始之前，最重要的工作不是某个 pass 被执行，而是整套视图描述被构建并完成交接。</p>
+</blockquote>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/" class="nav-prev">
+                <span class="nav-label">&larr; 上一篇</span>
+                <span class="nav-title">UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段</span>
+            </a>
+            
+
+            
+            <a href="/2026/04/09/graphics-notes/opengl-02-shaders-attributes-uniform/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E6%9C%AC%E6%96%87%E5%88%B0%E5%BA%95%E5%9C%A8%E8%AE%B2%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">先给结论：本文到底在讲什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E5%85%88%E6%8A%8A%E6%95%B4%E4%BB%B6%E4%BA%8B%E4%B8%B2%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">一条主线：先把整件事串起来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E6%9C%80%E4%B8%8A%E5%B1%82%E5%BC%80%E5%A7%8B%EF%BC%9A%E6%98%AF%E8%B0%81%E5%9C%A8%E9%A9%B1%E5%8A%A8%E8%BF%99%E4%B8%80%E5%B8%A7"><span class="post-toc-list-text">从最上层开始：是谁在驱动这一帧</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#UGameEngine-RedrawViewports"><span class="post-toc-list-text">UGameEngine::RedrawViewports</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FViewport-Draw"><span class="post-toc-list-text">FViewport::Draw</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#UGameViewportClient-Draw"><span class="post-toc-list-text">UGameViewportClient::Draw</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%88%E5%88%9B%E5%BB%BA-ViewFamily%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E5%85%88%E5%88%9B%E5%BB%BA-View"><span class="post-toc-list-text">为什么先创建 ViewFamily，而不是先创建 View</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FSceneViewFamily-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneViewFamily 是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E5%85%88%E6%9C%89-family"><span class="post-toc-list-text">为什么必须先有 family</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FSceneViewFamilyContext-%E7%9A%84%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">FSceneViewFamilyContext 的角色</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneViewFamily-%E5%88%B0%E5%BA%95%E8%A3%85%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneViewFamily 到底装了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B8%B2%E6%9F%93%E7%9B%AE%E6%A0%87%E5%92%8C%E5%9C%BA%E6%99%AF%E5%BD%92%E5%B1%9E"><span class="post-toc-list-text">1. 渲染目标和场景归属</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%85%B1%E4%BA%AB%E6%B8%B2%E6%9F%93%E5%BC%80%E5%85%B3"><span class="post-toc-list-text">2. 共享渲染开关</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%97%B6%E5%BA%8F%E5%92%8C%E5%B8%A7%E4%BF%A1%E6%81%AF"><span class="post-toc-list-text">3. 时序和帧信息</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E4%B8%80%E7%BB%84%E5%85%B7%E4%BD%93%E8%A7%86%E5%9B%BE"><span class="post-toc-list-text">4. 一组具体视图</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9C%A8-ViewFamily-%E4%B9%8B%E4%B8%8A%EF%BC%8CUE-%E8%BF%98%E4%BC%9A%E5%81%9A%E5%93%AA%E4%BA%9B%E5%85%B1%E4%BA%AB%E8%AE%BE%E7%BD%AE"><span class="post-toc-list-text">在 ViewFamily 之上，UE 还会做哪些共享设置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E-ViewFamily-%E5%88%B0%E5%8D%95%E4%B8%AA-View%EF%BC%9A%E5%BC%80%E5%A7%8B%E9%81%8D%E5%8E%86%E7%8E%A9%E5%AE%B6"><span class="post-toc-list-text">从 ViewFamily 到单个 View：开始遍历玩家</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E4%B8%80%E4%B8%AA%E6%9C%AC%E5%9C%B0%E7%8E%A9%E5%AE%B6%E4%B8%8D%E4%B8%80%E5%AE%9A%E5%8F%AA%E7%94%9F%E6%88%90%E4%B8%80%E4%B8%AA-view"><span class="post-toc-list-text">1. 一个本地玩家不一定只生成一个 view</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E8%BF%99%E9%87%8C%E5%BC%80%E5%A7%8B%EF%BC%8CUE-%E6%89%8D%E7%9C%9F%E6%AD%A3%E8%BF%9B%E5%85%A5-per-view-%E9%80%BB%E8%BE%91"><span class="post-toc-list-text">2. 这里开始，UE 才真正进入 per-view 逻辑</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneViewInitOptions%EF%BC%9A%E4%B8%8D%E6%98%AF-View%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E2%80%9C%E6%9E%84%E9%80%A0%E5%8F%82%E6%95%B0%E5%8C%85%E2%80%9D"><span class="post-toc-list-text">FSceneViewInitOptions：不是 View，本质上是“构造参数包”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FSceneViewInitOptions-%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneViewInitOptions 负责什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BB%A7%E6%89%BF-FSceneViewProjectionData"><span class="post-toc-list-text">它为什么继承 FSceneViewProjectionData</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E6%AF%94%E6%8A%95%E5%BD%B1%E6%95%B0%E6%8D%AE%E5%A4%9A%E5%87%BA%E6%9D%A5%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">它比投影数据多出来什么</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#CalcSceneViewInitOptions%EF%BC%9A%E6%8A%8A%E5%BA%95%E5%B1%82%E5%8E%9F%E6%9D%90%E6%96%99%E5%85%88%E8%A3%85%E7%AE%B1"><span class="post-toc-list-text">CalcSceneViewInitOptions：把底层原材料先装箱</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E7%B1%BB%E8%BE%93%E5%85%A5%EF%BC%9A%E6%8A%95%E5%BD%B1%E4%B8%8E%E8%A7%86%E5%8F%A3%E5%87%A0%E4%BD%95"><span class="post-toc-list-text">第一类输入：投影与视口几何</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E7%B1%BB%E8%BE%93%E5%85%A5%EF%BC%9A%E7%9B%B8%E6%9C%BA%E9%99%84%E5%8A%A0%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">第二类输入：相机附加状态</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E7%B1%BB%E8%BE%93%E5%85%A5%EF%BC%9Aview-state-%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="post-toc-list-text">第三类输入：view state 与上下文</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#CalcSceneView%EF%BC%9A%E4%BB%8E%E7%9B%B8%E6%9C%BA%E8%AF%AD%E4%B9%89%E5%88%B0%E6%AD%A3%E5%BC%8F-FSceneView"><span class="post-toc-list-text">CalcSceneView：从相机语义到正式 FSceneView</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E5%85%88%E5%8F%96%E7%9A%84%E6%98%AF-FMinimalViewInfo"><span class="post-toc-list-text">它先取的是 FMinimalViewInfo</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E8%BF%98%E4%BC%9A%E8%A1%A5-hidden-show-only-%E9%80%BB%E8%BE%91"><span class="post-toc-list-text">它还会补 hidden &#x2F; show only 逻辑</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%84%B6%E5%90%8E%E6%89%8D%E7%9C%9F%E6%AD%A3-new-FSceneView"><span class="post-toc-list-text">然后才真正 new FSceneView</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneView-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSceneView 到底是什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%AE%83%E4%B8%8D%E6%98%AF-CameraActor"><span class="post-toc-list-text">1. 它不是 CameraActor</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%AE%83%E4%B8%8D%E6%98%AF%E6%9C%80%E7%BB%88%E6%89%A7%E8%A1%8C%E5%AF%B9%E8%B1%A1"><span class="post-toc-list-text">2. 它不是最终执行对象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%AE%83%E5%B7%B2%E7%BB%8F%E8%B6%B3%E5%A4%9F%E5%AE%8C%E6%95%B4"><span class="post-toc-list-text">3. 它已经足够完整</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FViewMatrices%EF%BC%9A%E5%85%A8%E6%96%87%E6%9C%80%E5%80%BC%E5%BE%97%E5%8F%8D%E5%A4%8D%E7%9C%8B%E7%9A%84%E9%83%A8%E5%88%86"><span class="post-toc-list-text">FViewMatrices：全文最值得反复看的部分</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E6%80%A7%E7%9C%8B%E6%87%82-FViewMatrices"><span class="post-toc-list-text">一次性看懂 FViewMatrices</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E6%9C%89%E8%BF%99%E4%B9%88%E5%A4%9A%E7%9F%A9%E9%98%B5"><span class="post-toc-list-text">为什么会有这么多矩阵</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%BA%9B%E7%9F%A9%E9%98%B5%E5%9C%A8-CPU-%E4%BE%A7%E5%87%86%E5%A4%87"><span class="post-toc-list-text">为什么这些矩阵在 CPU 侧准备</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#PreViewTranslation-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">PreViewTranslation 为什么重要</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneView-%E6%9E%84%E9%80%A0%E5%AE%8C%E6%88%90%E4%BB%A5%E5%90%8E%EF%BC%8C%E4%BA%8B%E6%83%85%E8%BF%98%E6%B2%A1%E7%BB%93%E6%9D%9F"><span class="post-toc-list-text">FSceneView 构造完成以后，事情还没结束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8E%E5%A4%84%E7%90%86%E9%85%8D%E7%BD%AE%E4%B8%8D%E7%9B%B4%E6%8E%A5%E5%9C%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E9%87%8C%E4%B8%80%E6%AC%A1%E6%80%A7%E5%86%99%E5%AE%8C"><span class="post-toc-list-text">为什么后处理配置不直接在构造函数里一次性写完</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#StartFinalPostprocessSettings"><span class="post-toc-list-text">StartFinalPostprocessSettings</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#OverridePostProcessSettings"><span class="post-toc-list-text">OverridePostProcessSettings</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#EndFinalPostprocessSettings"><span class="post-toc-list-text">EndFinalPostprocessSettings</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%AD%A4%E6%97%B6%E7%9A%84-FSceneView-%E5%B7%B2%E7%BB%8F%E5%AE%8C%E6%95%B4%E4%BA%86%E5%90%97"><span class="post-toc-list-text">此时的 FSceneView 已经完整了吗</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Engine-%E5%88%B0-Renderer-%E7%9A%84%E6%AD%A3%E5%BC%8F%E4%BA%A4%E6%8E%A5%E7%82%B9"><span class="post-toc-list-text">Engine 到 Renderer 的正式交接点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#BeginRenderingViewFamily%EF%BC%9ARenderer-%E6%8E%A5%E6%89%8B%E5%90%8E%E7%9A%84%E7%AC%AC%E4%B8%80%E8%B7%B3%EF%BC%8C%E5%B9%B6%E4%B8%8D%E6%98%AF%E7%AB%8B%E5%88%BB%E5%BC%80%E7%94%BB"><span class="post-toc-list-text">BeginRenderingViewFamily：Renderer 接手后的第一跳，并不是立刻开画</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSceneRenderer%EF%BC%9ARenderer-%E7%9A%84%E7%BB%84%E7%BB%87%E8%80%85%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E6%9F%90%E4%B8%AA-pass"><span class="post-toc-list-text">FSceneRenderer：Renderer 的组织者，而不是某个 pass</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E-FSceneView-%E5%88%B0-FViewInfo%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-Renderer-%E4%B8%8D%E7%9B%B4%E6%8E%A5%E7%94%A8%E5%89%8D%E8%80%85"><span class="post-toc-list-text">从 FSceneView 到 FViewInfo：为什么 Renderer 不直接用前者</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%A4%9A%E4%B8%80%E5%B1%82-FViewInfo"><span class="post-toc-list-text">为什么要多一层 FViewInfo</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%83%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E4%B8%80%E8%BD%AE%E8%81%8C%E8%B4%A3%E5%8D%87%E7%BA%A7"><span class="post-toc-list-text">它本质上是一轮职责升级</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%A6%82%E6%8B%AC%E4%B8%A4%E8%80%85%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">一句话概括两者关系</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FViewInfo-%E5%88%B0%E5%BA%95%E6%AF%94-FSceneView-%E5%A4%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FViewInfo 到底比 FSceneView 多了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E8%BF%99%E9%87%8C%E4%B8%BA%E6%AD%A2%EF%BC%8CRenderThread-%E5%85%B6%E5%AE%9E%E8%BF%98%E6%B2%A1%E7%9C%9F%E6%AD%A3%E5%BC%80%E5%A7%8B%E2%80%9C%E6%89%A7%E8%A1%8C%E6%B8%B2%E6%9F%93%E2%80%9D"><span class="post-toc-list-text">到这里为止，RenderThread 其实还没真正开始“执行渲染”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B4%E7%AF%87%E6%96%87%E7%AB%A0%EF%BC%8C%E5%85%B6%E5%AE%9E%E9%83%BD%E5%8F%AF%E4%BB%A5%E5%8E%8B%E7%BC%A9%E6%88%90%E8%BF%99%E5%BC%A0%E5%9B%BE"><span class="post-toc-list-text">整篇文章，其实都可以压缩成这张图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%80%BC%E5%BE%97%E5%B8%A6%E8%B5%B0%E7%9A%84-8-%E4%B8%AA%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">最值得带走的 8 个结论</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E4%B8%80%E5%B8%A7%E4%B8%BB%E5%9C%BA%E6%99%AF%E6%B8%B2%E6%9F%93%E5%9C%A8-Engine-%E4%BE%A7%E7%9A%84%E9%87%8D%E8%A6%81%E5%85%A5%E5%8F%A3%E6%98%AF-UGameViewportClient-Draw"><span class="post-toc-list-text">1. 一帧主场景渲染在 Engine 侧的重要入口是 UGameViewportClient::Draw</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-UE-%E5%85%88%E5%88%9B%E5%BB%BA-ViewFamily%EF%BC%8C%E5%86%8D%E5%88%9B%E5%BB%BA%E5%85%B7%E4%BD%93-View"><span class="post-toc-list-text">2. UE 先创建 ViewFamily，再创建具体 View</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-FSceneViewInitOptions-%E4%B8%8D%E6%98%AF%E6%9C%80%E7%BB%88%E8%A7%86%E5%9B%BE%E5%AF%B9%E8%B1%A1%EF%BC%8C%E8%80%8C%E6%98%AF%E6%9E%84%E9%80%A0%E5%8F%82%E6%95%B0%E5%8C%85"><span class="post-toc-list-text">3. FSceneViewInitOptions 不是最终视图对象，而是构造参数包</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-FSceneView-%E6%98%AF-Engine-%E4%BE%A7%E6%AD%A3%E5%BC%8F%E7%9A%84%E8%A7%86%E5%9B%BE%E6%8F%8F%E8%BF%B0"><span class="post-toc-list-text">4. FSceneView 是 Engine 侧正式的视图描述</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-FViewMatrices-%E6%98%AF%E8%A7%86%E5%9B%BE%E6%95%B0%E5%AD%A6%E9%AA%A8%E6%9E%B6"><span class="post-toc-list-text">5. FViewMatrices 是视图数学骨架</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#6-%E5%90%8E%E5%A4%84%E7%90%86%E9%85%8D%E7%BD%AE%E6%98%AF%E5%9C%A8-FSceneView-%E5%8A%A0%E5%85%A5-family-%E4%B9%8B%E5%90%8E%E5%86%8D%E7%81%8C%E8%BF%9B%E5%8E%BB%E7%9A%84"><span class="post-toc-list-text">6. 后处理配置是在 FSceneView 加入 family 之后再灌进去的</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#7-Renderer-%E6%8E%A5%E6%89%8B%E5%90%8E%EF%BC%8C%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5%E4%BB%8D%E7%84%B6%E4%B8%BB%E8%A6%81%E5%8F%91%E7%94%9F%E5%9C%A8-GameThread"><span class="post-toc-list-text">7. Renderer 接手后，第一阶段仍然主要发生在 GameThread</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#8-Renderer-%E7%9C%9F%E6%AD%A3%E4%BD%BF%E7%94%A8%E7%9A%84%E6%98%AF-FViewInfo%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8E%9F%E5%A7%8B%E7%9A%84-FSceneView"><span class="post-toc-list-text">8. Renderer 真正使用的是 FViewInfo，不是原始的 FSceneView</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%83%A8%E5%88%86%E5%80%BC%E5%BE%97%E5%85%88%E7%9C%8B"><span class="post-toc-list-text">结语：为什么这部分值得先看</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/codeblocks.js?v=20260410e"></script>
+            <script src="/js/toc.js?v=20260410e"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

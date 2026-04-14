@@ -1,0 +1,753 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.13
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#UE Rendering</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#RenderThread</span>
+            
+            <span style="color: var(--accent);">#FPrimitiveSceneProxy</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE 渲染源码拆解</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
+            <div class="series-meta">
+                <span>第 4 篇</span>
+                <span>已发布 5 / 5</span>
+                
+                <span>阶段：主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 80%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-rendering/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E7%BA%BF%E7%A8%8B%E5%8D%8F%E4%BD%9C%E4%B8%8D%E6%98%AF%E4%B8%B2%E8%A1%8C%E9%93%BE%EF%BC%8C%E8%80%8C%E6%98%AF%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="post-toc-list-text">一条主线：线程协作不是串行链，而是流水线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#1-GameThread%E3%80%81RenderThread%E3%80%81RHIThread-%E5%88%86%E5%88%AB%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">1. GameThread、RenderThread、RHIThread 分别负责什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GameThread%EF%BC%9A%E5%87%86%E5%A4%87%E2%80%9C%E8%A6%81%E7%94%BB%E4%BB%80%E4%B9%88%E2%80%9D"><span class="post-toc-list-text">GameThread：准备“要画什么”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#RenderThread%EF%BC%9A%E7%BB%84%E7%BB%87%E2%80%9C%E6%80%8E%E4%B9%88%E7%94%BB%E2%80%9D"><span class="post-toc-list-text">RenderThread：组织“怎么画”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#RHIThread%EF%BC%9A%E7%BB%A7%E7%BB%AD%E5%90%91%E4%B8%8B%E6%8F%90%E4%BA%A4"><span class="post-toc-list-text">RHIThread：继续向下提交</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88-UE-%E4%B8%8D%E8%AE%A9-RenderThread-%E7%9B%B4%E6%8E%A5%E8%AF%BB%E5%8F%96-Actor"><span class="post-toc-list-text">2. 为什么 UE 不让 RenderThread 直接读取 Actor</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#3-%E7%BB%84%E4%BB%B6%E5%8F%98%E5%8C%96%E4%B8%8D%E6%98%AF%E7%AB%8B%E5%88%BB%E8%B7%A8%E7%BA%BF%E7%A8%8B%EF%BC%8C%E8%80%8C%E6%98%AF%E5%85%88%E2%80%9C%E6%89%93-dirty%E2%80%9D"><span class="post-toc-list-text">3. 组件变化不是立刻跨线程，而是先“打 dirty”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkRenderStateDirty"><span class="post-toc-list-text">MarkRenderStateDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkRenderTransformDirty"><span class="post-toc-list-text">MarkRenderTransformDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkRenderDynamicDataDirty"><span class="post-toc-list-text">MarkRenderDynamicDataDirty</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#4-%E5%B8%A7%E6%9C%AB%E7%BB%9F%E4%B8%80%E5%86%B2%E5%88%B7%EF%BC%9ASendAllEndOfFrameUpdates"><span class="post-toc-list-text">4. 帧末统一冲刷：SendAllEndOfFrameUpdates</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#5-%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA-UPrimitiveComponent-%E6%97%B6%EF%BC%8C%E9%93%BE%E8%B7%AF%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84"><span class="post-toc-list-text">5. 添加一个 UPrimitiveComponent 时，链路是怎样的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9ACreateRenderState-Concurrent"><span class="post-toc-list-text">第一步：CreateRenderState_Concurrent</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9AFScene-AddPrimitive"><span class="post-toc-list-text">第二步：FScene::AddPrimitive</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E5%88%9B%E5%BB%BA-FPrimitiveSceneProxy"><span class="post-toc-list-text">第三步：创建 FPrimitiveSceneProxy</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E4%BA%A4%E7%BB%99-RenderThread"><span class="post-toc-list-text">第四步：交给 RenderThread</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#6-%E7%BB%84%E4%BB%B6%E7%A7%BB%E5%8A%A8%E6%97%B6%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%9A%E5%B8%B8%E4%B8%8D%E9%9C%80%E8%A6%81%E9%87%8D%E5%BB%BA-proxy"><span class="post-toc-list-text">6. 组件移动时，为什么通常不需要重建 proxy</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#7-MarkRenderStateDirty-%E7%9A%84%E7%9C%9F%E5%AE%9E%E4%BB%A3%E4%BB%B7%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">7. MarkRenderStateDirty 的真实代价是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#8-%E7%BB%84%E4%BB%B6%E8%A2%AB%E7%A7%BB%E9%99%A4%E6%97%B6%EF%BC%8C%E5%8F%88%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">8. 组件被移除时，又发生了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#9-FPrimitiveSceneProxy-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E7%BA%BF%E7%A8%8B%E8%BE%B9%E7%95%8C%E7%9A%84%E6%A0%B8%E5%BF%83"><span class="post-toc-list-text">9. FPrimitiveSceneProxy 为什么是线程边界的核心</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetViewRelevance"><span class="post-toc-list-text">GetViewRelevance</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DrawStaticElements"><span class="post-toc-list-text">DrawStaticElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetDynamicMeshElements"><span class="post-toc-list-text">GetDynamicMeshElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#CreateRenderThreadResources-DestroyRenderThreadResources"><span class="post-toc-list-text">CreateRenderThreadResources &#x2F; DestroyRenderThreadResources</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#10-%E7%94%A8-FStaticMeshSceneProxy-%E7%9C%8B%E4%B8%80%E4%B8%AA%E6%9C%80%E5%85%B8%E5%9E%8B%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="post-toc-list-text">10. 用 FStaticMeshSceneProxy 看一个最典型的例子</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DrawStaticElements-2"><span class="post-toc-list-text">DrawStaticElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetDynamicMeshElements-2"><span class="post-toc-list-text">GetDynamicMeshElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetViewRelevance-2"><span class="post-toc-list-text">GetViewRelevance</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#11-FPrimitiveSceneProxy-%E5%92%8C-FPrimitiveSceneInfo-%E4%B8%8D%E8%A6%81%E6%B7%B7"><span class="post-toc-list-text">11. FPrimitiveSceneProxy 和 FPrimitiveSceneInfo 不要混</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FPrimitiveSceneProxy"><span class="post-toc-list-text">FPrimitiveSceneProxy</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FPrimitiveSceneInfo"><span class="post-toc-list-text">FPrimitiveSceneInfo</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#12-%E8%BF%99%E5%A5%97%E8%AE%BE%E8%AE%A1%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">12. 这套设计到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本文结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">下一步</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE 渲染源码主线拆解<br>
+本文主题：<code>GameThread / RenderThread / RHIThread</code> 的协作，以及 <code>UPrimitiveComponent -&gt; FPrimitiveSceneProxy</code> 的渲染更新链路</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>前面的几篇文章主要在回答两类问题：</p>
+<ul>
+<li>一帧画面在真正开始渲染前，是怎样被准备好的</li>
+<li>Deferred Renderer 在 RenderThread 上，又是怎样把这一帧组织成 <code>PrePass -&gt; BasePass -&gt; Lighting -&gt; PostProcessing</code> 的</li>
+</ul>
+<p>但如果只停在这些阶段名上，仍然会有一个非常关键的问题没有真正讲透：</p>
+<p><strong>这些渲染阶段，究竟是怎样在不同线程之间协作起来的？</strong></p>
+<p>继续往下追源码时，几乎一定会遇到下面这些名字：</p>
+<ul>
+<li><code>GameThread</code></li>
+<li><code>RenderThread</code></li>
+<li><code>RHIThread</code></li>
+<li><code>MarkRenderStateDirty</code></li>
+<li><code>SendAllEndOfFrameUpdates</code></li>
+<li><code>CreateSceneProxy</code></li>
+<li><code>FPrimitiveSceneProxy</code></li>
+</ul>
+<p>如果这些概念之间的关系没有建立起来，那么后面再看 <code>FMeshBatch</code>、<code>MeshDrawCommand</code>、<code>GPUScene</code>、<code>SceneVisibility</code>，就很容易觉得“函数很多，但不知道它们属于哪一层”。</p>
+<p>本文就专门解决这个问题。<br>
+文章会分成两部分：</p>
+<ol>
+<li>UE 渲染里 <code>GameThread</code>、<code>RenderThread</code>、<code>RHIThread</code> 到底是怎样协作的</li>
+<li>一个 <code>UPrimitiveComponent</code> 的变化，是怎样一步步传到 <code>FPrimitiveSceneProxy</code> 和 <code>FPrimitiveSceneInfo</code>，最终影响画面的</li>
+</ol>
+<hr>
+<h2 id="一条主线：线程协作不是串行链，而是流水线">一条主线：线程协作不是串行链，而是流水线</h2>
+<p>先把整条协作链压成一张图：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;GameThread: 更新世界 / 组件 / 相机 / ViewFamily&quot;] --&gt; B[&quot;RenderThread: 组织渲染阶段 / RDG / Pass&quot;]</span><br><span class="line">    B --&gt; C[&quot;RHIThread: 提交 FRHICommandList 到图形 API&quot;]</span><br><span class="line">    C --&gt; D[&quot;GPU: 执行 Draw / Dispatch&quot;]</span><br></pre></td></tr></table></figure>
+<p>如果再把“一帧重叠执行”的感觉放进去，可以把它理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;GameThread 正在准备第 N+1 帧&quot;] --&gt; B[&quot;RenderThread 正在组织第 N 帧&quot;]</span><br><span class="line">    B --&gt; C[&quot;GPU 正在执行第 N-1 帧&quot;]</span><br></pre></td></tr></table></figure>
+<p>这就是 UE 渲染线程协作的第一个核心事实：</p>
+<blockquote>
+<p><strong>它们通常不是一条线程干完，下一条线程再接着干，而是以流水线方式并行重叠。</strong></p>
+</blockquote>
+<hr>
+<h2 id="1-GameThread、RenderThread、RHIThread-分别负责什么">1. <code>GameThread</code>、<code>RenderThread</code>、<code>RHIThread</code> 分别负责什么</h2>
+<h3 id="GameThread：准备“要画什么”"><code>GameThread</code>：准备“要画什么”</h3>
+<p><code>GameThread</code> 主要负责高层世界状态和视图准备。<br>
+对渲染来说，它最重要的职责不是直接画，而是先把这一帧的渲染描述整理好。</p>
+<p>典型工作包括：</p>
+<ul>
+<li><code>Actor</code>、<code>Component</code>、相机和玩法状态更新</li>
+<li>构建 <code>FSceneViewFamily</code></li>
+<li>创建 <code>FSceneView</code></li>
+<li>生成 <code>FViewInfo</code></li>
+<li>创建 <code>FSceneRenderer</code></li>
+<li>把组件变化翻译成渲染系统能够消费的更新</li>
+</ul>
+<p>前面已经看到，像 <code>UGameViewportClient::Draw</code>、<code>BeginRenderingViewFamily</code>、<code>FSceneRenderer::FSceneRenderer</code> 这些关键步骤，本质上都还处于这条线程上。</p>
+<p>也就是说，<code>GameThread</code> 解决的是：</p>
+<blockquote>
+<p><strong>这一帧要画什么，视角是什么，哪些渲染对象发生了变化。</strong></p>
+</blockquote>
+<hr>
+<h3 id="RenderThread：组织“怎么画”"><code>RenderThread</code>：组织“怎么画”</h3>
+<p>RenderThread 真正开始执行主场景一帧的入口是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/SceneRendering.cpp:4895</code> <code>RenderViewFamily_RenderThread</code></li>
+</ul>
+<p>对于主场景 Deferred Renderer，真正的总调度入口是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/DeferredShadingRenderer.cpp:1736</code> <code>FDeferredShadingSceneRenderer::Render</code></li>
+</ul>
+<p>它负责的工作包括：</p>
+<ul>
+<li>消费 <code>FSceneRenderer</code> 和 <code>FViewInfo</code></li>
+<li>组织 <code>PrePass</code>、<code>BasePass</code>、Lighting、Translucency、PostProcessing</li>
+<li>搭建 RDG 图</li>
+<li>在 pass 执行阶段录制渲染命令</li>
+<li>驱动可见性、mesh draw command、GPUScene 等渲染侧系统</li>
+</ul>
+<p>所以 <code>RenderThread</code> 解决的是：</p>
+<blockquote>
+<p><strong>这一帧应该按什么阶段顺序执行，每个阶段读什么、写什么、提交什么。</strong></p>
+</blockquote>
+<hr>
+<h3 id="RHIThread：继续向下提交"><code>RHIThread</code>：继续向下提交</h3>
+<p><code>RHIThread</code> 可以理解成更靠近底层图形 API 的那一层。<br>
+它会继续处理 <code>FRHICommandList</code>，把 <code>BeginRenderPass</code>、<code>DrawIndexedPrimitive</code>、<code>DispatchComputeShader</code> 这类命令交给 D3D12、Vulkan、Metal 等后端。</p>
+<p>它解决的是：</p>
+<blockquote>
+<p><strong>这些渲染命令怎样被真正送到底层图形接口。</strong></p>
+</blockquote>
+<p>需要注意的是，<code>RHIThread</code> 是否独立存在，与平台和配置有关。<br>
+但从理解渲染架构的角度，可以先把它视为：</p>
+<ul>
+<li><code>RenderThread</code>：渲染组织层</li>
+<li><code>RHIThread</code>：底层提交层</li>
+</ul>
+<hr>
+<h2 id="2-为什么-UE-不让-RenderThread-直接读取-Actor">2. 为什么 UE 不让 <code>RenderThread</code> 直接读取 <code>Actor</code></h2>
+<p>这是理解线程协作的关键。</p>
+<p>RenderThread 上当然需要知道“这个物体该怎么画”，但它不能直接去读大部分 <code>UObject</code> / <code>Actor</code> / <code>UPrimitiveComponent</code> 的实时状态。原因很简单：</p>
+<ul>
+<li>这些对象主要归 <code>GameThread</code> 管</li>
+<li>它们不是通用线程安全对象</li>
+<li>如果 RenderThread 直接读，会引入严重的数据竞争和线程边界混乱</li>
+</ul>
+<p>所以 UE 的做法不是“跨线程共享组件本体”，而是引入一层渲染代表对象。</p>
+<p>对 <code>UPrimitiveComponent</code> 来说，这层代表对象就是：</p>
+<ul>
+<li><code>FPrimitiveSceneProxy</code></li>
+</ul>
+<p>配合 scene 内部管理结构：</p>
+<ul>
+<li><code>FPrimitiveSceneInfo</code></li>
+</ul>
+<p>于是线程边界就清楚了：</p>
+<ul>
+<li><code>GameThread</code> 持有游戏对象</li>
+<li><code>RenderThread</code> 持有渲染对象</li>
+<li>二者通过 <code>FScene</code>、命令队列和 deferred update 机制协作</li>
+</ul>
+<hr>
+<h2 id="3-组件变化不是立刻跨线程，而是先“打-dirty”">3. 组件变化不是立刻跨线程，而是先“打 dirty”</h2>
+<p>一个 <code>UPrimitiveComponent</code> 的变化，通常不会立刻把命令发给渲染线程。<br>
+UE 先做的是标记这份变化属于哪一类。</p>
+<p>最关键的入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/ActorComponent.cpp:2587</code> <code>DoDeferredRenderUpdates_Concurrent</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/ActorComponent.cpp:2634</code> <code>MarkRenderStateDirty</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/ActorComponent.cpp:2650</code> <code>MarkRenderTransformDirty</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/ActorComponent.cpp:2671</code> <code>MarkRenderDynamicDataDirty</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/ActorComponent.cpp:2682</code> <code>MarkForNeededEndOfFrameUpdate</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/ActorComponent.cpp:2719</code> <code>MarkForNeededEndOfFrameRecreate</code></li>
+</ul>
+<p>这里最重要的不是函数名本身，而是背后的分类：</p>
+<h3 id="MarkRenderStateDirty"><code>MarkRenderStateDirty</code></h3>
+<p>表示这次变化会影响渲染状态本身，通常需要重建 render state。</p>
+<h3 id="MarkRenderTransformDirty"><code>MarkRenderTransformDirty</code></h3>
+<p>表示只是变换变了，通常只需要更新 bounds 和 local-to-world。</p>
+<h3 id="MarkRenderDynamicDataDirty"><code>MarkRenderDynamicDataDirty</code></h3>
+<p>表示某些每帧变化的动态渲染数据需要同步，但不需要重建整个 proxy。</p>
+<p>这套设计说明了一个很重要的事实：</p>
+<blockquote>
+<p><strong>UE 会先判断变化的性质，再决定要不要重建 proxy，还是只更新局部渲染数据。</strong></p>
+</blockquote>
+<hr>
+<h2 id="4-帧末统一冲刷：SendAllEndOfFrameUpdates">4. 帧末统一冲刷：<code>SendAllEndOfFrameUpdates</code></h2>
+<p>当组件把自己标记为 render dirty 后，并不是立刻就进入 <code>RenderThread</code>。<br>
+它通常会先进入当前 world 的“帧末待更新队列”。</p>
+<p>统一执行入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/LevelTick.cpp:1346</code> <code>UWorld::SendAllEndOfFrameUpdates</code></li>
+</ul>
+<p>Renderer 在真正开始一帧之前，会显式确保这件事先完成：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/SceneRendering.cpp:5059</code></li>
+</ul>
+<p>源码注释写得很清楚：</p>
+<blockquote>
+<p>在开始 <code>BeginRenderViewFamily</code> 前，保证所有 render proxies 都是最新的。</p>
+</blockquote>
+<p>这就是线程协作里的第二个核心事实：</p>
+<blockquote>
+<p><strong><code>GameThread</code> 先把这一帧所有组件的渲染变化在帧末统一结算，再让 <code>RenderThread</code> 正式开始组织新的一帧。</strong></p>
+</blockquote>
+<hr>
+<h2 id="5-添加一个-UPrimitiveComponent-时，链路是怎样的">5. 添加一个 <code>UPrimitiveComponent</code> 时，链路是怎样的</h2>
+<p>先看“第一次进入场景”的情况。</p>
+<h3 id="第一步：CreateRenderState-Concurrent">第一步：<code>CreateRenderState_Concurrent</code></h3>
+<p><code>UPrimitiveComponent</code> 的入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp:631</code></li>
+</ul>
+<p>这里会先：</p>
+<ul>
+<li><code>UpdateBounds()</code></li>
+<li>判断这个 primitive 是否应该进 scene</li>
+</ul>
+<p>如果应该进入场景，就会调用：</p>
+<ul>
+<li><code>GetWorld()-&gt;Scene-&gt;AddPrimitive(this)</code></li>
+</ul>
+<hr>
+<h3 id="第二步：FScene-AddPrimitive">第二步：<code>FScene::AddPrimitive</code></h3>
+<p>入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1302</code></li>
+</ul>
+<p>最关键的内部逻辑在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1403</code></li>
+</ul>
+<p>这里做了三件核心事情：</p>
+<ol>
+<li>调 <code>CreateSceneProxy()</code></li>
+<li>创建 <code>FPrimitiveSceneInfo</code></li>
+<li><code>ENQUEUE_RENDER_COMMAND(AddPrimitiveCommand)(...)</code></li>
+</ol>
+<p>这三步非常值得单独记住。</p>
+<hr>
+<h3 id="第三步：创建-FPrimitiveSceneProxy">第三步：创建 <code>FPrimitiveSceneProxy</code></h3>
+<p><code>UPrimitiveComponent</code> 基类默认的 <code>CreateSceneProxy()</code> 在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Classes/Components/PrimitiveComponent.h:2306</code></li>
+</ul>
+<p>默认返回空。</p>
+<p>这意味着：</p>
+<blockquote>
+<p><strong>不是所有 primitive 都天然可渲染，真正可渲染的组件需要自己 override <code>CreateSceneProxy()</code>。</strong></p>
+</blockquote>
+<p>比如静态网格组件：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/StaticMeshSceneProxy.cpp:2918</code></li>
+</ul>
+<p>这里的实现很简单：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">FPrimitiveSceneProxy* <span class="title">UStaticMeshComponent::CreateSceneProxy</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> FStaticMeshComponentHelper::<span class="built_in">CreateSceneProxy</span>(*<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>也就是说，<code>UStaticMeshComponent</code> 进入场景时，会创建一个 <code>FStaticMeshSceneProxy</code> 来代表自己。</p>
+<hr>
+<h3 id="第四步：交给-RenderThread">第四步：交给 <code>RenderThread</code></h3>
+<p><code>FScene::AddPrimitive</code> 在 GameThread 上准备好：</p>
+<ul>
+<li><code>FPrimitiveSceneProxy</code></li>
+<li><code>FPrimitiveSceneInfo</code></li>
+<li>初始 transform 和 bounds</li>
+</ul>
+<p>然后通过：</p>
+<ul>
+<li><code>ENQUEUE_RENDER_COMMAND(AddPrimitiveCommand)(...)</code></li>
+</ul>
+<p>把工作送到 RenderThread。</p>
+<p>真正执行的逻辑在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1460</code></li>
+</ul>
+<p>这里会依次做：</p>
+<ul>
+<li><code>PrimitiveSceneProxy-&gt;SetTransform(...)</code></li>
+<li><code>PrimitiveSceneProxy-&gt;CreateRenderThreadResources(...)</code></li>
+<li><code>AddPrimitiveSceneInfo_RenderThread(...)</code></li>
+</ul>
+<p>所以“组件第一次被渲染”的完整链路可以压成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;GameThread: UPrimitiveComponent::CreateRenderState_Concurrent&quot;] --&gt; B[&quot;FScene::AddPrimitive&quot;]</span><br><span class="line">    B --&gt; C[&quot;CreateSceneProxy&quot;]</span><br><span class="line">    C --&gt; D[&quot;Create FPrimitiveSceneInfo&quot;]</span><br><span class="line">    D --&gt; E[&quot;ENQUEUE_RENDER_COMMAND(AddPrimitiveCommand)&quot;]</span><br><span class="line">    E --&gt; F[&quot;RenderThread: SetTransform / CreateRenderThreadResources&quot;]</span><br><span class="line">    F --&gt; G[&quot;RenderThread: AddPrimitiveSceneInfo_RenderThread&quot;]</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="6-组件移动时，为什么通常不需要重建-proxy">6. 组件移动时，为什么通常不需要重建 proxy</h2>
+<p>第二种常见情况是：组件只是位置、旋转、缩放变了。</p>
+<p>入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp:657</code> <code>SendRenderTransform_Concurrent</code></li>
+</ul>
+<p>它会先更新 bounds，然后调用：</p>
+<ul>
+<li><code>GetWorld()-&gt;Scene-&gt;UpdatePrimitiveTransform(this)</code></li>
+</ul>
+<p>真正的 scene 入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1556</code></li>
+</ul>
+<p>核心逻辑在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1566</code></li>
+</ul>
+<p>这里会先判断：</p>
+<ul>
+<li>这次 transform 变化是不是普通更新</li>
+<li>还是这个组件要求“变换一更新就重新创建 proxy”
+<ul>
+<li>对应 <code>ShouldRecreateProxyOnUpdateTransform()</code></li>
+</ul>
+</li>
+</ul>
+<p>如果只是普通更新，它会组装一包：</p>
+<ul>
+<li><code>WorldBounds</code></li>
+<li><code>LocalBounds</code></li>
+<li><code>LocalToWorld</code></li>
+<li><code>AttachmentRootPosition</code></li>
+<li><code>PreviousTransform</code></li>
+</ul>
+<p>然后通过：</p>
+<ul>
+<li><code>ENQUEUE_RENDER_COMMAND(UpdateTransformCommand)(...)</code></li>
+</ul>
+<p>交给 RenderThread，见：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1635</code></li>
+</ul>
+<p>RenderThread 侧真正处理的位置是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1512</code> <code>UpdatePrimitiveTransform_RenderThread</code></li>
+</ul>
+<p>这说明：</p>
+<blockquote>
+<p><strong>大多数“组件移动了”的情况，不会重建 proxy，而是更新 proxy 对应的变换与 bounds 数据。</strong></p>
+</blockquote>
+<hr>
+<h2 id="7-MarkRenderStateDirty-的真实代价是什么">7. <code>MarkRenderStateDirty</code> 的真实代价是什么</h2>
+<p><code>MarkRenderStateDirty()</code> 看起来只是一句标记，但它的真实含义通常是：</p>
+<blockquote>
+<p><strong>这一份渲染代表对象已经不够用了，需要整套重新来。</strong></p>
+</blockquote>
+<p>在帧末执行 <code>DoDeferredRenderUpdates_Concurrent()</code> 时，如果发现：</p>
+<ul>
+<li><code>bRenderStateDirty == true</code></li>
+</ul>
+<p>就会走：</p>
+<ul>
+<li><code>RecreateRenderState_Concurrent()</code></li>
+</ul>
+<p>这通常意味着：</p>
+<ol>
+<li><code>DestroyRenderState_Concurrent()</code></li>
+<li>再 <code>CreateRenderState_Concurrent()</code></li>
+</ol>
+<p>对 <code>UPrimitiveComponent</code> 来说：</p>
+<ul>
+<li><code>DestroyRenderState_Concurrent()</code> 会调用 <code>World-&gt;Scene-&gt;RemovePrimitive(this)</code>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp:763</code></li>
+</ul>
+</li>
+<li><code>CreateRenderState_Concurrent()</code> 会重新 <code>AddPrimitive(this)</code>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp:631</code></li>
+</ul>
+</li>
+</ul>
+<p>所以：</p>
+<blockquote>
+<p><strong><code>MarkRenderStateDirty</code> 不是一个轻量标记，它常常意味着 proxy 和 scene info 的重建。</strong></p>
+</blockquote>
+<p>这也是为什么 UE 还要专门区分：</p>
+<ul>
+<li><code>MarkRenderTransformDirty</code></li>
+<li><code>MarkRenderDynamicDataDirty</code></li>
+</ul>
+<p>因为不是所有变化都值得走最贵的那条路径。</p>
+<hr>
+<h2 id="8-组件被移除时，又发生了什么">8. 组件被移除时，又发生了什么</h2>
+<p>当组件注销或离开场景时，<code>UPrimitiveComponent</code> 会走：</p>
+<ul>
+<li><code>DestroyRenderState_Concurrent()</code></li>
+</ul>
+<p>见：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp:763</code></li>
+</ul>
+<p>这里会调用：</p>
+<ul>
+<li><code>World-&gt;Scene-&gt;RemovePrimitive(this)</code></li>
+</ul>
+<p><code>FScene::RemovePrimitive</code> 的入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:1987</code></li>
+</ul>
+<p>内部关键逻辑在：</p>
+<ul>
+<li>拿到 <code>PrimitiveSceneProxy</code></li>
+<li>先把组件和 proxy 解绑</li>
+<li><code>ENQUEUE_RENDER_COMMAND(FRemovePrimitiveCommand)(...)</code></li>
+</ul>
+<p>RenderThread 再继续执行：</p>
+<ul>
+<li><code>RemovePrimitiveSceneInfo_RenderThread(...)</code></li>
+<li><code>PrimitiveSceneProxy-&gt;DestroyRenderThreadResources()</code></li>
+</ul>
+<p>见：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/RendererScene.cpp:2040</code></li>
+</ul>
+<p>这说明删除过程和添加过程是对称的：</p>
+<ul>
+<li>GameThread 负责高层解绑和命令排队</li>
+<li>RenderThread 真正清理渲染侧资源</li>
+</ul>
+<hr>
+<h2 id="9-FPrimitiveSceneProxy-为什么是线程边界的核心">9. <code>FPrimitiveSceneProxy</code> 为什么是线程边界的核心</h2>
+<p><code>FPrimitiveSceneProxy</code> 的定义在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Public/PrimitiveSceneProxy.h:295</code></li>
+</ul>
+<p>它最重要的几个接口是：</p>
+<ul>
+<li><code>DrawStaticElements</code><br>
+<code>Engine/Source/Runtime/Engine/Public/PrimitiveSceneProxy.h:444</code></li>
+<li><code>GetDynamicMeshElements</code><br>
+<code>Engine/Source/Runtime/Engine/Public/PrimitiveSceneProxy.h:502</code></li>
+<li><code>GetViewRelevance</code><br>
+<code>Engine/Source/Runtime/Engine/Public/PrimitiveSceneProxy.h:538</code></li>
+<li><code>CreateRenderThreadResources</code><br>
+<code>Engine/Source/Runtime/Engine/Public/PrimitiveSceneProxy.h:586</code></li>
+<li><code>DestroyRenderThreadResources</code><br>
+<code>Engine/Source/Runtime/Engine/Public/PrimitiveSceneProxy.h:593</code></li>
+</ul>
+<p>这几个函数的组合，几乎完整定义了一个 primitive 对 Renderer 的“协作协议”：</p>
+<h3 id="GetViewRelevance"><code>GetViewRelevance</code></h3>
+<p>告诉 Renderer：</p>
+<ul>
+<li>我对当前 view 是否 relevant</li>
+<li>我应该走 static 还是 dynamic 路径</li>
+<li>我要不要进 main pass、depth pass、shadow pass、custom depth 等</li>
+</ul>
+<h3 id="DrawStaticElements"><code>DrawStaticElements</code></h3>
+<p>告诉 Renderer：</p>
+<ul>
+<li>如果我是静态相关对象，我能提供哪些可缓存的 mesh 元素</li>
+</ul>
+<h3 id="GetDynamicMeshElements"><code>GetDynamicMeshElements</code></h3>
+<p>告诉 Renderer：</p>
+<ul>
+<li>如果我是动态相关对象，我在当前 view 下应该提交哪些 <code>FMeshBatch</code></li>
+</ul>
+<h3 id="CreateRenderThreadResources-DestroyRenderThreadResources"><code>CreateRenderThreadResources / DestroyRenderThreadResources</code></h3>
+<p>告诉 Renderer：</p>
+<ul>
+<li>我在 RenderThread 侧还需要创建和销毁哪些专属渲染资源</li>
+</ul>
+<p>这说明 <code>FPrimitiveSceneProxy</code> 并不是一个被动数据包，而是：</p>
+<blockquote>
+<p><strong>Renderer 对单个 primitive 发起渲染查询时的统一代表对象。</strong></p>
+</blockquote>
+<hr>
+<h2 id="10-用-FStaticMeshSceneProxy-看一个最典型的例子">10. 用 <code>FStaticMeshSceneProxy</code> 看一个最典型的例子</h2>
+<p>静态网格 proxy 是最适合理解这套接口的例子。</p>
+<p>它的定义在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/StaticMeshSceneProxy.cpp:223</code></li>
+</ul>
+<p>Renderer 最常用它的三个函数：</p>
+<h3 id="DrawStaticElements-2"><code>DrawStaticElements</code></h3>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/StaticMeshSceneProxy.cpp:1382</code></li>
+</ul>
+<p>它会：</p>
+<ul>
+<li>按 LOD / section 遍历</li>
+<li>构造 <code>FMeshBatch</code></li>
+<li>调 <code>PDI-&gt;DrawMesh(...)</code></li>
+</ul>
+<p>也就是说，静态网格的“静态绘制描述”是在这里交给 Renderer 的。</p>
+<h3 id="GetDynamicMeshElements-2"><code>GetDynamicMeshElements</code></h3>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/StaticMeshSceneProxy.cpp:1669</code></li>
+</ul>
+<p>它会：</p>
+<ul>
+<li>按 view 判断可见</li>
+<li>算当前 LOD</li>
+<li>根据 show flags、选择状态、碰撞可视化等条件</li>
+<li>组装动态的 <code>FMeshBatch</code></li>
+</ul>
+<p>这里是动态路径下最典型的 mesh 收集函数。</p>
+<h3 id="GetViewRelevance-2"><code>GetViewRelevance</code></h3>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/StaticMeshSceneProxy.cpp:2372</code></li>
+</ul>
+<p>它会设置：</p>
+<ul>
+<li><code>bDrawRelevance</code></li>
+<li><code>bStaticRelevance</code> / <code>bDynamicRelevance</code></li>
+<li><code>bRenderInMainPass</code></li>
+<li><code>bRenderInDepthPass</code></li>
+<li><code>bRenderCustomDepth</code></li>
+<li><code>bShadowRelevance</code></li>
+</ul>
+<p>也就是说，Renderer 在真正收集 mesh 之前，会先通过这个函数决定：</p>
+<blockquote>
+<p><strong>这个静态网格在当前 view 中应不应该参与、参与哪条路径。</strong></p>
+</blockquote>
+<hr>
+<h2 id="11-FPrimitiveSceneProxy-和-FPrimitiveSceneInfo-不要混">11. <code>FPrimitiveSceneProxy</code> 和 <code>FPrimitiveSceneInfo</code> 不要混</h2>
+<p>这两个名字很像，但职责不同。</p>
+<h3 id="FPrimitiveSceneProxy"><code>FPrimitiveSceneProxy</code></h3>
+<p>偏“渲染代表对象”：</p>
+<ul>
+<li>保存线程安全的渲染数据</li>
+<li>暴露渲染接口</li>
+<li>决定 view relevance</li>
+<li>提供 mesh batches</li>
+</ul>
+<h3 id="FPrimitiveSceneInfo"><code>FPrimitiveSceneInfo</code></h3>
+<p>偏“scene 内部管理对象”：</p>
+<ul>
+<li>被挂进 <code>FScene</code></li>
+<li>参与 visibility、light interaction、draw command cache、GPUScene 等系统</li>
+<li>是 Renderer 内部管理 primitive 的核心壳对象</li>
+</ul>
+<p>所以更容易记的说法是：</p>
+<ul>
+<li><code>Proxy</code>：我该怎么被渲染</li>
+<li><code>SceneInfo</code>：scene 里怎样管理我</li>
+</ul>
+<hr>
+<h2 id="12-这套设计到底解决了什么问题">12. 这套设计到底解决了什么问题</h2>
+<p>如果把这篇文章压成一句话，那就是：</p>
+<blockquote>
+<p><strong>UE 用 deferred render update + scene bridge + primitive proxy，把游戏线程对象和渲染线程对象拆开了。</strong></p>
+</blockquote>
+<p>这样做的收益非常明确：</p>
+<ul>
+<li><code>RenderThread</code> 不需要直接解引用 <code>UObject</code></li>
+<li>组件变化可以按类型分类同步，而不是一律重建</li>
+<li>scene 可以统一管理 primitive 的 add / update / remove</li>
+<li>Renderer 可以通过一套稳定接口消费各种不同组件类型</li>
+</ul>
+<p>这也是为什么：</p>
+<ul>
+<li><code>GameThread</code> 主要负责“准备和同步”</li>
+<li><code>RenderThread</code> 主要负责“组织和消费”</li>
+</ul>
+<p>而不是两个线程一起去碰同一份对象状态。</p>
+<hr>
+<h2 id="结语">结语</h2>
+<p>理解 <code>GameThread</code>、<code>RenderThread</code>、<code>RHIThread</code> 的协作，真正难的地方不是记住线程名字，而是搞清楚：</p>
+<ul>
+<li>哪些数据留在游戏对象里</li>
+<li>哪些数据会被镜像到渲染对象里</li>
+<li>哪些变化只是更新 transform</li>
+<li>哪些变化必须重建整个 render state</li>
+</ul>
+<p>一旦把 <code>UPrimitiveComponent -&gt; FPrimitiveSceneProxy -&gt; FPrimitiveSceneInfo</code> 这条链理顺，后面再往下看：</p>
+<ul>
+<li><code>FMeshBatch</code></li>
+<li><code>MeshDrawCommand</code></li>
+<li><code>SceneVisibility</code></li>
+<li><code>GPUScene</code></li>
+</ul>
+<p>就不会再把它们看成一堆分散的实现细节，而会看到它们其实都在消费同一套线程边界和渲染代理模型。</p>
+<hr>
+<h2 id="本文结论">本文结论</h2>
+<ol>
+<li><code>GameThread</code> 负责准备这帧要画什么，<code>RenderThread</code> 负责组织怎么画，<code>RHIThread</code> 负责继续向底层图形 API 提交命令。</li>
+<li>UE 渲染线程协作本质上是流水线，而不是串行接力。</li>
+<li>组件变化不会立刻跨线程同步，而是先通过 <code>MarkRenderStateDirty</code>、<code>MarkRenderTransformDirty</code>、<code>MarkRenderDynamicDataDirty</code> 打上分类标记。</li>
+<li><code>UWorld::SendAllEndOfFrameUpdates</code> 是组件渲染变化在帧末统一结算的关键节点。</li>
+<li><code>UPrimitiveComponent::CreateRenderState_Concurrent</code> 会通过 <code>FScene::AddPrimitive</code> 触发 <code>CreateSceneProxy</code>、创建 <code>FPrimitiveSceneInfo</code> 并排队 RenderThread 命令。</li>
+<li>变换更新通常只走 <code>UpdatePrimitiveTransform</code>，不需要重建整个 proxy。</li>
+<li><code>MarkRenderStateDirty</code> 的真实含义通常是 remove + add，也就是整套 render state 重建。</li>
+<li><code>FPrimitiveSceneProxy</code> 是 <code>UPrimitiveComponent</code> 在渲染世界里的镜像对象，也是线程边界的核心。</li>
+<li>Renderer 最关心 <code>FPrimitiveSceneProxy</code> 的三个接口：<code>GetViewRelevance</code>、<code>DrawStaticElements</code>、<code>GetDynamicMeshElements</code>。</li>
+<li><code>FPrimitiveSceneInfo</code> 偏 scene 管理，<code>FPrimitiveSceneProxy</code> 偏渲染代表，这两个概念不要混在一起。</li>
+</ol>
+<hr>
+<h2 id="下一步">下一步</h2>
+<p>这篇文章把线程协作和 primitive 渲染代理的边界理顺之后，最自然的下一篇会接到：</p>
+<p><strong><code>FMeshBatch</code> 是什么，为什么 UE Renderer 最后几乎总会落到它身上。</strong></p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-05-rdg-rhi-shader-bridge/" class="nav-prev">
+                <span class="nav-label">&larr; 上一篇</span>
+                <span class="nav-title">UE引擎中的 RDG 与 RHI：一帧渲染是怎样真正提交到 GPU 的</span>
+            </a>
+            
+
+            
+            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-03-deferred-main-flow-part2/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">UE引擎中的延迟渲染主流程（二）：后处理如何接管最终输出</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E7%BA%BF%E7%A8%8B%E5%8D%8F%E4%BD%9C%E4%B8%8D%E6%98%AF%E4%B8%B2%E8%A1%8C%E9%93%BE%EF%BC%8C%E8%80%8C%E6%98%AF%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="post-toc-list-text">一条主线：线程协作不是串行链，而是流水线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#1-GameThread%E3%80%81RenderThread%E3%80%81RHIThread-%E5%88%86%E5%88%AB%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">1. GameThread、RenderThread、RHIThread 分别负责什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GameThread%EF%BC%9A%E5%87%86%E5%A4%87%E2%80%9C%E8%A6%81%E7%94%BB%E4%BB%80%E4%B9%88%E2%80%9D"><span class="post-toc-list-text">GameThread：准备“要画什么”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#RenderThread%EF%BC%9A%E7%BB%84%E7%BB%87%E2%80%9C%E6%80%8E%E4%B9%88%E7%94%BB%E2%80%9D"><span class="post-toc-list-text">RenderThread：组织“怎么画”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#RHIThread%EF%BC%9A%E7%BB%A7%E7%BB%AD%E5%90%91%E4%B8%8B%E6%8F%90%E4%BA%A4"><span class="post-toc-list-text">RHIThread：继续向下提交</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88-UE-%E4%B8%8D%E8%AE%A9-RenderThread-%E7%9B%B4%E6%8E%A5%E8%AF%BB%E5%8F%96-Actor"><span class="post-toc-list-text">2. 为什么 UE 不让 RenderThread 直接读取 Actor</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#3-%E7%BB%84%E4%BB%B6%E5%8F%98%E5%8C%96%E4%B8%8D%E6%98%AF%E7%AB%8B%E5%88%BB%E8%B7%A8%E7%BA%BF%E7%A8%8B%EF%BC%8C%E8%80%8C%E6%98%AF%E5%85%88%E2%80%9C%E6%89%93-dirty%E2%80%9D"><span class="post-toc-list-text">3. 组件变化不是立刻跨线程，而是先“打 dirty”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkRenderStateDirty"><span class="post-toc-list-text">MarkRenderStateDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkRenderTransformDirty"><span class="post-toc-list-text">MarkRenderTransformDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkRenderDynamicDataDirty"><span class="post-toc-list-text">MarkRenderDynamicDataDirty</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#4-%E5%B8%A7%E6%9C%AB%E7%BB%9F%E4%B8%80%E5%86%B2%E5%88%B7%EF%BC%9ASendAllEndOfFrameUpdates"><span class="post-toc-list-text">4. 帧末统一冲刷：SendAllEndOfFrameUpdates</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#5-%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA-UPrimitiveComponent-%E6%97%B6%EF%BC%8C%E9%93%BE%E8%B7%AF%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84"><span class="post-toc-list-text">5. 添加一个 UPrimitiveComponent 时，链路是怎样的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9ACreateRenderState-Concurrent"><span class="post-toc-list-text">第一步：CreateRenderState_Concurrent</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9AFScene-AddPrimitive"><span class="post-toc-list-text">第二步：FScene::AddPrimitive</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E5%88%9B%E5%BB%BA-FPrimitiveSceneProxy"><span class="post-toc-list-text">第三步：创建 FPrimitiveSceneProxy</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E4%BA%A4%E7%BB%99-RenderThread"><span class="post-toc-list-text">第四步：交给 RenderThread</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#6-%E7%BB%84%E4%BB%B6%E7%A7%BB%E5%8A%A8%E6%97%B6%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%9A%E5%B8%B8%E4%B8%8D%E9%9C%80%E8%A6%81%E9%87%8D%E5%BB%BA-proxy"><span class="post-toc-list-text">6. 组件移动时，为什么通常不需要重建 proxy</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#7-MarkRenderStateDirty-%E7%9A%84%E7%9C%9F%E5%AE%9E%E4%BB%A3%E4%BB%B7%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">7. MarkRenderStateDirty 的真实代价是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#8-%E7%BB%84%E4%BB%B6%E8%A2%AB%E7%A7%BB%E9%99%A4%E6%97%B6%EF%BC%8C%E5%8F%88%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">8. 组件被移除时，又发生了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#9-FPrimitiveSceneProxy-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E7%BA%BF%E7%A8%8B%E8%BE%B9%E7%95%8C%E7%9A%84%E6%A0%B8%E5%BF%83"><span class="post-toc-list-text">9. FPrimitiveSceneProxy 为什么是线程边界的核心</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetViewRelevance"><span class="post-toc-list-text">GetViewRelevance</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DrawStaticElements"><span class="post-toc-list-text">DrawStaticElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetDynamicMeshElements"><span class="post-toc-list-text">GetDynamicMeshElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#CreateRenderThreadResources-DestroyRenderThreadResources"><span class="post-toc-list-text">CreateRenderThreadResources &#x2F; DestroyRenderThreadResources</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#10-%E7%94%A8-FStaticMeshSceneProxy-%E7%9C%8B%E4%B8%80%E4%B8%AA%E6%9C%80%E5%85%B8%E5%9E%8B%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="post-toc-list-text">10. 用 FStaticMeshSceneProxy 看一个最典型的例子</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DrawStaticElements-2"><span class="post-toc-list-text">DrawStaticElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetDynamicMeshElements-2"><span class="post-toc-list-text">GetDynamicMeshElements</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#GetViewRelevance-2"><span class="post-toc-list-text">GetViewRelevance</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#11-FPrimitiveSceneProxy-%E5%92%8C-FPrimitiveSceneInfo-%E4%B8%8D%E8%A6%81%E6%B7%B7"><span class="post-toc-list-text">11. FPrimitiveSceneProxy 和 FPrimitiveSceneInfo 不要混</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FPrimitiveSceneProxy"><span class="post-toc-list-text">FPrimitiveSceneProxy</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FPrimitiveSceneInfo"><span class="post-toc-list-text">FPrimitiveSceneInfo</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#12-%E8%BF%99%E5%A5%97%E8%AE%BE%E8%AE%A1%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">12. 这套设计到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本文结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">下一步</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/codeblocks.js?v=20260410e"></script>
+            <script src="/js/toc.js?v=20260410e"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

@@ -1,0 +1,485 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从颜色到多光源：OpenGL 光照学习笔记 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从颜色到多光源：OpenGL 光照学习笔记</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.14
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Lighting</span>
+            
+            <span style="color: var(--accent);">#Material</span>
+            
+            <span style="color: var(--accent);">#Multiple Lights</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 5 / 7</span>
+                
+                <span>阶段：基础入门</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 71%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%89%E7%85%A7%E5%BA%94%E8%AF%A5%E6%95%B4%E7%AB%A0%E8%BF%9E%E8%B5%B7%E6%9D%A5%E5%AD%A6"><span class="post-toc-list-text">为什么光照应该整章连起来学</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E9%A2%9C%E8%89%B2%E5%B9%B6%E4%B8%8D%E6%98%AF%E8%B4%B4%E4%B8%8A%E5%8E%BB%E7%9A%84%EF%BC%8C%E8%80%8C%E6%98%AF%E7%AE%97%E5%87%BA%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">第一部分：颜色并不是贴上去的，而是算出来的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E5%9F%BA%E7%A1%80%E5%85%89%E7%85%A7%E7%9C%9F%E6%AD%A3%E5%BB%BA%E7%AB%8B%E4%BA%86%E6%98%8E%E6%9A%97%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">第二部分：基础光照真正建立了明暗关系</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%8E%AF%E5%A2%83%E5%85%89-Ambient"><span class="post-toc-list-text">1. 环境光 Ambient</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%BC%AB%E5%8F%8D%E5%B0%84-Diffuse"><span class="post-toc-list-text">2. 漫反射 Diffuse</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E9%95%9C%E9%9D%A2%E9%AB%98%E5%85%89-Specular"><span class="post-toc-list-text">3. 镜面高光 Specular</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%B3%95%E7%BA%BF%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B9%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">4. 法线为什么这么重要</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%89%80%E6%9C%89%E5%90%91%E9%87%8F%E5%BF%85%E9%A1%BB%E6%94%BE%E5%9C%A8%E5%90%8C%E4%B8%80%E4%B8%AA%E7%A9%BA%E9%97%B4%E9%87%8C"><span class="post-toc-list-text">5. 为什么所有向量必须放在同一个空间里</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E6%9D%90%E8%B4%A8%E5%9B%9E%E7%AD%94%E4%BA%86%E2%80%9C%E8%BF%99%E6%98%AF%E4%BB%80%E4%B9%88%E4%B8%9C%E8%A5%BF%E2%80%9D"><span class="post-toc-list-text">第三部分：材质回答了“这是什么东西”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%EF%BC%9A%E5%85%89%E7%85%A7%E8%B4%B4%E5%9B%BE%E6%8A%8A%E2%80%9C%E6%9D%90%E8%B4%A8%E5%B8%B8%E9%87%8F%E2%80%9D%E5%8D%87%E7%BA%A7%E6%88%90%E4%BA%86%E2%80%9C%E6%9D%90%E8%B4%A8%E5%88%86%E5%B8%83%E2%80%9D"><span class="post-toc-list-text">第四部分：光照贴图把“材质常量”升级成了“材质分布”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%94%E9%83%A8%E5%88%86%EF%BC%9A%E6%8A%95%E5%85%89%E7%89%A9%E5%BC%80%E5%A7%8B%E8%AE%A8%E8%AE%BA%E2%80%9C%E5%85%89%E4%BB%8E%E5%93%AA%E9%87%8C%E6%9D%A5%E2%80%9D"><span class="post-toc-list-text">第五部分：投光物开始讨论“光从哪里来”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%96%B9%E5%90%91%E5%85%89-Directional-Light"><span class="post-toc-list-text">1. 方向光 Directional Light</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%82%B9%E5%85%89%E6%BA%90-Point-Light"><span class="post-toc-list-text">2. 点光源 Point Light</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E8%81%9A%E5%85%89%E7%81%AF-Spot-Light"><span class="post-toc-list-text">3. 聚光灯 Spot Light</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%85%AD%E9%83%A8%E5%88%86%EF%BC%9A%E5%A4%9A%E5%85%89%E6%BA%90%E6%8A%8A%E6%95%B4%E7%AB%A0%E7%9C%9F%E6%AD%A3%E6%94%B6%E6%9D%9F%E4%BA%86"><span class="post-toc-list-text">第六部分：多光源把整章真正收束了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%8A%E6%95%B4%E4%B8%AA%E5%85%89%E7%85%A7%E7%AB%A0%E8%8A%82%E5%8E%8B%E7%BC%A9%E6%88%90%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF"><span class="post-toc-list-text">把整个光照章节压缩成一条主线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E6%88%91%E6%9C%80%E6%83%B3%E7%9C%9F%E6%AD%A3%E8%AE%B0%E4%BD%8F%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一章我最想真正记住的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%85%89%E7%85%A7%E8%AE%A1%E7%AE%97%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E2%80%9C%E6%96%B9%E5%90%91%E5%85%B3%E7%B3%BB%E2%80%9D%E7%9A%84%E8%AE%A1%E7%AE%97"><span class="post-toc-list-text">1. 光照计算本质上是“方向关系”的计算</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B3%95%E7%BA%BF%E6%98%AF%E8%A1%A8%E9%9D%A2%E6%9C%9D%E5%90%91%EF%BC%8C%E4%B8%8D%E6%98%AF%E8%A3%85%E9%A5%B0%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">2. 法线是表面朝向，不是装饰数据</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%9D%90%E8%B4%A8%E5%92%8C%E8%B4%B4%E5%9B%BE%E5%B9%B6%E4%B8%8D%E6%98%AF%E4%B8%A4%E5%A5%97%E4%BD%93%E7%B3%BB%EF%BC%8C%E8%80%8C%E6%98%AF%E4%B8%80%E5%A5%97%E4%BD%93%E7%B3%BB%E7%9A%84%E4%B8%8D%E5%90%8C%E5%B1%82%E6%AC%A1"><span class="post-toc-list-text">3. 材质和贴图并不是两套体系，而是一套体系的不同层次</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%A4%9A%E5%85%89%E6%BA%90%E4%B8%8D%E6%98%AF%E6%8E%A8%E7%BF%BB%E5%89%8D%E9%9D%A2%E7%9A%84%E5%85%AC%E5%BC%8F%EF%BC%8C%E8%80%8C%E6%98%AF%E6%8A%8A%E5%AE%83%E4%BB%AC%E5%8A%A0%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">4. 多光源不是推翻前面的公式，而是把它们加起来</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E5%85%89%E7%85%A7%E7%AB%A0%E8%8A%82%E7%9A%84%E6%9C%AC%E8%B4%A8%EF%BC%8C%E6%98%AF%E6%8A%8A%E2%80%9C%E5%87%A0%E4%BD%95%E4%B8%96%E7%95%8C%E2%80%9D%E5%92%8C%E2%80%9C%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C%E2%80%9D%E7%AC%AC%E4%B8%80%E6%AC%A1%E7%9C%9F%E6%AD%A3%E8%BF%9E%E6%8E%A5%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">5. 光照章节的本质，是把“几何世界”和“视觉效果”第一次真正连接起来</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%B7%AF%E6%9C%80%E8%87%AA%E7%84%B6%E7%9A%84%E5%AD%A6%E4%B9%A0%E9%A1%BA%E5%BA%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%AF%B9%E7%9A%84"><span class="post-toc-list-text">这一路最自然的学习顺序为什么是对的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学到 LearnOpenGL 的光照部分时，我第一次明显感觉到“图形学开始像图形学了”。</p>
+<p>前面的窗口、三角形、着色器、纹理、坐标系统和摄像机，更多是在回答这些问题：</p>
+<ul>
+<li>程序怎么跑起来</li>
+<li>顶点怎么送进 GPU</li>
+<li>物体怎么出现在三维空间里</li>
+<li>相机为什么能移动</li>
+</ul>
+<p>而光照这一章开始回答的是另一类问题：</p>
+<ul>
+<li>为什么同样是一个立方体，有的看起来像塑料，有的像金属</li>
+<li>为什么物体会有明暗变化，而不是一整块纯色</li>
+<li>为什么高光会随着视角移动</li>
+<li>为什么不同位置、不同类型的光源，会让同一个场景呈现完全不同的气氛</li>
+</ul>
+<p>这一篇笔记把整个光照主线串在一起记录，对应的本地项目是：</p>
+<ul>
+<li><code>projects/learnopengl/learnopengl/09_lighting_colors</code></li>
+<li><code>projects/learnopengl/learnopengl/10_basic_lighting</code></li>
+<li><code>projects/learnopengl/learnopengl/11_materials</code></li>
+<li><code>projects/learnopengl/learnopengl/12_lighting_maps</code></li>
+<li><code>projects/learnopengl/learnopengl/13_light_casters</code></li>
+<li><code>projects/learnopengl/learnopengl/14_multiple_lights</code></li>
+</ul>
+<p>如果只把它们看成六个小节，学习时很容易碎掉；但如果把它们看成一条连续演化的链路，逻辑会非常清楚：</p>
+<ol>
+<li>先建立“物体颜色会受光源颜色影响”的直觉</li>
+<li>再建立一套最基本的光照模型</li>
+<li>然后把“物体是什么材质”引入进来</li>
+<li>再把材质参数从常量升级成贴图</li>
+<li>再讨论光到底是从哪里来的、怎么衰减、怎么形成聚光</li>
+<li>最后把不同类型的光源同时放进一个场景里</li>
+</ol>
+<p>也就是说，这一章真正完成的是一次认知升级：</p>
+<p>从“给物体指定颜色”，到“由光照模型决定物体最终呈现出来的颜色”。</p>
+<h2 id="为什么光照应该整章连起来学">为什么光照应该整章连起来学</h2>
+<p>这一章的每一节都不是孤立的。</p>
+<p>“颜色”看起来最简单，但它在帮我们建立一个最基本的起点：物体颜色和光源颜色之间是会相互作用的。</p>
+<p>“基础光照”则是在这个起点上，第一次把明暗变化拆成了环境光、漫反射和镜面高光。</p>
+<p>“材质”进一步说明：不同物体面对同一束光，呈现出来的效果并不相同，因为物体本身的反射属性不同。</p>
+<p>“光照贴图”又说明：这些材质属性不仅可以是一个常量，还可以是纹理，也就是说，物体的不同区域可以有不同的反射特征。</p>
+<p>“投光物”开始讨论光源类型。原来光不一定只是“一个位置 + 一个颜色”，它还可能是平行光、点光源、聚光灯，而且会随距离衰减。</p>
+<p>最后“多光源”把这一切收束起来：现实场景里通常不会只有一盏灯，真正的渲染程序要把多种光源的贡献叠加在一起。</p>
+<p>所以这整章最好不要拆碎记，而应该作为一条完整的主线来理解：</p>
+<p>“物体如何根据自身材质、表面朝向、观察方向以及场景中的多个光源，计算出最终颜色。”</p>
+<h2 id="第一部分：颜色并不是贴上去的，而是算出来的">第一部分：颜色并不是贴上去的，而是算出来的</h2>
+<p>光照章节的第一个起点其实很朴素。</p>
+<p>在“颜色”这一节里，物体片元着色器通常只做了一件事：</p>
+<p><code>最终颜色 = lightColor * objectColor</code></p>
+<p>这还不是完整的光照模型，但它已经足够帮助我建立一个重要直觉：</p>
+<ul>
+<li>光源本身有颜色</li>
+<li>物体本身也有颜色</li>
+<li>屏幕上看到的结果，往往不是“直接等于物体颜色”，而是两者共同作用的结果</li>
+</ul>
+<p>这一节通常还会在场景里放一个小白色立方体，专门表示光源位置。这个做法在后面看起来非常自然，因为一旦开始做真正的光照计算，我们就不再只是“知道有一盏灯”，而是会明确地知道“灯在场景中的什么位置”。</p>
+<p>换句话说，“颜色”这一节虽然简单，但它完成了两件很重要的铺垫：</p>
+<ul>
+<li>把“物体”和“光源”分开</li>
+<li>把“颜色是被光照影响的结果”这个概念先立住</li>
+</ul>
+<h2 id="第二部分：基础光照真正建立了明暗关系">第二部分：基础光照真正建立了明暗关系</h2>
+<p>到了“基础光照”，事情才真正进入图形学核心。</p>
+<p>这一节最重要的不是代码量变大了，而是第一次开始认真回答：</p>
+<p>“一个片段为什么该亮，为什么该暗？”</p>
+<p>LearnOpenGL 这里使用的是经典的 Phong/Blinn-Phong 入门思路里的那条主线：把光照拆成三部分。</p>
+<h3 id="1-环境光-Ambient">1. 环境光 Ambient</h3>
+<p>环境光可以理解成场景里总有一点基础亮度，不至于让背光面彻底黑掉。</p>
+<p>它并不追求物理严格，更像是入门阶段为了让场景更自然的一种基础补光。</p>
+<h3 id="2-漫反射-Diffuse">2. 漫反射 Diffuse</h3>
+<p>漫反射最关键的量是：</p>
+<p><code>dot(normal, lightDir)</code></p>
+<p>它表达的是“表面朝向”和“来光方向”之间的对齐程度。</p>
+<ul>
+<li>如果法线和光线方向几乎一致，说明光打得比较正，表面更亮</li>
+<li>如果夹角很大，说明光打得比较斜，表面更暗</li>
+</ul>
+<p>这一步让立方体第一次真正具有了“面朝光的一侧更亮，背光的一侧更暗”的立体感。</p>
+<h3 id="3-镜面高光-Specular">3. 镜面高光 Specular</h3>
+<p>镜面高光开始把观察者也引入计算。</p>
+<p>它不再只关心光从哪里来，还关心：</p>
+<ul>
+<li>我现在从哪个方向看这个表面</li>
+<li>反射方向是不是接近我的视线方向</li>
+</ul>
+<p>这也是为什么高光会随着视角移动。它不是贴在物体表面上的一块白斑，而是由“光线方向、表面法线、观察方向”共同决定的结果。</p>
+<h3 id="4-法线为什么这么重要">4. 法线为什么这么重要</h3>
+<p>这一节里最关键的新输入其实不是光源颜色，而是法线。</p>
+<p>法线描述的是表面朝向。没有法线，就没有办法判断：</p>
+<ul>
+<li>这一块表面是不是朝向光源</li>
+<li>光在这里应该有多强的漫反射</li>
+<li>高光应该出现在哪里</li>
+</ul>
+<p>这也是为什么这一章开始，顶点数据不再只是位置，还要额外包含法线。</p>
+<h3 id="5-为什么所有向量必须放在同一个空间里">5. 为什么所有向量必须放在同一个空间里</h3>
+<p>这一节还有一个非常容易忽略但极其关键的原则：</p>
+<p>参与光照计算的量，最好全部放在同一个坐标空间里。</p>
+<p>例如：</p>
+<ul>
+<li><code>FragPos</code></li>
+<li><code>Normal</code></li>
+<li><code>lightPos</code></li>
+<li><code>viewPos</code></li>
+</ul>
+<p>如果其中一部分在局部空间，另一部分在世界空间，那么点乘、方向差值这些结果就会失去意义。</p>
+<p>在我们的实现里，基础光照之后的代码基本都选择在世界空间中完成这件事。这一点会贯穿后面所有小节。</p>
+<h2 id="第三部分：材质回答了“这是什么东西”">第三部分：材质回答了“这是什么东西”</h2>
+<p>“基础光照”让我们知道了物体为什么会亮和暗，但它默认了一个很粗糙的前提：所有物体的反射行为差不多。</p>
+<p>现实里当然不是这样。</p>
+<ul>
+<li>木头的高光弱</li>
+<li>金属的反光强</li>
+<li>塑料会有明显高光，但又不像金属那么锐利</li>
+</ul>
+<p>这时候，“材质”这一节就出现了。</p>
+<p>它做的事可以概括成一句话：</p>
+<p>“把光照公式里原本写死的颜色和高光强度，拆成属于物体自己的材质参数。”</p>
+<p>通常我们会把材质拆成：</p>
+<ul>
+<li><code>ambient</code></li>
+<li><code>diffuse</code></li>
+<li><code>specular</code></li>
+<li><code>shininess</code></li>
+</ul>
+<p>前面三个控制不同光照分量如何响应，<code>shininess</code> 则控制高光有多集中。</p>
+<p>这里最容易建立的直觉是：</p>
+<ul>
+<li><code>specular</code> 越强，高光越明显</li>
+<li><code>shininess</code> 越大，高光范围越小，但更尖锐</li>
+</ul>
+<p>这一节很像在说：</p>
+<p>基础光照告诉你“光照怎么算”，而材质告诉你“这个物体愿意以什么方式响应这些光”。</p>
+<p>如果说前一节讨论的是光照模型的结构，那么这一节讨论的就是物体自身的反射个性。</p>
+<h2 id="第四部分：光照贴图把“材质常量”升级成了“材质分布”">第四部分：光照贴图把“材质常量”升级成了“材质分布”</h2>
+<p>学到“材质”之后，一个很自然的问题就会出现：</p>
+<p>难道整个物体的漫反射、镜面反射都只能是一个固定值吗？</p>
+<p>如果是一个木箱，木头纹理不同区域看起来并不完全一样；有些金属边角更容易出现高光，有些区域则更暗、更粗糙。</p>
+<p>于是“光照贴图”把材质再往前推了一步：</p>
+<ul>
+<li>漫反射不再只是常量，而可以来自 <code>diffuse map</code></li>
+<li>镜面反射不再只是常量，而可以来自 <code>specular map</code></li>
+</ul>
+<p>这一步的重要意义在于：</p>
+<p>材质不再只是“整个物体的一份配置”，而变成了“物体表面每个位置都可能不同的属性分布”。</p>
+<p>这时候，纹理坐标重新变得非常重要，因为片元着色器需要根据 <code>TexCoord</code> 去查询：</p>
+<ul>
+<li>这一点表面的基础颜色是什么</li>
+<li>这一点表面的镜面反射强度是多少</li>
+</ul>
+<p>如果说“材质”是在回答“这是什么材料”，那么“光照贴图”就在回答：</p>
+<p>“这个材料在物体表面的不同区域，具体是怎样分布的。”</p>
+<p>这也是光照章节第一次真正把“纹理”和“光照”深度结合起来。</p>
+<h2 id="第五部分：投光物开始讨论“光从哪里来”">第五部分：投光物开始讨论“光从哪里来”</h2>
+<p>前面几节更多是在讨论：</p>
+<ul>
+<li>物体怎样接收光</li>
+<li>物体怎样根据材质响应光</li>
+</ul>
+<p>但“投光物”开始真正讨论光源本身。</p>
+<p>这时候我们不再满足于说“场景里有一束光”，而是要区分：</p>
+<ul>
+<li>这盏光是沿某个固定方向照下来的吗</li>
+<li>它是从某个具体位置向四周发散的吗</li>
+<li>它会不会像手电筒一样只照亮一小块区域</li>
+<li>它会不会随距离变远而变暗</li>
+</ul>
+<p>这一节最重要的变化，是把“光源类型”纳入了程序结构。</p>
+<h3 id="1-方向光-Directional-Light">1. 方向光 Directional Light</h3>
+<p>方向光可以理解成来自非常远处的光，例如阳光。</p>
+<p>它的特点是：</p>
+<ul>
+<li>只有方向</li>
+<li>不强调具体位置</li>
+<li>所有片段接收到的来光方向大致相同</li>
+</ul>
+<p>这类光很适合做场景的基础主光。</p>
+<h3 id="2-点光源-Point-Light">2. 点光源 Point Light</h3>
+<p>点光源则强调一个明确的位置。</p>
+<p>它从某个点向四周发散，因此离光源近的地方更亮，离得远的地方更暗。</p>
+<p>这时候就引入了衰减：</p>
+<p><code>1.0 / (constant + linear * d + quadratic * d^2)</code></p>
+<p>这条式子非常重要，因为它让点光源不再“照亮全世界”，而更像现实中会随着距离减弱的灯泡。</p>
+<h3 id="3-聚光灯-Spot-Light">3. 聚光灯 Spot Light</h3>
+<p>聚光灯除了有位置，还有方向，并且有一个照射角范围。</p>
+<p>这类光最容易让人联想到手电筒。</p>
+<p>在我们的实现里，它还和摄像机绑定在一起，于是你移动和转头时，聚光灯的亮区也会一起移动。</p>
+<p>如果再加入内外切角和插值，就能做出柔和边缘，而不是生硬地“圈内亮、圈外黑”。</p>
+<p>这一节真正带来的理解是：</p>
+<p>光照不仅仅是“算一个公式”，还要考虑光源的空间属性和照射方式。</p>
+<h2 id="第六部分：多光源把整章真正收束了">第六部分：多光源把整章真正收束了</h2>
+<p>到了“多光源”，这一章的逻辑终于闭环了。</p>
+<p>现实中的场景很少只存在一盏灯。一个房间里可能同时有：</p>
+<ul>
+<li>从窗外照进来的方向光</li>
+<li>天花板上的多个点光源</li>
+<li>玩家手上的手电筒聚光灯</li>
+</ul>
+<p>多光源这一节做的事情，其实就是把前面已经学过的各种光源组织起来，然后把它们对同一个片段的贡献叠加。</p>
+<p>这一节最重要的不是新的数学，而是新的组织方式。</p>
+<p>通常会做这些事：</p>
+<ul>
+<li>为方向光单独定义结构体</li>
+<li>为点光源定义结构体数组</li>
+<li>为聚光灯定义结构体</li>
+<li>分别写出 <code>CalcDirLight</code>、<code>CalcPointLight</code>、<code>CalcSpotLight</code></li>
+<li>在片元着色器里把它们的结果相加</li>
+</ul>
+<p>到了这一步，片元着色器的核心就从“单灯光照公式”变成了“多种光照贡献的组合器”。</p>
+<p>这也是为什么这一节看起来更像工程问题，而不只是数学问题：</p>
+<p>你不只是要会算，还要会组织 shader 代码，让它能清晰地支持多种光源并存。</p>
+<h2 id="把整个光照章节压缩成一条主线">把整个光照章节压缩成一条主线</h2>
+<p>如果让我把这一整章压缩成最短的一条主线，我会这样概括：</p>
+<ol>
+<li>先认识到物体颜色会受光源颜色影响</li>
+<li>再用环境光、漫反射和镜面高光建立最基本的明暗模型</li>
+<li>然后用材质参数控制不同物体如何响应光</li>
+<li>再用贴图让材质从“常量”变成“分布”</li>
+<li>再用方向、位置、衰减、聚光角度去描述不同类型的光源</li>
+<li>最后把多种光源的结果叠加，形成一个完整场景</li>
+</ol>
+<p>换句话说，这整章是在不断回答同一个问题，只是回答得越来越完整：</p>
+<p>“一个片段的最终颜色，到底是怎样被算出来的？”</p>
+<h2 id="这一章我最想真正记住的几个点">这一章我最想真正记住的几个点</h2>
+<p>学完整章后，我觉得最值得反复回想的不是某个单独 API，而是下面这些原则。</p>
+<h3 id="1-光照计算本质上是“方向关系”的计算">1. 光照计算本质上是“方向关系”的计算</h3>
+<p>无论是漫反射还是镜面高光，核心都离不开方向之间的关系：</p>
+<ul>
+<li>法线和光线方向的关系</li>
+<li>观察方向和反射方向的关系</li>
+</ul>
+<p>也就是说，光照不是在“给颜色”，而是在“根据几何关系计算颜色”。</p>
+<h3 id="2-法线是表面朝向，不是装饰数据">2. 法线是表面朝向，不是装饰数据</h3>
+<p>法线一旦不对，明暗关系就会整体失真。</p>
+<p>尤其是在后面有缩放变换时，法线不能简单地直接乘 <code>model</code>，而需要使用法线矩阵。这一点在基础光照之后就应该牢牢记住。</p>
+<h3 id="3-材质和贴图并不是两套体系，而是一套体系的不同层次">3. 材质和贴图并不是两套体系，而是一套体系的不同层次</h3>
+<p>材质先把物体的反射行为抽象成参数。</p>
+<p>贴图则让这些参数在表面空间中变得更细致。</p>
+<p>所以贴图不是额外附加的一层装饰，而是材质表达方式的升级。</p>
+<h3 id="4-多光源不是推翻前面的公式，而是把它们加起来">4. 多光源不是推翻前面的公式，而是把它们加起来</h3>
+<p>这一点很重要，因为它说明：</p>
+<p>后面的复杂，并不是因为前面的内容失效了，而是因为前面的每一部分都继续有效，只是需要同时存在。</p>
+<h3 id="5-光照章节的本质，是把“几何世界”和“视觉效果”第一次真正连接起来">5. 光照章节的本质，是把“几何世界”和“视觉效果”第一次真正连接起来</h3>
+<p>在坐标系统和摄像机阶段，我们更多是在组织空间。</p>
+<p>而到了光照阶段，这个空间终于开始产生视觉上的“质感”。</p>
+<p>这也是为什么光照是一个非常关键的分水岭：从这里开始，画面不再只是“有东西在那儿”，而开始变得“像一个被看见的世界”。</p>
+<h2 id="这一路最自然的学习顺序为什么是对的">这一路最自然的学习顺序为什么是对的</h2>
+<p>现在回头看 LearnOpenGL 这条光照学习顺序，我觉得它设计得非常合理。</p>
+<p>它没有一上来就把所有公式和所有光源堆在你面前，而是一步一步扩展问题：</p>
+<ul>
+<li>先分清光源和物体</li>
+<li>再引入法线和明暗</li>
+<li>再引入材质差异</li>
+<li>再引入贴图</li>
+<li>再引入不同光源类型</li>
+<li>最后收束到多光源</li>
+</ul>
+<p>这意味着我们不是在硬背一个大公式，而是在逐步构建一套完整的理解框架。</p>
+<p>这也是为什么把整章串成一篇笔记会比单独看每一节更有效：</p>
+<p>因为你看到的将不再是六个小知识点，而是一套不断扩展、不断变完整的渲染思路。</p>
+<h2 id="小结">小结</h2>
+<p>如果说入门阶段解决的是“怎么把东西画出来”，那么光照阶段解决的就是：</p>
+<p>“怎么让它看起来不再只是画出来，而是真正开始有体积、有材质、有空间中的视觉逻辑。”</p>
+<p>从“颜色”到“多光源”，我最终学到的并不是几个孤立的 shader 技巧，而是一条非常完整的认识路径：</p>
+<ul>
+<li>颜色会受到光源影响</li>
+<li>表面朝向会决定明暗</li>
+<li>观察方向会决定高光</li>
+<li>材质会决定反射特性</li>
+<li>贴图会决定这些特性在表面上的分布</li>
+<li>光源类型会决定光如何投射到场景中</li>
+<li>多光源会共同塑造最终画面</li>
+</ul>
+<p>到这里，OpenGL 的画面才真正开始从“几何正确”走向“视觉上更可信”。</p>
+<p>而这也正是我觉得光照这一章最有价值的地方。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <div class="nav-prev empty"></div>
+            
+
+            
+            <a href="/2026/04/13/graphics-notes/opengl-04-transformations-coordinate-systems-camera/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%89%E7%85%A7%E5%BA%94%E8%AF%A5%E6%95%B4%E7%AB%A0%E8%BF%9E%E8%B5%B7%E6%9D%A5%E5%AD%A6"><span class="post-toc-list-text">为什么光照应该整章连起来学</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E9%A2%9C%E8%89%B2%E5%B9%B6%E4%B8%8D%E6%98%AF%E8%B4%B4%E4%B8%8A%E5%8E%BB%E7%9A%84%EF%BC%8C%E8%80%8C%E6%98%AF%E7%AE%97%E5%87%BA%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">第一部分：颜色并不是贴上去的，而是算出来的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E5%9F%BA%E7%A1%80%E5%85%89%E7%85%A7%E7%9C%9F%E6%AD%A3%E5%BB%BA%E7%AB%8B%E4%BA%86%E6%98%8E%E6%9A%97%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">第二部分：基础光照真正建立了明暗关系</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%8E%AF%E5%A2%83%E5%85%89-Ambient"><span class="post-toc-list-text">1. 环境光 Ambient</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%BC%AB%E5%8F%8D%E5%B0%84-Diffuse"><span class="post-toc-list-text">2. 漫反射 Diffuse</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E9%95%9C%E9%9D%A2%E9%AB%98%E5%85%89-Specular"><span class="post-toc-list-text">3. 镜面高光 Specular</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%B3%95%E7%BA%BF%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B9%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">4. 法线为什么这么重要</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%89%80%E6%9C%89%E5%90%91%E9%87%8F%E5%BF%85%E9%A1%BB%E6%94%BE%E5%9C%A8%E5%90%8C%E4%B8%80%E4%B8%AA%E7%A9%BA%E9%97%B4%E9%87%8C"><span class="post-toc-list-text">5. 为什么所有向量必须放在同一个空间里</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E6%9D%90%E8%B4%A8%E5%9B%9E%E7%AD%94%E4%BA%86%E2%80%9C%E8%BF%99%E6%98%AF%E4%BB%80%E4%B9%88%E4%B8%9C%E8%A5%BF%E2%80%9D"><span class="post-toc-list-text">第三部分：材质回答了“这是什么东西”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%EF%BC%9A%E5%85%89%E7%85%A7%E8%B4%B4%E5%9B%BE%E6%8A%8A%E2%80%9C%E6%9D%90%E8%B4%A8%E5%B8%B8%E9%87%8F%E2%80%9D%E5%8D%87%E7%BA%A7%E6%88%90%E4%BA%86%E2%80%9C%E6%9D%90%E8%B4%A8%E5%88%86%E5%B8%83%E2%80%9D"><span class="post-toc-list-text">第四部分：光照贴图把“材质常量”升级成了“材质分布”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%94%E9%83%A8%E5%88%86%EF%BC%9A%E6%8A%95%E5%85%89%E7%89%A9%E5%BC%80%E5%A7%8B%E8%AE%A8%E8%AE%BA%E2%80%9C%E5%85%89%E4%BB%8E%E5%93%AA%E9%87%8C%E6%9D%A5%E2%80%9D"><span class="post-toc-list-text">第五部分：投光物开始讨论“光从哪里来”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%96%B9%E5%90%91%E5%85%89-Directional-Light"><span class="post-toc-list-text">1. 方向光 Directional Light</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%82%B9%E5%85%89%E6%BA%90-Point-Light"><span class="post-toc-list-text">2. 点光源 Point Light</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E8%81%9A%E5%85%89%E7%81%AF-Spot-Light"><span class="post-toc-list-text">3. 聚光灯 Spot Light</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%85%AD%E9%83%A8%E5%88%86%EF%BC%9A%E5%A4%9A%E5%85%89%E6%BA%90%E6%8A%8A%E6%95%B4%E7%AB%A0%E7%9C%9F%E6%AD%A3%E6%94%B6%E6%9D%9F%E4%BA%86"><span class="post-toc-list-text">第六部分：多光源把整章真正收束了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%8A%E6%95%B4%E4%B8%AA%E5%85%89%E7%85%A7%E7%AB%A0%E8%8A%82%E5%8E%8B%E7%BC%A9%E6%88%90%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF"><span class="post-toc-list-text">把整个光照章节压缩成一条主线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E6%88%91%E6%9C%80%E6%83%B3%E7%9C%9F%E6%AD%A3%E8%AE%B0%E4%BD%8F%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一章我最想真正记住的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%85%89%E7%85%A7%E8%AE%A1%E7%AE%97%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E2%80%9C%E6%96%B9%E5%90%91%E5%85%B3%E7%B3%BB%E2%80%9D%E7%9A%84%E8%AE%A1%E7%AE%97"><span class="post-toc-list-text">1. 光照计算本质上是“方向关系”的计算</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B3%95%E7%BA%BF%E6%98%AF%E8%A1%A8%E9%9D%A2%E6%9C%9D%E5%90%91%EF%BC%8C%E4%B8%8D%E6%98%AF%E8%A3%85%E9%A5%B0%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">2. 法线是表面朝向，不是装饰数据</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%9D%90%E8%B4%A8%E5%92%8C%E8%B4%B4%E5%9B%BE%E5%B9%B6%E4%B8%8D%E6%98%AF%E4%B8%A4%E5%A5%97%E4%BD%93%E7%B3%BB%EF%BC%8C%E8%80%8C%E6%98%AF%E4%B8%80%E5%A5%97%E4%BD%93%E7%B3%BB%E7%9A%84%E4%B8%8D%E5%90%8C%E5%B1%82%E6%AC%A1"><span class="post-toc-list-text">3. 材质和贴图并不是两套体系，而是一套体系的不同层次</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%A4%9A%E5%85%89%E6%BA%90%E4%B8%8D%E6%98%AF%E6%8E%A8%E7%BF%BB%E5%89%8D%E9%9D%A2%E7%9A%84%E5%85%AC%E5%BC%8F%EF%BC%8C%E8%80%8C%E6%98%AF%E6%8A%8A%E5%AE%83%E4%BB%AC%E5%8A%A0%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">4. 多光源不是推翻前面的公式，而是把它们加起来</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E5%85%89%E7%85%A7%E7%AB%A0%E8%8A%82%E7%9A%84%E6%9C%AC%E8%B4%A8%EF%BC%8C%E6%98%AF%E6%8A%8A%E2%80%9C%E5%87%A0%E4%BD%95%E4%B8%96%E7%95%8C%E2%80%9D%E5%92%8C%E2%80%9C%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C%E2%80%9D%E7%AC%AC%E4%B8%80%E6%AC%A1%E7%9C%9F%E6%AD%A3%E8%BF%9E%E6%8E%A5%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">5. 光照章节的本质，是把“几何世界”和“视觉效果”第一次真正连接起来</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E8%B7%AF%E6%9C%80%E8%87%AA%E7%84%B6%E7%9A%84%E5%AD%A6%E4%B9%A0%E9%A1%BA%E5%BA%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%AF%B9%E7%9A%84"><span class="post-toc-list-text">这一路最自然的学习顺序为什么是对的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/codeblocks.js?v=20260410e"></script>
+            <script src="/js/toc.js?v=20260410e"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

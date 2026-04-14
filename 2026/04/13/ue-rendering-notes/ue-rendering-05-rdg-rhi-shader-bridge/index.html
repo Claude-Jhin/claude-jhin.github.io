@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE引擎中的 RDG 与 RHI：一帧渲染是怎样真正提交到 GPU 的 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">UE引擎中的 RDG 与 RHI：一帧渲染是怎样真正提交到 GPU 的</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.13
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#UE Rendering</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#RDG</span>
+            
+            <span style="color: var(--accent);">#RHI</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE 渲染源码拆解</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 5 / 5</span>
+                
+                <span>阶段：主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-rendering/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E9%98%B6%E6%AE%B5%E7%BB%84%E7%BB%87%E5%88%B0-GPU-%E6%89%A7%E8%A1%8C"><span class="post-toc-list-text">一条主线：从阶段组织到 GPU 执行</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%89%8D%E9%9D%A2%E5%B7%B2%E7%BB%8F%E7%9C%8B%E4%BA%86%E5%BE%88%E5%A4%9A-pass%EF%BC%8C%E5%8D%B4%E4%BB%8D%E7%84%B6%E4%BC%9A%E8%A7%89%E5%BE%97%E2%80%9C%E6%B2%A1%E7%9C%8B%E8%A7%81-GPU%E2%80%9D"><span class="post-toc-list-text">1. 为什么前面已经看了很多 pass，却仍然会觉得“没看见 GPU”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#2-FSceneRenderBuilder%EF%BC%9A%E6%95%B4%E5%B8%A7%E6%89%A7%E8%A1%8C%E7%9A%84%E4%B8%8A%E5%B1%82%E7%BB%84%E7%BB%87%E5%99%A8"><span class="post-toc-list-text">2. FSceneRenderBuilder：整帧执行的上层组织器</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#3-FRDGBuilder%EF%BC%9A%E5%AE%83%E4%B8%8D%E6%98%AF%E5%91%BD%E4%BB%A4%E5%88%97%E8%A1%A8%EF%BC%8C%E8%80%8C%E6%98%AF%E4%B8%80%E5%BC%A0%E2%80%9C%E6%B8%B2%E6%9F%93%E5%9B%BE%E2%80%9D"><span class="post-toc-list-text">3. FRDGBuilder：它不是命令列表，而是一张“渲染图”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#4-AddPass-%E7%9C%9F%E6%AD%A3%E5%81%9A%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">4. AddPass(...) 真正做的是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#5-AddDispatchPass-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8D%E5%AD%97%E5%AE%B9%E6%98%93%E8%AE%A9%E4%BA%BA%E8%AF%AF%E4%BC%9A"><span class="post-toc-list-text">5. AddDispatchPass(...) 为什么名字容易让人误会</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#6-Execute-%EF%BC%9ARDG-%E4%BB%8E%E2%80%9C%E6%90%AD%E5%9B%BE%E2%80%9D%E5%88%87%E6%8D%A2%E5%88%B0%E2%80%9C%E7%9C%9F%E6%AD%A3%E6%89%A7%E8%A1%8C%E2%80%9D%E7%9A%84%E5%88%86%E7%95%8C%E7%BA%BF"><span class="post-toc-list-text">6. Execute()：RDG 从“搭图”切换到“真正执行”的分界线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#7-FRHICommandList%EF%BC%9A%E8%BF%99%E6%89%8D%E6%98%AF%E2%80%9C%E5%BD%95%E5%88%B6%E5%BA%95%E5%B1%82%E5%91%BD%E4%BB%A4%E2%80%9D%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="post-toc-list-text">7. FRHICommandList：这才是“录制底层命令”的地方</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#8-ALLOC-COMMAND-%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%AF%B4-UE-%E6%98%AF%E5%9C%A8%E2%80%9C%E5%BD%95%E5%91%BD%E4%BB%A4%E2%80%9D%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E2%80%9C%E7%AB%8B%E5%88%BB%E6%89%A7%E8%A1%8C%E2%80%9D"><span class="post-toc-list-text">8. ALLOC_COMMAND(...)：为什么说 UE 是在“录命令”，而不是“立刻执行”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#9-%E7%94%BB%E5%9B%BE%E5%85%83%E5%92%8C%E8%B7%91-Compute%EF%BC%8C%E5%9C%A8%E8%BF%99%E9%87%8C%E7%BB%88%E4%BA%8E%E8%A2%AB%E7%BB%9F%E4%B8%80%E8%B5%B7%E6%9D%A5%E4%BA%86"><span class="post-toc-list-text">9. 画图元和跑 Compute，在这里终于被统一起来了</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Raster"><span class="post-toc-list-text">Raster</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Compute"><span class="post-toc-list-text">Compute</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#10-Shader%EF%BC%9A%E5%89%8D%E9%9D%A2%E7%9A%84%E6%89%80%E6%9C%89%E7%BB%84%E7%BB%87%EF%BC%8C%E6%9C%80%E7%BB%88%E9%83%BD%E6%98%AF%E4%B8%BA%E4%BA%86%E6%8A%8A%E8%B5%84%E6%BA%90%E9%80%81%E8%BF%9B%E8%BF%99%E9%87%8C"><span class="post-toc-list-text">10. Shader：前面的所有组织，最终都是为了把资源送进这里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#11-%E7%94%A8-BasePass-%E9%87%8D%E6%96%B0%E5%9B%9E%E7%9C%8B%E8%BF%99%E6%9D%A1%E6%A1%A5%E6%A2%81%E9%93%BE"><span class="post-toc-list-text">11. 用 BasePass 重新回看这条桥梁链</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#12-%E8%BF%99%E6%9D%A1%E6%A1%A5%E6%A2%81%E9%93%BE%E5%AF%B9%E2%80%9C%E8%87%AA%E5%AE%9A%E4%B9%89-Pass%E2%80%9D%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">12. 这条桥梁链对“自定义 Pass”意味着什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E4%BB%A5%E5%B8%A6%E8%B5%B0%E7%9A%84%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">可以带走的结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">写在最后</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE 渲染源码主线拆解<br>
+本文主题：从 <code>FSceneRenderBuilder</code> 到 <code>FRHICommandList</code></p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>前面的几篇文章，已经把 UE 主场景 Deferred Renderer 的主骨架基本串起来了：</p>
+<ul>
+<li>渲染准备阶段如何生成 <code>ViewFamily</code>、<code>FSceneView</code> 和 <code>FViewInfo</code></li>
+<li>RenderThread 上这一帧怎样从 <code>PrePass</code> 走到 <code>PostProcessing</code></li>
+<li>后处理又怎样把 <code>SceneColor</code> 最终推进到 <code>ViewFamilyOutput</code></li>
+</ul>
+<p>但如果只停在这里，读源码时仍然会有一个非常强的疑问：</p>
+<p><strong>这些 pass 到底是怎样真正变成 GPU 工作的？</strong></p>
+<p>在 <code>BasePass</code>、<code>Deferred Lighting</code>、<code>PostProcessing</code> 这些函数里，看到的往往是：</p>
+<ul>
+<li><code>GraphBuilder.AddPass(...)</code></li>
+<li><code>FComputeShaderUtils::AddPass(...)</code></li>
+<li><code>FPixelShaderUtils::AddFullscreenPass(...)</code></li>
+<li><code>Pass-&gt;Draw(...)</code></li>
+</ul>
+<p>而不是图形 API 教程里那种直白的：</p>
+<ul>
+<li><code>DrawIndexedInstanced(...)</code></li>
+<li><code>DispatchCompute(...)</code></li>
+<li><code>vkCmdDrawIndexed(...)</code></li>
+</ul>
+<p>这正是 UE 渲染源码第二层难点所在。<br>
+你已经能看懂“这一帧按什么顺序组织”，但还没真正打通：</p>
+<blockquote>
+<p><strong>这一帧的 C++ 渲染阶段，是怎样通过 RDG、RHI 和 Shader 最终落到 GPU 上的。</strong></p>
+</blockquote>
+<p>这篇文章就专门解决这个问题。</p>
+<hr>
+<h2 id="一条主线：从阶段组织到-GPU-执行">一条主线：从阶段组织到 GPU 执行</h2>
+<p>先把这篇文章最重要的主线放出来：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;FDeferredShadingSceneRenderer::Render&quot;] --&gt; B[&quot;FSceneRenderBuilder&quot;]</span><br><span class="line">    B --&gt; C[&quot;FRDGBuilder&quot;]</span><br><span class="line">    C --&gt; D[&quot;AddPass / AddDispatchPass&quot;]</span><br><span class="line">    D --&gt; E[&quot;RDG Graph&quot;]</span><br><span class="line">    E --&gt; F[&quot;GraphBuilder.Execute()&quot;]</span><br><span class="line">    F --&gt; G[&quot;Pass Execute Lambda&quot;]</span><br><span class="line">    G --&gt; H[&quot;FRHICommandList&quot;]</span><br><span class="line">    H --&gt; I[&quot;Draw / Dispatch / BeginRenderPass&quot;]</span><br><span class="line">    I --&gt; J[&quot;Shader (.usf / .ush)&quot;]</span><br><span class="line">    J --&gt; K[&quot;GPU&quot;]</span><br></pre></td></tr></table></figure>
+<p>如果换一种更偏职责分层的说法，这条链也可以理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;Renderer 决定这一帧做什么&quot;] --&gt; B[&quot;RDG 决定这些工作之间的依赖关系&quot;]</span><br><span class="line">    B --&gt; C[&quot;RHI 负责把这些工作录成底层命令&quot;]</span><br><span class="line">    C --&gt; D[&quot;Shader 定义 GPU 上真正执行的逻辑&quot;]</span><br><span class="line">    D --&gt; E[&quot;GPU 执行&quot;]</span><br></pre></td></tr></table></figure>
+<p>这两张图就是本文的总纲。</p>
+<hr>
+<h2 id="1-为什么前面已经看了很多-pass，却仍然会觉得“没看见-GPU”">1. 为什么前面已经看了很多 pass，却仍然会觉得“没看见 GPU”</h2>
+<p>第一次读 UE 渲染源码时，很容易产生一种奇怪的割裂感：</p>
+<ul>
+<li><code>PrePass</code> 看起来是在画东西</li>
+<li><code>BasePass</code> 看起来也在画东西</li>
+<li><code>PostProcessing</code> 更是一连串很明显的图像处理阶段</li>
+</ul>
+<p>但在这些函数内部，真正直接像图形 API 那样“下命令”的地方并不显眼。<br>
+原因不是 UE 没有做这件事，而是它把这件事拆成了几层：</p>
+<ol>
+<li>先由 renderer 决定“这一帧要有哪些阶段”</li>
+<li>再由 RDG 把这些阶段组织成一张带资源依赖的图</li>
+<li>每个 pass 执行时，再通过 <code>FRHICommandList</code> 录制具体的底层命令</li>
+<li>最后由 RHI 后端把这些命令交给 D3D12 / Vulkan / Metal</li>
+</ol>
+<p>也就是说，前面那些阶段函数更多是在做：</p>
+<blockquote>
+<p><strong>图组织与命令描述</strong></p>
+</blockquote>
+<p>而不是直接执行 GPU 硬件。</p>
+<hr>
+<h2 id="2-FSceneRenderBuilder：整帧执行的上层组织器">2. <code>FSceneRenderBuilder</code>：整帧执行的上层组织器</h2>
+<p>这条桥梁链里，最上面的一层是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/SceneRenderBuilder.cpp:1034</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/SceneRenderBuilder.cpp:1079</code></li>
+</ul>
+<p>也就是：</p>
+<ul>
+<li><code>FSceneRenderBuilder::AddRenderer(...)</code></li>
+<li><code>FSceneRenderBuilder::Execute()</code></li>
+</ul>
+<p>如果你把它放回主渲染链里看，它的位置非常清楚：</p>
+<ul>
+<li>Engine 和 Renderer 已经把这帧的 <code>FSceneRenderer</code> 准备好了</li>
+<li><code>SceneRenderBuilder</code> 负责把这些 renderer 的工作挂到真正的执行轨道上</li>
+</ul>
+<p>这里最关键的理解是：</p>
+<blockquote>
+<p><code>FSceneRenderBuilder</code> 自己并不实现某个具体渲染阶段，它更像是场景渲染的执行调度壳。</p>
+</blockquote>
+<p>真正的重要动作，是在它往下调用的执行过程中触发：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Renderer/Private/SceneRenderBuilder.cpp:771</code></li>
+<li><code>Engine/Source/Runtime/Renderer/Private/SceneRenderBuilder.cpp:915</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GraphBuilder.<span class="built_in">Execute</span>();</span><br></pre></td></tr></table></figure>
+<p>也就是说，这一层真正做的是：</p>
+<ul>
+<li>把当前帧的 renderer 工作组织起来</li>
+<li>在合适的时机触发 RDG 图执行</li>
+</ul>
+<hr>
+<h2 id="3-FRDGBuilder：它不是命令列表，而是一张“渲染图”">3. <code>FRDGBuilder</code>：它不是命令列表，而是一张“渲染图”</h2>
+<p>RDG 的核心定义在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:47</code></li>
+</ul>
+<p>而它最重要的说明，其实就在开头的注释里：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:42</code></li>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:44</code></li>
+</ul>
+<p>那里已经直接写明了：</p>
+<ul>
+<li>Render Graph Builder 用来 build up a graph of passes</li>
+<li>barrier 和 lifetime 来自 pass parameter struct 里的 RDG 参数</li>
+<li>图会在 <code>Execute()</code> 中被 compile、cull、execute</li>
+</ul>
+<p>这几句非常关键，因为它把 RDG 和“普通命令数组”彻底区分开了。</p>
+<p>RDG 不是：</p>
+<ul>
+<li>先把若干 draw / dispatch 存进一个数组</li>
+<li>然后顺序执行</li>
+</ul>
+<p>RDG 更像是：</p>
+<blockquote>
+<p><strong>一张由 pass 节点和资源依赖关系组成的渲染图。</strong></p>
+</blockquote>
+<p>在这张图里，系统不仅知道“要做什么”，还知道：</p>
+<ul>
+<li>这个 pass 读什么</li>
+<li>写什么</li>
+<li>和其他 pass 有什么前后依赖</li>
+<li>哪些资源什么时候需要活着</li>
+<li>哪些 barrier 应该自动插入</li>
+<li>哪些 pass 可以被裁剪掉</li>
+</ul>
+<p>这就是 RDG 相比传统手写 command list 最大的价值。</p>
+<hr>
+<h2 id="4-AddPass-真正做的是什么">4. <code>AddPass(...)</code> 真正做的是什么</h2>
+<p><code>FRDGBuilder</code> 最核心的接口是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:218</code></li>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:230</code></li>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:237</code></li>
+</ul>
+<p>分别对应：</p>
+<ul>
+<li><code>AddPass(...)</code></li>
+<li>无参数版本的 <code>AddPass(...)</code></li>
+<li><code>AddDispatchPass(...)</code></li>
+</ul>
+<p>如果只看名字，最容易误解成：</p>
+<blockquote>
+<p>调了 <code>AddPass(...)</code>，这个 pass 就已经在 GPU 上开始跑了。</p>
+</blockquote>
+<p>但更准确的理解是：</p>
+<blockquote>
+<p><code>AddPass(...)</code> 是在给 RDG 图添加一个新的节点，并描述这个节点执行时要读写哪些资源、使用什么 workload、运行什么 lambda。</p>
+</blockquote>
+<p>这里最重要的不是 lambda 本身，而是：</p>
+<ul>
+<li>pass parameter struct</li>
+<li><code>ERDGPassFlags</code></li>
+<li>资源字段上的 RDG 类型</li>
+</ul>
+<p>因为是这些信息共同告诉 RDG：</p>
+<ul>
+<li>这个 pass 是 raster 还是 compute</li>
+<li>这个 pass 的资源依赖是什么</li>
+<li>它应该怎样被安排进整张图</li>
+</ul>
+<p>所以从阅读角度看，<code>AddPass(...)</code> 最重要的作用不是“执行”，而是：</p>
+<p><strong>描述。</strong></p>
+<hr>
+<h2 id="5-AddDispatchPass-为什么名字容易让人误会">5. <code>AddDispatchPass(...)</code> 为什么名字容易让人误会</h2>
+<p><code>AddDispatchPass(...)</code> 在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:237</code></li>
+</ul>
+<p>如果第一次看到，很容易把它理解成：</p>
+<blockquote>
+<p>“哦，这是 compute shader pass。”</p>
+</blockquote>
+<p>其实不完全是这样。<br>
+它更准确地说，是一种让 pass 采用“显式发起命令录制任务”的组织方式。<br>
+在 UE 里，它既可以服务 compute，也可以服务某些并行 raster 路径。</p>
+<p>这也是为什么你在 <code>PrePass</code> / <code>BasePass</code> 里会看到一种乍看有点奇怪的组合：</p>
+<ul>
+<li>用的是 <code>AddDispatchPass(...)</code></li>
+<li>但 <code>PassFlags</code> 仍然是 <code>ERDGPassFlags::Raster</code></li>
+</ul>
+<p>所以这里“Dispatch”的重点不在 shader 类型，而在：</p>
+<blockquote>
+<p><strong>如何组织命令录制与任务分发。</strong></p>
+</blockquote>
+<hr>
+<h2 id="6-Execute-：RDG-从“搭图”切换到“真正执行”的分界线">6. <code>Execute()</code>：RDG 从“搭图”切换到“真正执行”的分界线</h2>
+<p>RDG 的执行入口在：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RenderCore/Public/RenderGraphBuilder.h:413</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Execute</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<p>这一步在理解上非常重要。</p>
+<p>在 <code>Execute()</code> 之前，代码大多在做：</p>
+<ul>
+<li><code>CreateTexture(...)</code></li>
+<li><code>CreateBuffer(...)</code></li>
+<li><code>CreateSRV(...)</code></li>
+<li><code>CreateUAV(...)</code></li>
+<li><code>AllocParameters(...)</code></li>
+<li><code>AddPass(...)</code></li>
+</ul>
+<p>这些操作都还停留在：</p>
+<blockquote>
+<p><strong>搭图、描述依赖、描述执行方式</strong></p>
+</blockquote>
+<p>而一旦进入 <code>Execute()</code>，语义就变了：</p>
+<ul>
+<li>图会被编译</li>
+<li>图会被裁剪</li>
+<li>pass 会按依赖和 workload 被真正安排执行</li>
+<li>对应 pass 的 lambda 会被真正跑起来</li>
+</ul>
+<p>所以，如果要给整个 RDG 系统找一个最关键的分界点，那就是：</p>
+<p><strong><code>Execute()</code> 之前是图构建，<code>Execute()</code> 之后才是图执行。</strong></p>
+<hr>
+<h2 id="7-FRHICommandList：这才是“录制底层命令”的地方">7. <code>FRHICommandList</code>：这才是“录制底层命令”的地方</h2>
+<p>更靠近底层的一层，是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:3818</code></li>
+</ul>
+<p>也就是 <code>FRHICommandList</code>。</p>
+<p>它的关键作用，不是组织渲染图，而是：</p>
+<blockquote>
+<p><strong>承接某个 pass 在真正执行时需要录制的底层图形命令。</strong></p>
+</blockquote>
+<p>最典型的接口有：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:3973</code> <code>DrawIndexedPrimitive(...)</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:4259</code> <code>BeginRenderPass(...)</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:4291</code> <code>EndRenderPass()</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:2929</code> <code>DispatchComputeShader(...)</code></li>
+</ul>
+<p>这几个接口很关键，因为它们终于开始接近传统图形 API 的语义了。</p>
+<p>也就是说：</p>
+<ul>
+<li>RDG 解决的是“pass 之间怎么组织”</li>
+<li><code>FRHICommandList</code> 解决的是“某个 pass 具体要录什么命令”</li>
+</ul>
+<hr>
+<h2 id="8-ALLOC-COMMAND-：为什么说-UE-是在“录命令”，而不是“立刻执行”">8. <code>ALLOC_COMMAND(...)</code>：为什么说 UE 是在“录命令”，而不是“立刻执行”</h2>
+<p>看看 <code>DrawIndexedPrimitive(...)</code> 的实现：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:3973</code></li>
+</ul>
+<p>最关键的是这两段：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:3978</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:3981</code></li>
+</ul>
+<p>逻辑很清楚：</p>
+<ul>
+<li>如果 <code>Bypass()</code>，直接走 <code>RHIDrawIndexedPrimitive(...)</code></li>
+<li>否则走 <code>ALLOC_COMMAND(FRHICommandDrawIndexedPrimitive)(...)</code></li>
+</ul>
+<p>同样的结构也出现在：</p>
+<ul>
+<li><code>BeginRenderPass(...)</code></li>
+<li><code>EndRenderPass()</code></li>
+<li><code>DispatchComputeShader(...)</code></li>
+</ul>
+<p>对应位置分别是：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:4268</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:4277</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:4304</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:4308</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:2933</code></li>
+<li><code>Engine/Source/Runtime/RHI/Public/RHICommandList.h:2936</code></li>
+</ul>
+<p>这些代码说明：</p>
+<blockquote>
+<p>大多数情况下，UE 不是在这里“直接让 GPU 执行”，而是在当前 RHI 命令流里分配并记录一条命令对象。</p>
+</blockquote>
+<p>这也是为什么前面我们一直说：</p>
+<ul>
+<li>CPU 在 RenderThread 上组织和录制</li>
+<li>GPU 的真正执行发生在更靠后的底层提交阶段</li>
+</ul>
+<hr>
+<h2 id="9-画图元和跑-Compute，在这里终于被统一起来了">9. 画图元和跑 Compute，在这里终于被统一起来了</h2>
+<p>从 <code>FRHICommandList</code> 这层往下看，Raster 和 Compute 其实有着完全一致的模式：</p>
+<h3 id="Raster">Raster</h3>
+<ul>
+<li><code>BeginRenderPass(...)</code></li>
+<li>绑定 PSO / shader / 参数</li>
+<li><code>DrawIndexedPrimitive(...)</code></li>
+<li><code>EndRenderPass()</code></li>
+</ul>
+<h3 id="Compute">Compute</h3>
+<ul>
+<li>绑定 compute shader / 参数</li>
+<li><code>DispatchComputeShader(...)</code></li>
+</ul>
+<p>它们的差别主要在：</p>
+<ul>
+<li>使用什么类型的 pipeline</li>
+<li>使用什么类型的资源状态</li>
+<li>具体 shader 在 GPU 上如何运行</li>
+</ul>
+<p>但从 CPU 侧的提交视角看，它们本质上都是：</p>
+<blockquote>
+<p><strong>把一条图形或计算命令记录进 RHI 命令流。</strong></p>
+</blockquote>
+<p>这点非常重要，因为它会让你以后再看：</p>
+<ul>
+<li><code>BasePass</code></li>
+<li><code>AddFullscreenPass</code></li>
+<li><code>FComputeShaderUtils::AddPass</code></li>
+</ul>
+<p>这些不同风格的代码时，不会再觉得它们是完全不同的世界。</p>
+<hr>
+<h2 id="10-Shader：前面的所有组织，最终都是为了把资源送进这里">10. Shader：前面的所有组织，最终都是为了把资源送进这里</h2>
+<p>如果说：</p>
+<ul>
+<li>Renderer 决定“这一帧做什么”</li>
+<li>RDG 决定“这些工作如何组织”</li>
+<li>RHI 决定“命令怎样被录下来”</li>
+</ul>
+<p>那么 shader 真正决定的，就是：</p>
+<blockquote>
+<p><strong>GPU 上每个像素、每个线程、每个图元到底做什么。</strong></p>
+</blockquote>
+<p>这一层最适合用 <code>GenerateMips</code> 来看：</p>
+<ul>
+<li><code>Engine/Source/Runtime/RenderCore/Private/GenerateMips.cpp:15</code></li>
+<li><code>Engine/Shaders/Private/ComputeGenerateMips.usf:1</code></li>
+</ul>
+<p>在这个例子里，整个链条非常清楚：</p>
+<ul>
+<li><code>FGlobalShader</code> 定义 C++ 侧 shader class</li>
+<li><code>BEGIN_SHADER_PARAMETER_STRUCT</code> 定义资源和常量绑定契约</li>
+<li><code>IMPLEMENT_GLOBAL_SHADER(...)</code> 把它绑定到 <code>.usf</code> 里的入口函数</li>
+<li><code>GraphBuilder.AllocParameters(...)</code> 和 <code>CreateSRV/CreateUAV(...)</code> 准备资源</li>
+<li><code>AddPass(...)</code> / <code>FComputeShaderUtils::AddPass(...)</code> 把 shader 扔进 RDG pass</li>
+<li>最终通过 <code>FRHICommandList</code> 走向真正的 draw / dispatch</li>
+</ul>
+<p>所以 shader 在这条桥梁链中的位置，可以准确理解成：</p>
+<p><strong>执行逻辑的终点。</strong></p>
+<p>前面所有 C++ 组织工作，最终都是为了把正确的资源、正确的参数、正确的入口函数送到这里。</p>
+<hr>
+<h2 id="11-用-BasePass-重新回看这条桥梁链">11. 用 <code>BasePass</code> 重新回看这条桥梁链</h2>
+<p>现在可以用一个你已经熟悉的例子，把整条链再压一次。</p>
+<p>以 <code>BasePass</code> 为例，它真正经历的是：</p>
+<ol>
+<li><code>FDeferredShadingSceneRenderer::Render</code> 决定这一帧要进入 <code>BasePass</code></li>
+<li><code>RenderBasePass(...)</code> 组织：
+<ul>
+<li>render targets</li>
+<li>depth / stencil 访问方式</li>
+<li>shader 参数</li>
+<li>mesh pass</li>
+</ul>
+</li>
+<li>通过 RDG 把它挂成一个 raster pass</li>
+<li>pass 真正执行时，通过 <code>FRHICommandList</code> 录制：
+<ul>
+<li>render pass begin/end</li>
+<li>PSO 绑定</li>
+<li>draw calls</li>
+</ul>
+</li>
+<li>GPU 执行 BasePass shader，真正写出 <code>SceneColor + GBuffer</code></li>
+</ol>
+<p>也就是说，<code>BasePass</code> 在源码里既是：</p>
+<ul>
+<li>一个帧组织阶段</li>
+</ul>
+<p>也是：</p>
+<ul>
+<li>一个 RDG 图节点</li>
+</ul>
+<p>还是：</p>
+<ul>
+<li>一组 RHI 命令</li>
+</ul>
+<p>最终才是：</p>
+<ul>
+<li>GPU 上的一段真实 raster 工作</li>
+</ul>
+<p>这四层叠在一起，才是它的完整身份。</p>
+<hr>
+<h2 id="12-这条桥梁链对“自定义-Pass”意味着什么">12. 这条桥梁链对“自定义 Pass”意味着什么</h2>
+<p>如果你已经理解了这篇文章的主线，那么前面提到的“最小自定义 Pass”也就有了明确位置。</p>
+<p>以一个插在 <code>PostProcessing</code> 里的最小全屏 Pass 为例，它在这条链中的位置就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;AddMyMinimalPass(...)&quot;] --&gt; B[&quot;FMyMinimalPassPS&quot;]</span><br><span class="line">    B --&gt; C[&quot;FPixelShaderUtils::AddFullscreenPass(...)&quot;]</span><br><span class="line">    C --&gt; D[&quot;RDG Pass&quot;]</span><br><span class="line">    D --&gt; E[&quot;GraphBuilder.Execute()&quot;]</span><br><span class="line">    E --&gt; F[&quot;FRHICommandList&quot;]</span><br><span class="line">    F --&gt; G[&quot;Fullscreen Triangle&quot;]</span><br><span class="line">    G --&gt; H[&quot;MyMinimalPass.usf / MainPS&quot;]</span><br><span class="line">    H --&gt; I[&quot;GPU&quot;]</span><br></pre></td></tr></table></figure>
+<p>这张图其实就是你以后自己往 UE 渲染主线里加东西时，最稳定的工作模板。</p>
+<hr>
+<h2 id="可以带走的结论">可以带走的结论</h2>
+<ol>
+<li>前面看到的 <code>PrePass</code>、<code>BasePass</code>、<code>PostProcessing</code> 等阶段函数，大多是在描述和组织 GPU 工作，而不是直接执行 GPU。</li>
+<li><code>FSceneRenderBuilder</code> 负责把 scene renderer 的执行组织起来，并最终触发 RDG 图执行。</li>
+<li><code>FRDGBuilder</code> 的本质是一张带资源依赖、生命周期和 barrier 信息的渲染图，而不是简单命令列表。</li>
+<li><code>AddPass(...)</code> 的核心作用是声明一个 pass 节点，而不是立刻执行这个 pass。</li>
+<li><code>Execute()</code> 是 RDG 从“图构建”切换到“图执行”的分界线。</li>
+<li><code>FRHICommandList</code> 负责把某个 pass 的具体 draw / dispatch / render pass 操作录制成底层 RHI 命令。</li>
+<li><code>ALLOC_COMMAND(...)</code> 说明 UE 更常见的模式是“录制命令”，而不是在每个调用点立刻直通 GPU。</li>
+<li>Shader 是这条桥梁链的执行终点：前面所有 C++ 组织工作，最终都是为了把资源和参数送进 <code>.usf</code> 的入口函数。</li>
+<li>只要把“帧组织层、图组织层、命令录制层、GPU 程序层”这四层区分开，UE 渲染源码就会清晰很多。</li>
+<li>自定义一个最小 Pass，本质上就是在这条桥梁链上插入一个新的图节点，并为它准备 shader、参数和输出。</li>
+</ol>
+<hr>
+<h2 id="写在最后">写在最后</h2>
+<p>如果把前面的几篇文章和这一篇放在一起看，UE 主场景渲染最重要的主干其实已经基本打通了：</p>
+<ul>
+<li>从 <code>ViewFamily</code>、<code>FSceneView</code> 到 <code>FViewInfo</code> 的准备链</li>
+<li>从 <code>RenderThread</code> 入口到 <code>PostProcessing</code> 的整帧主线</li>
+<li>从 <code>FSceneRenderBuilder</code>、RDG、RHI 到 Shader 的提交桥梁</li>
+</ul>
+<p>到这一步，再回头看 UE Renderer 目录，感受会和一开始很不一样。<br>
+它不再像是一堆相互独立的大文件，而会更像一套层次分明的系统：</p>
+<ul>
+<li>上层决定阶段顺序</li>
+<li>中层决定资源依赖</li>
+<li>底层决定命令录制</li>
+<li>最终由 shader 在 GPU 上执行</li>
+</ul>
+<p>接下来如果继续沿这套系列往后写，最自然的方向有两个：</p>
+<ul>
+<li>继续沿现代渲染系统展开，分别看 <code>Lumen</code>、<code>Nanite</code>、<code>Virtual Shadow Maps</code> 是怎样插进主线的</li>
+<li>或者进入更偏实践的方向，专门写一篇“如何在 UE 渲染主线里添加一个最小自定义 Pass”</li>
+</ul>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        <div class="post-navigation">
+            
+            <a href="/2026/04/13/graphics-notes/opengl-03-textures-stb-image-and-samplers/" class="nav-prev">
+                <span class="nav-label">&larr; 上一篇</span>
+                <span class="nav-title">从颜色到贴图：OpenGL 纹理、采样器与 `stb_image` 入门</span>
+            </a>
+            
+
+            
+            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/" class="nav-next">
+                <span class="nav-label">下一篇 &rarr;</span>
+                <span class="nav-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</span>
+            </a>
+            
+        </div>
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E9%98%B6%E6%AE%B5%E7%BB%84%E7%BB%87%E5%88%B0-GPU-%E6%89%A7%E8%A1%8C"><span class="post-toc-list-text">一条主线：从阶段组织到 GPU 执行</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%89%8D%E9%9D%A2%E5%B7%B2%E7%BB%8F%E7%9C%8B%E4%BA%86%E5%BE%88%E5%A4%9A-pass%EF%BC%8C%E5%8D%B4%E4%BB%8D%E7%84%B6%E4%BC%9A%E8%A7%89%E5%BE%97%E2%80%9C%E6%B2%A1%E7%9C%8B%E8%A7%81-GPU%E2%80%9D"><span class="post-toc-list-text">1. 为什么前面已经看了很多 pass，却仍然会觉得“没看见 GPU”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#2-FSceneRenderBuilder%EF%BC%9A%E6%95%B4%E5%B8%A7%E6%89%A7%E8%A1%8C%E7%9A%84%E4%B8%8A%E5%B1%82%E7%BB%84%E7%BB%87%E5%99%A8"><span class="post-toc-list-text">2. FSceneRenderBuilder：整帧执行的上层组织器</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#3-FRDGBuilder%EF%BC%9A%E5%AE%83%E4%B8%8D%E6%98%AF%E5%91%BD%E4%BB%A4%E5%88%97%E8%A1%A8%EF%BC%8C%E8%80%8C%E6%98%AF%E4%B8%80%E5%BC%A0%E2%80%9C%E6%B8%B2%E6%9F%93%E5%9B%BE%E2%80%9D"><span class="post-toc-list-text">3. FRDGBuilder：它不是命令列表，而是一张“渲染图”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#4-AddPass-%E7%9C%9F%E6%AD%A3%E5%81%9A%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">4. AddPass(...) 真正做的是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#5-AddDispatchPass-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8D%E5%AD%97%E5%AE%B9%E6%98%93%E8%AE%A9%E4%BA%BA%E8%AF%AF%E4%BC%9A"><span class="post-toc-list-text">5. AddDispatchPass(...) 为什么名字容易让人误会</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#6-Execute-%EF%BC%9ARDG-%E4%BB%8E%E2%80%9C%E6%90%AD%E5%9B%BE%E2%80%9D%E5%88%87%E6%8D%A2%E5%88%B0%E2%80%9C%E7%9C%9F%E6%AD%A3%E6%89%A7%E8%A1%8C%E2%80%9D%E7%9A%84%E5%88%86%E7%95%8C%E7%BA%BF"><span class="post-toc-list-text">6. Execute()：RDG 从“搭图”切换到“真正执行”的分界线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#7-FRHICommandList%EF%BC%9A%E8%BF%99%E6%89%8D%E6%98%AF%E2%80%9C%E5%BD%95%E5%88%B6%E5%BA%95%E5%B1%82%E5%91%BD%E4%BB%A4%E2%80%9D%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="post-toc-list-text">7. FRHICommandList：这才是“录制底层命令”的地方</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#8-ALLOC-COMMAND-%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%AF%B4-UE-%E6%98%AF%E5%9C%A8%E2%80%9C%E5%BD%95%E5%91%BD%E4%BB%A4%E2%80%9D%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E2%80%9C%E7%AB%8B%E5%88%BB%E6%89%A7%E8%A1%8C%E2%80%9D"><span class="post-toc-list-text">8. ALLOC_COMMAND(...)：为什么说 UE 是在“录命令”，而不是“立刻执行”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#9-%E7%94%BB%E5%9B%BE%E5%85%83%E5%92%8C%E8%B7%91-Compute%EF%BC%8C%E5%9C%A8%E8%BF%99%E9%87%8C%E7%BB%88%E4%BA%8E%E8%A2%AB%E7%BB%9F%E4%B8%80%E8%B5%B7%E6%9D%A5%E4%BA%86"><span class="post-toc-list-text">9. 画图元和跑 Compute，在这里终于被统一起来了</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Raster"><span class="post-toc-list-text">Raster</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Compute"><span class="post-toc-list-text">Compute</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#10-Shader%EF%BC%9A%E5%89%8D%E9%9D%A2%E7%9A%84%E6%89%80%E6%9C%89%E7%BB%84%E7%BB%87%EF%BC%8C%E6%9C%80%E7%BB%88%E9%83%BD%E6%98%AF%E4%B8%BA%E4%BA%86%E6%8A%8A%E8%B5%84%E6%BA%90%E9%80%81%E8%BF%9B%E8%BF%99%E9%87%8C"><span class="post-toc-list-text">10. Shader：前面的所有组织，最终都是为了把资源送进这里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#11-%E7%94%A8-BasePass-%E9%87%8D%E6%96%B0%E5%9B%9E%E7%9C%8B%E8%BF%99%E6%9D%A1%E6%A1%A5%E6%A2%81%E9%93%BE"><span class="post-toc-list-text">11. 用 BasePass 重新回看这条桥梁链</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#12-%E8%BF%99%E6%9D%A1%E6%A1%A5%E6%A2%81%E9%93%BE%E5%AF%B9%E2%80%9C%E8%87%AA%E5%AE%9A%E4%B9%89-Pass%E2%80%9D%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">12. 这条桥梁链对“自定义 Pass”意味着什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E4%BB%A5%E5%B8%A6%E8%B5%B0%E7%9A%84%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">可以带走的结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">写在最后</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/codeblocks.js?v=20260410e"></script>
+            <script src="/js/toc.js?v=20260410e"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
