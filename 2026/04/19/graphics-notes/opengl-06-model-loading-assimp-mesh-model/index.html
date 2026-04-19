@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>把模型从文件带进场景：OpenGL 模型加载、Mesh 与 Model - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260419a">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">把模型从文件带进场景：OpenGL 模型加载、Mesh 与 Model</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.19
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Assimp</span>
+            
+            <span style="color: var(--accent);">#Mesh</span>
+            
+            <span style="color: var(--accent);">#Model Loading</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge">连载中</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 6 篇</span>
+                <span>已发布 6 / 7</span>
+                
+                <span>阶段：基础入门</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 86%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%A8%A1%E5%9E%8B%E5%8A%A0%E8%BD%BD%E6%98%AF%E4%B8%80%E4%B8%AA%E5%88%86%E6%B0%B4%E5%B2%AD"><span class="post-toc-list-text">为什么模型加载是一个分水岭</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%94%A8%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%A6%82%E6%8B%AC%E4%B8%89%E5%B1%82%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">先用一句话概括三层分工</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%BC%A0%E5%9B%BE%E7%9C%8B%E6%87%82-Assimp-Model-Mesh"><span class="post-toc-list-text">一张图看懂 Assimp &#x2F; Model &#x2F; Mesh</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9AAssimp-%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E2%80%9C%E8%AF%BB%E6%96%87%E4%BB%B6%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第一部分：Assimp 解决的是“读文件”的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Assimp"><span class="post-toc-list-text">1. 为什么需要 Assimp</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-ReadFile-%E5%88%B0%E5%BA%95%E8%BF%94%E5%9B%9E%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">2. ReadFile(...) 到底返回了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E9%A2%84%E5%A4%84%E7%90%86%E6%A0%87%E5%BF%97%E4%B8%BA%E4%BB%80%E4%B9%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">3. 预处理标志为什么重要</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9AMesh-%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E2%80%9C%E5%8D%95%E4%B8%AA%E7%BD%91%E6%A0%BC%E6%80%8E%E4%B9%88%E7%94%BB%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第二部分：Mesh 解决的是“单个网格怎么画”的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Mesh-%E4%B8%8D%E6%98%AF%E6%95%B4%E4%B8%AA%E6%A8%A1%E5%9E%8B"><span class="post-toc-list-text">1. Mesh 不是整个模型</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Vertex-%E6%98%AF-CPU-%E4%BE%A7%E5%AF%B9%E9%A1%B6%E7%82%B9%E6%A0%BC%E5%BC%8F%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="post-toc-list-text">2. Vertex 是 CPU 侧对顶点格式的定义</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Mesh-%E6%8C%81%E6%9C%89%E7%9A%84%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">3. Mesh 持有的到底是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-setupMesh-%E6%9C%AC%E8%B4%A8%E4%B8%8A%E8%BF%98%E6%98%AF%E6%88%91%E4%BB%AC%E7%86%9F%E6%82%89%E7%9A%84-OpenGL-%E4%B8%8A%E4%BC%A0%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">4. setupMesh() 本质上还是我们熟悉的 OpenGL 上传流程</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-Draw-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%B1%9E%E4%BA%8E-Mesh"><span class="post-toc-list-text">5. Draw() 为什么属于 Mesh</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9AModel-%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E2%80%9C%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9E%8B%E6%96%87%E4%BB%B6%E5%A6%82%E4%BD%95%E7%BB%84%E7%BB%87%E6%88%90%E5%A4%9A%E4%B8%AA-Mesh%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第三部分：Model 解决的是“一个模型文件如何组织成多个 Mesh”的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Model-%E6%AF%94-Mesh-%E9%AB%98%E4%B8%80%E5%B1%82"><span class="post-toc-list-text">1. Model 比 Mesh 高一层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E9%80%92%E5%BD%92-processNode"><span class="post-toc-list-text">2. 为什么要递归 processNode()</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-processMesh-%E6%98%AF%E6%95%B4%E4%B8%AA%E8%BD%AC%E6%8D%A2%E8%BF%87%E7%A8%8B%E7%9A%84%E6%A0%B8%E5%BF%83"><span class="post-toc-list-text">3. processMesh() 是整个转换过程的核心</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%8D%95%E7%8B%AC%E4%BF%9D%E5%AD%98-directory"><span class="post-toc-list-text">4. 为什么要单独保存 directory</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%BC%93%E5%AD%98-texturesLoaded"><span class="post-toc-list-text">5. 为什么要缓存 texturesLoaded</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%EF%BC%9A%E6%8A%8A%E4%B8%89%E5%B1%82%E5%85%B3%E7%B3%BB%E7%9C%9F%E6%AD%A3%E4%B8%B2%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">第四部分：把三层关系真正串起来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BD%93%E5%89%8D%E8%BF%99%E4%B8%AA%E6%9C%80%E5%B0%8F%E9%A1%B9%E7%9B%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%80%E4%B8%AA%E5%A5%BD%E7%9A%84%E8%B5%B7%E7%82%B9"><span class="post-toc-list-text">当前这个最小项目为什么是一个好的起点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E6%88%91%E6%9C%80%E6%83%B3%E7%9C%9F%E6%AD%A3%E8%AE%B0%E4%BD%8F%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一章我最想真正记住的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%A8%A1%E5%9E%8B%E5%8A%A0%E8%BD%BD%E4%B8%8D%E6%98%AF%E2%80%9C%E8%AF%BB%E4%B8%80%E4%B8%AA-OBJ-%E6%96%87%E4%BB%B6%E2%80%9D%E9%82%A3%E4%B9%88%E7%AE%80%E5%8D%95"><span class="post-toc-list-text">1. 模型加载不是“读一个 OBJ 文件”那么简单</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Assimp-%E6%98%AF%E8%A7%A3%E6%9E%90%E5%B1%82%EF%BC%8C%E4%B8%8D%E6%98%AF%E6%B8%B2%E6%9F%93%E5%B1%82"><span class="post-toc-list-text">2. Assimp 是解析层，不是渲染层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Mesh-%E5%92%8C-Model-%E5%BF%85%E9%A1%BB%E5%88%86%E5%B1%82"><span class="post-toc-list-text">3. Mesh 和 Model 必须分层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%A8%A1%E5%9E%8B%E5%8A%A0%E8%BD%BD%E8%BF%99%E4%B8%80%E7%AB%A0%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E8%B5%84%E6%BA%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%B5%B7%E7%82%B9"><span class="post-toc-list-text">4. 模型加载这一章，本质上是资源系统的起点</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学到 LearnOpenGL 的模型加载部分时，我第一次真正感受到“画一个立方体”和“渲染一个模型”之间的差别。</p>
+<p>前面的章节里，我们画过三角形、矩形、立方体，也做过纹理、光照和多光源。那时候所有东西都有一个共同点：</p>
+<ul>
+<li>顶点数据是自己手写的</li>
+<li>纹理路径是自己指定的</li>
+<li>几何结构是自己提前知道的</li>
+</ul>
+<p>但真实图形程序当然不会永远停留在这个阶段。</p>
+<p>如果要渲染一个角色、一把武器、一辆车、一棵树，不可能再把所有顶点、法线、纹理坐标都手敲在代码里。到了这里，问题开始变成：</p>
+<ul>
+<li>模型文件该怎么读进程序</li>
+<li>一个模型里为什么会有很多网格</li>
+<li>纹理和材质信息是怎么跟模型绑在一起的</li>
+<li><code>Assimp</code>、<code>Mesh</code>、<code>Model</code> 这三层到底各自负责什么</li>
+</ul>
+<p>这一篇笔记，就把这部分主线完整串起来。</p>
+<p>对应的本地项目是：</p>
+<ul>
+<li><code>projects/learnopengl/learnopengl/15_model_loading</code></li>
+</ul>
+<h2 id="为什么模型加载是一个分水岭">为什么模型加载是一个分水岭</h2>
+<p>前面的 OpenGL 入门和光照部分，更多是在学习渲染管线本身：</p>
+<ul>
+<li>顶点如何进入 GPU</li>
+<li>Shader 如何计算位置和颜色</li>
+<li>纹理如何参与采样</li>
+<li>光照如何让画面产生体积感和材质感</li>
+</ul>
+<p>而模型加载这一章，开始把问题从“如何渲染”扩展成“如何把外部资源接入渲染系统”。</p>
+<p>这意味着我们第一次开始面对真正接近工程化的问题：</p>
+<ul>
+<li>文件格式不是自己定义的</li>
+<li>资源结构比单个立方体复杂得多</li>
+<li>一个模型通常不止一组顶点数据</li>
+<li>贴图、材质、节点层级都可能包含在同一个资源里</li>
+</ul>
+<p>所以这一章的重要性，不只是“多学了一个库”，而是：</p>
+<p>OpenGL 程序终于从“演示级几何体”开始走向“可以处理真实资源”的阶段。</p>
+<h2 id="先用一句话概括三层分工">先用一句话概括三层分工</h2>
+<p>如果只用最短的话来记住这三层关系，我会这样概括：</p>
+<ul>
+<li><code>Assimp</code>：负责把模型文件解析成统一的数据结构</li>
+<li><code>Model</code>：负责把 Assimp 解析出来的场景组织成多个可绘制网格</li>
+<li><code>Mesh</code>：负责把单个网格上传到 GPU 并真正绘制出来</li>
+</ul>
+<p>这三层是一个非常典型的“解析层 -&gt; 组织层 -&gt; 渲染层”的分工。</p>
+<h2 id="一张图看懂-Assimp-Model-Mesh">一张图看懂 Assimp / Model / Mesh</h2>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;OBJ / MTL / 贴图文件&quot;] --&gt; B[&quot;Assimp::Importer::ReadFile&quot;]</span><br><span class="line">    B --&gt; C[&quot;aiScene&quot;]</span><br><span class="line">    C --&gt; D[&quot;Model::processNode&quot;]</span><br><span class="line">    D --&gt; E[&quot;aiMesh&quot;]</span><br><span class="line">    E --&gt; F[&quot;Model::processMesh&quot;]</span><br><span class="line">    F --&gt; G[&quot;Vertex / indices / Texture&quot;]</span><br><span class="line">    G --&gt; H[&quot;Mesh&quot;]</span><br><span class="line">    H --&gt; I[&quot;VAO / VBO / EBO&quot;]</span><br><span class="line">    H --&gt; J[&quot;Mesh::Draw(shader)&quot;]</span><br><span class="line">    J --&gt; K[&quot;OpenGL Draw Call&quot;]</span><br><span class="line">    C --&gt; L[&quot;aiMaterial&quot;]</span><br><span class="line">    L --&gt; M[&quot;loadMaterialTextures&quot;]</span><br><span class="line">    M --&gt; G</span><br></pre></td></tr></table></figure>
+<p>如果把这张图翻成一句自然语言，就是：</p>
+<p>模型文件先由 <code>Assimp</code> 解析成 <code>aiScene</code>，然后 <code>Model</code> 遍历节点和网格，把外部格式转换成我们自己的 <code>Mesh</code> 数据结构，最后由 <code>Mesh</code> 负责把这些数据交给 OpenGL 绘制。</p>
+<h2 id="第一部分：Assimp-解决的是“读文件”的问题">第一部分：Assimp 解决的是“读文件”的问题</h2>
+<h3 id="1-为什么需要-Assimp">1. 为什么需要 Assimp</h3>
+<p>如果没有 <code>Assimp</code>，你就得自己解析这些模型格式：</p>
+<ul>
+<li><code>.obj</code></li>
+<li><code>.fbx</code></li>
+<li><code>.dae</code></li>
+<li><code>.3ds</code></li>
+<li><code>.blend</code></li>
+</ul>
+<p>而且不仅要读顶点位置，还要处理：</p>
+<ul>
+<li>法线</li>
+<li>纹理坐标</li>
+<li>材质</li>
+<li>骨骼</li>
+<li>节点层级</li>
+</ul>
+<p>这件事太重了，所以通常不会自己从零开始做。</p>
+<p><code>Assimp</code> 的价值就在于：</p>
+<p>“把各种模型格式统一解析成一套标准中间结构。”</p>
+<p>这样我们就不用关心源文件到底是哪种格式，而只需要关心：</p>
+<p>“从 Assimp 给出的统一数据结构里，怎样提取我需要的内容。”</p>
+<h3 id="2-ReadFile-到底返回了什么">2. <code>ReadFile(...)</code> 到底返回了什么</h3>
+<p>在当前项目里，最关键的入口是：</p>
+<ul>
+<li><code>Assimp::Importer importer;</code></li>
+<li><code>importer.ReadFile(path, flags...)</code></li>
+</ul>
+<p>它返回的是一个 <code>aiScene*</code>。</p>
+<p>你可以把 <code>aiScene</code> 理解成：</p>
+<p>“Assimp 对整个模型文件做完解析后，给出来的一份统一场景描述。”</p>
+<p>里面通常会包含：</p>
+<ul>
+<li>根节点</li>
+<li>多个网格</li>
+<li>多个材质</li>
+<li>贴图引用</li>
+<li>可能还有动画或骨骼数据</li>
+</ul>
+<p>也就是说，<code>aiScene</code> 不是一个“单网格对象”，而是一个完整模型资源的抽象结果。</p>
+<h3 id="3-预处理标志为什么重要">3. 预处理标志为什么重要</h3>
+<p>模型文件原始数据不一定直接适合实时渲染，所以 <code>ReadFile(...)</code> 往往会带上一些预处理标志。</p>
+<p>当前项目里最关键的几个是：</p>
+<ul>
+<li><code>aiProcess_Triangulate</code></li>
+<li><code>aiProcess_FlipUVs</code></li>
+<li><code>aiProcess_GenSmoothNormals</code></li>
+<li><code>aiProcess_CalcTangentSpace</code></li>
+</ul>
+<p>它们分别对应这些目的：</p>
+<ul>
+<li>把所有面统一变成三角形</li>
+<li>让 UV 方向适配 OpenGL 常见使用方式</li>
+<li>在缺少法线时补法线</li>
+<li>为后续更高级的贴图技术预留切线空间数据</li>
+</ul>
+<p>这些标志的意义不是“锦上添花”，而是：</p>
+<p>在模型进入渲染系统之前，先把它整理成更适合 GPU 使用的形态。</p>
+<h2 id="第二部分：Mesh-解决的是“单个网格怎么画”的问题">第二部分：Mesh 解决的是“单个网格怎么画”的问题</h2>
+<h3 id="1-Mesh-不是整个模型">1. Mesh 不是整个模型</h3>
+<p>这是学习这一章时最容易混淆的地方。</p>
+<p>一个模型通常不止一个网格。</p>
+<p>例如一个角色模型，可能会拆成：</p>
+<ul>
+<li>身体</li>
+<li>头发</li>
+<li>武器</li>
+<li>背包</li>
+</ul>
+<p>这些部分可能使用不同材质，也可能拥有不同贴图。因此，从渲染角度看，把它们拆成多个独立 <code>Mesh</code> 是很自然的。</p>
+<p>所以 <code>Mesh</code> 更像是：</p>
+<p>“一个模型里的单个可绘制几何单元。”</p>
+<h3 id="2-Vertex-是-CPU-侧对顶点格式的定义">2. <code>Vertex</code> 是 CPU 侧对顶点格式的定义</h3>
+<p>在当前实现里，<code>Vertex</code> 包含：</p>
+<ul>
+<li><code>Position</code></li>
+<li><code>Normal</code></li>
+<li><code>TexCoords</code></li>
+</ul>
+<p>这实际上是在回答：</p>
+<p>“一个顶点进入 GPU 之前，我希望它带哪些属性？”</p>
+<p>这和前面光照部分是完全连着的：</p>
+<ul>
+<li>没有位置，没法放进空间里</li>
+<li>没有法线，没法参与光照</li>
+<li>没有纹理坐标，没法采样贴图</li>
+</ul>
+<p>所以模型加载这章并不是和前面脱节，而是在复用前面已经学过的顶点属性体系。</p>
+<h3 id="3-Mesh-持有的到底是什么">3. <code>Mesh</code> 持有的到底是什么</h3>
+<p>一个 <code>Mesh</code> 通常会持有：</p>
+<ul>
+<li>顶点数组 <code>vertices</code></li>
+<li>索引数组 <code>indices</code></li>
+<li>纹理数组 <code>textures</code></li>
+<li>OpenGL 状态对象 <code>VAO</code></li>
+</ul>
+<p>这说明 <code>Mesh</code> 的职责非常明确：</p>
+<p>它关心的是“这块网格自身怎样被渲染”。</p>
+<p>它不关心这个网格从哪个文件来，也不关心模型整体的层级结构。</p>
+<h3 id="4-setupMesh-本质上还是我们熟悉的-OpenGL-上传流程">4. <code>setupMesh()</code> 本质上还是我们熟悉的 OpenGL 上传流程</h3>
+<p>虽然这一节看起来一下子复杂了，但 <code>Mesh</code> 内部最核心的工作，其实还是你前面已经学过的那套：</p>
+<ol>
+<li>创建 <code>VAO / VBO / EBO</code></li>
+<li>上传顶点数据</li>
+<li>上传索引数据</li>
+<li>配置顶点属性布局</li>
+</ol>
+<p>也就是说，模型加载这章并没有引入一种全新的渲染方式。</p>
+<p>它只是把之前手写几何体时零散写在 <code>main.cpp</code> 里的那些步骤，正式封装成了一个网格对象自己的职责。</p>
+<h3 id="5-Draw-为什么属于-Mesh">5. <code>Draw()</code> 为什么属于 Mesh</h3>
+<p>在当前设计里，<code>Mesh::Draw(shader)</code> 会做这些事：</p>
+<ul>
+<li>绑定它自己的纹理</li>
+<li>设置对应的采样器 uniform</li>
+<li>绑定自己的 <code>VAO</code></li>
+<li>发出 <code>glDrawElements(...)</code></li>
+</ul>
+<p>这非常合理，因为从“单网格渲染”角度看，这些状态本来就应该归这个网格自己管理。</p>
+<p>所以 <code>Mesh</code> 这一层真正提供的是：</p>
+<p>“一旦你给了我整理好的几何和纹理数据，我就能把自己画出来。”</p>
+<h2 id="第三部分：Model-解决的是“一个模型文件如何组织成多个-Mesh”的问题">第三部分：Model 解决的是“一个模型文件如何组织成多个 Mesh”的问题</h2>
+<h3 id="1-Model-比-Mesh-高一层">1. <code>Model</code> 比 <code>Mesh</code> 高一层</h3>
+<p>如果 <code>Mesh</code> 是“单网格渲染封装”，那么 <code>Model</code> 更像是：</p>
+<p>“整个模型资源的组织者。”</p>
+<p>它负责做的事包括：</p>
+<ul>
+<li>调用 <code>Assimp</code> 读文件</li>
+<li>保存模型所在目录</li>
+<li>递归遍历节点</li>
+<li>把每个 <code>aiMesh</code> 转成自己的 <code>Mesh</code></li>
+<li>读取材质贴图</li>
+<li>做纹理缓存去重</li>
+</ul>
+<p>它不直接操作 OpenGL 顶点属性细节，那是 <code>Mesh</code> 的工作。</p>
+<h3 id="2-为什么要递归-processNode">2. 为什么要递归 <code>processNode()</code></h3>
+<p><code>Assimp</code> 给你的 <code>aiScene</code> 不是一个扁平列表，而通常是一棵场景树。</p>
+<p>这意味着：</p>
+<ul>
+<li>当前节点可能挂着多个 mesh</li>
+<li>当前节点下面可能还有多个子节点</li>
+<li>子节点下面还会继续挂自己的 mesh</li>
+</ul>
+<p>所以 <code>processNode()</code> 的逻辑一定是递归的：</p>
+<ol>
+<li>先处理当前节点引用到的 mesh</li>
+<li>再递归处理所有子节点</li>
+</ol>
+<p>这一步的意义非常关键，因为它说明：</p>
+<p>“模型加载不是只读一块数据，而是在遍历一个资源层级结构。”</p>
+<p>这和前面直接画单个立方体有本质区别。</p>
+<h3 id="3-processMesh-是整个转换过程的核心">3. <code>processMesh()</code> 是整个转换过程的核心</h3>
+<p><code>processMesh()</code> 做的是最重要的一次“翻译”：</p>
+<p>把 Assimp 的 <code>aiMesh</code>，翻译成我们自己的：</p>
+<ul>
+<li><code>Vertex</code></li>
+<li><code>indices</code></li>
+<li><code>Texture</code></li>
+<li>最后构造成 <code>Mesh</code></li>
+</ul>
+<p>你可以把这一步理解成：</p>
+<p>“把第三方库的数据结构，转换成自己渲染系统真正使用的数据结构。”</p>
+<p>这是个很有工程味的动作，因为它让你的渲染层不会被 <code>Assimp</code> 直接绑死。</p>
+<p>也就是说：</p>
+<ul>
+<li><code>Assimp</code> 只是输入格式适配器</li>
+<li><code>Mesh</code> 才是你真正的渲染对象</li>
+</ul>
+<h3 id="4-为什么要单独保存-directory">4. 为什么要单独保存 <code>directory</code></h3>
+<p>模型文件通常不会把贴图存成完整绝对路径。</p>
+<p>更常见的情况是：</p>
+<ul>
+<li><code>.obj</code> 引用 <code>.mtl</code></li>
+<li><code>.mtl</code> 再引用 <code>container_diffuse.jpg</code></li>
+</ul>
+<p>这时贴图路径往往只是相对路径。</p>
+<p>所以 <code>Model</code> 必须知道模型文件自己所在的目录，然后在加载贴图时做路径拼接。</p>
+<p>这一步很小，但非常关键，因为它说明：</p>
+<p>模型加载本质上也是一个资源路径管理问题。</p>
+<h3 id="5-为什么要缓存-texturesLoaded">5. 为什么要缓存 <code>texturesLoaded</code></h3>
+<p>一个模型里的多个 <code>Mesh</code> 往往会共用同一张贴图。</p>
+<p>如果不做缓存，就会出现：</p>
+<ul>
+<li>同一张图片被重复读取多次</li>
+<li>同一张纹理被重复上传到 GPU 多次</li>
+</ul>
+<p>这不仅浪费时间，也浪费显存。</p>
+<p>所以 <code>texturesLoaded</code> 的意义就是：</p>
+<p>“如果这张图已经加载过了，就直接复用已有纹理对象。”</p>
+<p>这一步虽然简单，但已经很接近真实图形程序里的资源管理思路了。</p>
+<h2 id="第四部分：把三层关系真正串起来">第四部分：把三层关系真正串起来</h2>
+<p>到这里，整条链路其实已经很清楚了：</p>
+<ol>
+<li><code>main.cpp</code> 只负责给出模型路径并调用 <code>Model</code></li>
+<li><code>Model</code> 调用 <code>Assimp</code> 解析模型文件</li>
+<li><code>Assimp</code> 返回统一的 <code>aiScene</code></li>
+<li><code>Model</code> 递归遍历节点和网格</li>
+<li>每个 <code>aiMesh</code> 被转换成自己的 <code>Mesh</code></li>
+<li>每个 <code>Mesh</code> 负责把顶点、索引、纹理交给 OpenGL</li>
+<li>最终 <code>Model::Draw(shader)</code> 会把内部所有 <code>Mesh</code> 逐个画出来</li>
+</ol>
+<p>换句话说：</p>
+<ul>
+<li><code>Assimp</code> 负责读懂文件</li>
+<li><code>Model</code> 负责理解并组织这些内容</li>
+<li><code>Mesh</code> 负责真正把内容画出来</li>
+</ul>
+<p>这就是这一章最值得真正记住的结构。</p>
+<h2 id="当前这个最小项目为什么是一个好的起点">当前这个最小项目为什么是一个好的起点</h2>
+<p>这次我们用的不是复杂角色模型，而是一个最小的 <code>simple_crate.obj + simple_crate.mtl + texture</code>。</p>
+<p>这个选择其实很合适，因为它把模型加载最核心的几件事都保留了：</p>
+<ul>
+<li>外部模型文件</li>
+<li>材质文件</li>
+<li>贴图引用</li>
+<li>Assimp 解析</li>
+<li>Mesh 封装</li>
+<li>Model 封装</li>
+</ul>
+<p>但它又不会因为资源太复杂，把注意力带偏。</p>
+<p>也就是说，这个例子虽然小，但整个模型加载体系已经是完整的。</p>
+<h2 id="这一章我最想真正记住的几个点">这一章我最想真正记住的几个点</h2>
+<h3 id="1-模型加载不是“读一个-OBJ-文件”那么简单">1. 模型加载不是“读一个 OBJ 文件”那么简单</h3>
+<p>它真正做的是：</p>
+<p>把外部资源文件解析成渲染系统能使用的结构化数据。</p>
+<h3 id="2-Assimp-是解析层，不是渲染层">2. <code>Assimp</code> 是解析层，不是渲染层</h3>
+<p>它负责统一格式，但不负责替你画东西。</p>
+<p>真正和 OpenGL 对接的，仍然是你自己的 <code>Mesh</code> / <code>Model</code> 设计。</p>
+<h3 id="3-Mesh-和-Model-必须分层">3. <code>Mesh</code> 和 <code>Model</code> 必须分层</h3>
+<p>如果不分层，文件解析、节点遍历、贴图路径管理、GPU 上传、绘制调用就会混在一起，代码会非常乱。</p>
+<p>分层以后就清楚很多：</p>
+<ul>
+<li><code>Model</code> 面向资源组织</li>
+<li><code>Mesh</code> 面向单网格渲染</li>
+</ul>
+<h3 id="4-模型加载这一章，本质上是资源系统的起点">4. 模型加载这一章，本质上是资源系统的起点</h3>
+<p>从这里开始，程序终于不再只依赖手写几何，而开始真正处理外部资产。</p>
+<p>这一步非常重要，因为后面的模型渲染、法线贴图、后处理、PBR，几乎都默认你已经具备这层能力。</p>
+<h2 id="小结">小结</h2>
+<p>如果说前面的入门和光照部分，主要是在学习“如何渲染”，那么模型加载部分开始学习的就是：</p>
+<p>“如何把真实资源接入渲染系统。”</p>
+<p>这也是为什么这一章虽然表面上只是接入了 <code>Assimp</code>，但本质上却完成了一次很重要的升级：</p>
+<ul>
+<li>从手写几何，走向外部资产</li>
+<li>从单个对象，走向层级化模型</li>
+<li>从零散渲染代码，走向 <code>Model / Mesh</code> 分层设计</li>
+</ul>
+<p>到这里，OpenGL 学习就开始越来越像真正的图形程序开发了。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/04/14/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">从颜色到多光源：OpenGL 光照学习笔记</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%A8%A1%E5%9E%8B%E5%8A%A0%E8%BD%BD%E6%98%AF%E4%B8%80%E4%B8%AA%E5%88%86%E6%B0%B4%E5%B2%AD"><span class="post-toc-list-text">为什么模型加载是一个分水岭</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%94%A8%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%A6%82%E6%8B%AC%E4%B8%89%E5%B1%82%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">先用一句话概括三层分工</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%BC%A0%E5%9B%BE%E7%9C%8B%E6%87%82-Assimp-Model-Mesh"><span class="post-toc-list-text">一张图看懂 Assimp &#x2F; Model &#x2F; Mesh</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9AAssimp-%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E2%80%9C%E8%AF%BB%E6%96%87%E4%BB%B6%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第一部分：Assimp 解决的是“读文件”的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Assimp"><span class="post-toc-list-text">1. 为什么需要 Assimp</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-ReadFile-%E5%88%B0%E5%BA%95%E8%BF%94%E5%9B%9E%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">2. ReadFile(...) 到底返回了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E9%A2%84%E5%A4%84%E7%90%86%E6%A0%87%E5%BF%97%E4%B8%BA%E4%BB%80%E4%B9%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">3. 预处理标志为什么重要</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9AMesh-%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E2%80%9C%E5%8D%95%E4%B8%AA%E7%BD%91%E6%A0%BC%E6%80%8E%E4%B9%88%E7%94%BB%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第二部分：Mesh 解决的是“单个网格怎么画”的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Mesh-%E4%B8%8D%E6%98%AF%E6%95%B4%E4%B8%AA%E6%A8%A1%E5%9E%8B"><span class="post-toc-list-text">1. Mesh 不是整个模型</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Vertex-%E6%98%AF-CPU-%E4%BE%A7%E5%AF%B9%E9%A1%B6%E7%82%B9%E6%A0%BC%E5%BC%8F%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="post-toc-list-text">2. Vertex 是 CPU 侧对顶点格式的定义</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Mesh-%E6%8C%81%E6%9C%89%E7%9A%84%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">3. Mesh 持有的到底是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-setupMesh-%E6%9C%AC%E8%B4%A8%E4%B8%8A%E8%BF%98%E6%98%AF%E6%88%91%E4%BB%AC%E7%86%9F%E6%82%89%E7%9A%84-OpenGL-%E4%B8%8A%E4%BC%A0%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">4. setupMesh() 本质上还是我们熟悉的 OpenGL 上传流程</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-Draw-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%B1%9E%E4%BA%8E-Mesh"><span class="post-toc-list-text">5. Draw() 为什么属于 Mesh</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9AModel-%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E2%80%9C%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9E%8B%E6%96%87%E4%BB%B6%E5%A6%82%E4%BD%95%E7%BB%84%E7%BB%87%E6%88%90%E5%A4%9A%E4%B8%AA-Mesh%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第三部分：Model 解决的是“一个模型文件如何组织成多个 Mesh”的问题</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Model-%E6%AF%94-Mesh-%E9%AB%98%E4%B8%80%E5%B1%82"><span class="post-toc-list-text">1. Model 比 Mesh 高一层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E9%80%92%E5%BD%92-processNode"><span class="post-toc-list-text">2. 为什么要递归 processNode()</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-processMesh-%E6%98%AF%E6%95%B4%E4%B8%AA%E8%BD%AC%E6%8D%A2%E8%BF%87%E7%A8%8B%E7%9A%84%E6%A0%B8%E5%BF%83"><span class="post-toc-list-text">3. processMesh() 是整个转换过程的核心</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%8D%95%E7%8B%AC%E4%BF%9D%E5%AD%98-directory"><span class="post-toc-list-text">4. 为什么要单独保存 directory</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%BC%93%E5%AD%98-texturesLoaded"><span class="post-toc-list-text">5. 为什么要缓存 texturesLoaded</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%EF%BC%9A%E6%8A%8A%E4%B8%89%E5%B1%82%E5%85%B3%E7%B3%BB%E7%9C%9F%E6%AD%A3%E4%B8%B2%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">第四部分：把三层关系真正串起来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BD%93%E5%89%8D%E8%BF%99%E4%B8%AA%E6%9C%80%E5%B0%8F%E9%A1%B9%E7%9B%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%80%E4%B8%AA%E5%A5%BD%E7%9A%84%E8%B5%B7%E7%82%B9"><span class="post-toc-list-text">当前这个最小项目为什么是一个好的起点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AB%A0%E6%88%91%E6%9C%80%E6%83%B3%E7%9C%9F%E6%AD%A3%E8%AE%B0%E4%BD%8F%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这一章我最想真正记住的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%A8%A1%E5%9E%8B%E5%8A%A0%E8%BD%BD%E4%B8%8D%E6%98%AF%E2%80%9C%E8%AF%BB%E4%B8%80%E4%B8%AA-OBJ-%E6%96%87%E4%BB%B6%E2%80%9D%E9%82%A3%E4%B9%88%E7%AE%80%E5%8D%95"><span class="post-toc-list-text">1. 模型加载不是“读一个 OBJ 文件”那么简单</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Assimp-%E6%98%AF%E8%A7%A3%E6%9E%90%E5%B1%82%EF%BC%8C%E4%B8%8D%E6%98%AF%E6%B8%B2%E6%9F%93%E5%B1%82"><span class="post-toc-list-text">2. Assimp 是解析层，不是渲染层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Mesh-%E5%92%8C-Model-%E5%BF%85%E9%A1%BB%E5%88%86%E5%B1%82"><span class="post-toc-list-text">3. Mesh 和 Model 必须分层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%A8%A1%E5%9E%8B%E5%8A%A0%E8%BD%BD%E8%BF%99%E4%B8%80%E7%AB%A0%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E8%B5%84%E6%BA%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%B5%B7%E7%82%B9"><span class="post-toc-list-text">4. 模型加载这一章，本质上是资源系统的起点</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

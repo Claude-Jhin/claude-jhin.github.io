@@ -11,7 +11,7 @@
     <link rel="shortcut icon" href="/favicon.png?v=20260410b">
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+    <link rel="stylesheet" href="/css/style.css?v=20260419a">
 
         
                 <script>
@@ -48,7 +48,9 @@
         字
     </button>
 
-    <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
     <a href="/" class="back-btn">
         <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
             viewBox="0 0 24 24">
@@ -59,48 +61,80 @@
     </a>
 </div>
 
-<article class="post-container module"
-    style="position: relative; margin: 80px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
-    <h1 style="font-size: 28px; margin-bottom: 32px;">
-        归档
-        <span style="color: var(--text-muted); font-size: 16px; font-weight: normal;">(13
-            篇)</span>
-    </h1>
+<article class="post-container module archive-page-shell"
+    style="position: relative; margin: 80px auto; transform: none; max-width: 920px; width: 92%; cursor: auto;">
+    <header class="archive-page-hero">
+        <div class="archive-page-head">
+            <div>
+                <p class="archive-page-kicker">时间索引</p>
+                <h1 class="archive-page-title">归档 <span>(14 篇)</span></h1>
+            </div>
+            <div class="archive-page-meta">
+                <span>1 个年份分组</span>
+                <span>本页 4 篇</span>
+            </div>
+        </div>
+        <p class="archive-page-summary">
+            这里按时间回看博客的写作轨迹。顺着时间轴往下读，会更容易看到主题是怎样从博客搭建延伸到 OpenGL 和 UE 渲染源码梳理的。
+        </p>
+    </header>
 
-    <div class="archive-list">
+    <section class="archive-timeline" aria-label="归档时间轴">
         
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.07
-            </span>
-            <a href="/2026/04/07/dev-notes/VPN%E5%BC%80%E5%90%AF%E5%90%8EPerforce%E6%97%A0%E6%B3%95%E8%BF%9E%E6%8E%A5%E7%9A%84%E4%B8%80%E6%AC%A1%E6%8E%92%E6%9F%A5%E8%AE%B0%E5%BD%95/">
-                VPN 开启后 Perforce 无法连接的一次排查记录
-            </a>
-        </div>
+        <section class="archive-year-block">
+            <div class="archive-year-rail">
+                <span class="archive-year-label">2026</span>
+            </div>
+
+            <div class="archive-year-content">
+                
+                <section class="archive-month-group">
+                    <div class="archive-month-head">
+                        <span class="archive-month-dot" aria-hidden="true"></span>
+                        <h2 class="archive-month-label">2026年 04月</h2>
+                    </div>
+
+                    <div class="archive-timeline-list">
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.08</span>
+                            <a class="archive-timeline-card" href="/2026/04/08/graphics-notes/opengl-01-from-window-to-triangle/">
+                                <span class="archive-timeline-title">从创建窗口到第一个三角形：我的 OpenGL 入门笔记</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.07</span>
+                            <a class="archive-timeline-card" href="/2026/04/07/dev-notes/VPN%E5%BC%80%E5%90%AF%E5%90%8EPerforce%E6%97%A0%E6%B3%95%E8%BF%9E%E6%8E%A5%E7%9A%84%E4%B8%80%E6%AC%A1%E6%8E%92%E6%9F%A5%E8%AE%B0%E5%BD%95/">
+                                <span class="archive-timeline-title">VPN 开启后 Perforce 无法连接的一次排查记录</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.02</span>
+                            <a class="archive-timeline-card" href="/2026/04/02/blog-tech/%E5%8D%9A%E5%AE%A2%E5%AD%97%E4%BD%93%E6%96%B9%E6%A1%88%E8%AE%B0%E5%BD%95%EF%BC%9A%E9%80%89%E6%8B%A9LXGW%20Neo%20XiHei%E4%BD%9C%E4%B8%BA%E4%B8%BB%E5%AD%97%E4%BD%93/">
+                                <span class="archive-timeline-title">博客字体方案记录：选择 LXGW Neo XiHei 作为主字体</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.01</span>
+                            <a class="archive-timeline-card" href="/2026/04/01/blog-tech/%E5%88%A9%E7%94%A8Hexo%E4%B8%8EGitHubPages%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/">
+                                <span class="archive-timeline-title">利用 Hexo 与 GitHub Pages 搭建个人博客</span>
+                            </a>
+                        </article>
+                        
+                    </div>
+                </section>
+                
+            </div>
+        </section>
         
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.02
-            </span>
-            <a href="/2026/04/02/blog-tech/%E5%8D%9A%E5%AE%A2%E5%AD%97%E4%BD%93%E6%96%B9%E6%A1%88%E8%AE%B0%E5%BD%95%EF%BC%9A%E9%80%89%E6%8B%A9LXGW%20Neo%20XiHei%E4%BD%9C%E4%B8%BA%E4%B8%BB%E5%AD%97%E4%BD%93/">
-                博客字体方案记录：选择 LXGW Neo XiHei 作为主字体
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.01
-            </span>
-            <a href="/2026/04/01/blog-tech/%E5%88%A9%E7%94%A8Hexo%E4%B8%8EGitHubPages%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/">
-                利用 Hexo 与 GitHub Pages 搭建个人博客
-            </a>
-        </div>
-        
-    </div>
+    </section>
 
     
-    <div class="pagination" style="margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-        <a class="extend prev" rel="prev" href="/archives/">&amp;larr; 上一页</a><a class="page-number" href="/archives/">1</a><span class="page-number current">2</span>
+    <div class="pagination" style="margin-top: 36px; border-top: 1px solid var(--border-color); padding-top: 18px;">
+        <a class="extend prev" rel="prev" href="/archives/">← 上一页</a><a class="page-number" href="/archives/">1</a><span class="page-number current">2</span>
     </div>
     
 </article>
@@ -113,8 +147,9 @@
         </div>
 
         
-            <script src="/js/codeblocks.js?v=20260410e"></script>
-            <script src="/js/toc.js?v=20260410e"></script>
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
         
 
         <script>

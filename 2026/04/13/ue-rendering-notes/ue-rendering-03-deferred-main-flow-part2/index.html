@@ -11,7 +11,7 @@
     <link rel="shortcut icon" href="/favicon.png?v=20260410b">
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+    <link rel="stylesheet" href="/css/style.css?v=20260419a">
 
         
                 <script>
@@ -89,7 +89,7 @@
                     <p class="series-kicker">所属专栏</p>
                     <h2 class="series-title">UE 渲染源码拆解</h2>
                 </div>
-                <span class="column-badge">连载中</span>
+                <span class="column-badge is-complete">已完结</span>
             </div>
             <p class="series-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
             <div class="series-meta">
@@ -461,7 +461,7 @@
 <li>最后由后处理链把整帧结果转换成真正的输出图像</li>
 </ul>
 <p>到这一步，再回头看 <code>FDeferredShadingSceneRenderer::Render(...)</code>，它就不再像一大段难以下口的 if / pass / feature 分支，而会更像一条组织严密的整帧调度链。</p>
-<p>下一步如果继续沿这条系列往后写，最自然的方向有两个：</p>
+<p>如果继续沿这条系列展开，比较自然的两个方向是：</p>
 <ul>
 <li>回到更底层，专门拆 RDG / RenderCore / RHI 是怎样把这些 pass 组织和提交到 GPU 上的</li>
 <li>继续沿主渲染骨架往外扩，分别看 Lumen、Nanite、Virtual Shadow Maps 是怎样插入这条主线的</li>
@@ -475,21 +475,35 @@
             协议发布。
         </div>
 
-        <div class="post-navigation">
-            
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/" class="nav-prev">
-                <span class="nav-label">&larr; 上一篇</span>
-                <span class="nav-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</span>
-            </a>
-            
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-rendering/">返回专栏总览</a>
+            </div>
 
-            
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/" class="nav-next">
-                <span class="nav-label">下一篇 &rarr;</span>
-                <span class="nav-title">UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段</span>
-            </a>
-            
-        </div>
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段</strong>
+                </a>
+                
+
+                
+                <a href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</strong>
+                </a>
+                
+            </div>
+        </section>
+        
     </article>
 
     
@@ -513,8 +527,9 @@
         </div>
 
         
-            <script src="/js/codeblocks.js?v=20260410e"></script>
-            <script src="/js/toc.js?v=20260410e"></script>
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
         
 
         <script>

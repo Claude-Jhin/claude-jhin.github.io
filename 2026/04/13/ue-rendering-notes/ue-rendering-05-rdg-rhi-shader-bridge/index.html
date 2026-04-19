@@ -11,7 +11,7 @@
     <link rel="shortcut icon" href="/favicon.png?v=20260410b">
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+    <link rel="stylesheet" href="/css/style.css?v=20260419a">
 
         
                 <script>
@@ -89,7 +89,7 @@
                     <p class="series-kicker">所属专栏</p>
                     <h2 class="series-title">UE 渲染源码拆解</h2>
                 </div>
-                <span class="column-badge">连载中</span>
+                <span class="column-badge is-complete">已完结</span>
             </div>
             <p class="series-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
             <div class="series-meta">
@@ -552,21 +552,34 @@
             协议发布。
         </div>
 
-        <div class="post-navigation">
-            
-            <a href="/2026/04/13/graphics-notes/opengl-03-textures-stb-image-and-samplers/" class="nav-prev">
-                <span class="nav-label">&larr; 上一篇</span>
-                <span class="nav-title">从颜色到贴图：OpenGL 纹理、采样器与 `stb_image` 入门</span>
-            </a>
-            
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-rendering/">返回专栏总览</a>
+            </div>
 
-            
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/" class="nav-next">
-                <span class="nav-label">下一篇 &rarr;</span>
-                <span class="nav-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</span>
-            </a>
-            
-        </div>
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
     </article>
 
     
@@ -590,8 +603,9 @@
         </div>
 
         
-            <script src="/js/codeblocks.js?v=20260410e"></script>
-            <script src="/js/toc.js?v=20260410e"></script>
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
         
 
         <script>

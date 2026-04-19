@@ -11,7 +11,7 @@
     <link rel="shortcut icon" href="/favicon.png?v=20260410b">
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+    <link rel="stylesheet" href="/css/style.css?v=20260419a">
 
         
                 <script>
@@ -89,7 +89,7 @@
                     <p class="series-kicker">所属专栏</p>
                     <h2 class="series-title">UE 渲染源码拆解</h2>
                 </div>
-                <span class="column-badge">连载中</span>
+                <span class="column-badge is-complete">已完结</span>
             </div>
             <p class="series-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
             <div class="series-meta">
@@ -818,21 +818,34 @@
             协议发布。
         </div>
 
-        <div class="post-navigation">
-            
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/" class="nav-prev">
-                <span class="nav-label">&larr; 上一篇</span>
-                <span class="nav-title">UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段</span>
-            </a>
-            
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-rendering/">返回专栏总览</a>
+            </div>
 
-            
-            <a href="/2026/04/09/graphics-notes/opengl-02-shaders-attributes-uniform/" class="nav-next">
-                <span class="nav-label">下一篇 &rarr;</span>
-                <span class="nav-title">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</span>
-            </a>
-            
-        </div>
+            <div class="series-navigation-grid">
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前是本专栏的起点</span>
+                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
+                </div>
+                
+
+                
+                <a href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段</strong>
+                </a>
+                
+            </div>
+        </section>
+        
     </article>
 
     
@@ -856,8 +869,9 @@
         </div>
 
         
-            <script src="/js/codeblocks.js?v=20260410e"></script>
-            <script src="/js/toc.js?v=20260410e"></script>
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
         
 
         <script>

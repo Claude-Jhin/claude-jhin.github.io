@@ -11,7 +11,7 @@
     <link rel="shortcut icon" href="/favicon.png?v=20260410b">
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="/css/style.css?v=20260414c">
+    <link rel="stylesheet" href="/css/style.css?v=20260419a">
 
         
                 <script>
@@ -48,7 +48,9 @@
         字
     </button>
 
-    <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
     <a href="/" class="back-btn">
         <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
             viewBox="0 0 24 24">
@@ -59,111 +61,122 @@
     </a>
 </div>
 
-<article class="post-container module"
-    style="position: relative; margin: 80px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
-    <h1 style="font-size: 28px; margin-bottom: 32px;">
-        归档
-        <span style="color: var(--text-muted); font-size: 16px; font-weight: normal;">(13
-            篇)</span>
-    </h1>
+<article class="post-container module archive-page-shell"
+    style="position: relative; margin: 80px auto; transform: none; max-width: 920px; width: 92%; cursor: auto;">
+    <header class="archive-page-hero">
+        <div class="archive-page-head">
+            <div>
+                <p class="archive-page-kicker">时间索引</p>
+                <h1 class="archive-page-title">归档 <span>(14 篇)</span></h1>
+            </div>
+            <div class="archive-page-meta">
+                <span>1 个年份分组</span>
+                <span>本页 10 篇</span>
+            </div>
+        </div>
+        <p class="archive-page-summary">
+            这里按时间回看博客的写作轨迹。顺着时间轴往下读，会更容易看到主题是怎样从博客搭建延伸到 OpenGL 和 UE 渲染源码梳理的。
+        </p>
+    </header>
 
-    <div class="archive-list">
+    <section class="archive-timeline" aria-label="归档时间轴">
         
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.14
-            </span>
-            <a href="/2026/04/14/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/">
-                从颜色到多光源：OpenGL 光照学习笔记
-            </a>
-        </div>
+        <section class="archive-year-block">
+            <div class="archive-year-rail">
+                <span class="archive-year-label">2026</span>
+            </div>
+
+            <div class="archive-year-content">
+                
+                <section class="archive-month-group">
+                    <div class="archive-month-head">
+                        <span class="archive-month-dot" aria-hidden="true"></span>
+                        <h2 class="archive-month-label">2026年 04月</h2>
+                    </div>
+
+                    <div class="archive-timeline-list">
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.19</span>
+                            <a class="archive-timeline-card" href="/2026/04/19/graphics-notes/opengl-06-model-loading-assimp-mesh-model/">
+                                <span class="archive-timeline-title">把模型从文件带进场景：OpenGL 模型加载、Mesh 与 Model</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.14</span>
+                            <a class="archive-timeline-card" href="/2026/04/14/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/">
+                                <span class="archive-timeline-title">从颜色到多光源：OpenGL 光照学习笔记</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.13</span>
+                            <a class="archive-timeline-card" href="/2026/04/13/graphics-notes/opengl-04-transformations-coordinate-systems-camera/">
+                                <span class="archive-timeline-title">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.13</span>
+                            <a class="archive-timeline-card" href="/2026/04/13/graphics-notes/opengl-03-textures-stb-image-and-samplers/">
+                                <span class="archive-timeline-title">从颜色到贴图：OpenGL 纹理、采样器与 `stb_image` 入门</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.13</span>
+                            <a class="archive-timeline-card" href="/2026/04/13/ue-rendering-notes/ue-rendering-05-rdg-rhi-shader-bridge/">
+                                <span class="archive-timeline-title">UE引擎中的 RDG 与 RHI：一帧渲染是怎样真正提交到 GPU 的</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.13</span>
+                            <a class="archive-timeline-card" href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/">
+                                <span class="archive-timeline-title">UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.13</span>
+                            <a class="archive-timeline-card" href="/2026/04/13/ue-rendering-notes/ue-rendering-03-deferred-main-flow-part2/">
+                                <span class="archive-timeline-title">UE引擎中的延迟渲染主流程（二）：后处理如何接管最终输出</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.13</span>
+                            <a class="archive-timeline-card" href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/">
+                                <span class="archive-timeline-title">UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.13</span>
+                            <a class="archive-timeline-card" href="/2026/04/13/ue-rendering-notes/ue-rendering-01-preparation-viewfamily-to-fviewinfo/">
+                                <span class="archive-timeline-title">UE引擎中的渲染准备工作：视图描述是如何生成并交给 Renderer 的</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">04.09</span>
+                            <a class="archive-timeline-card" href="/2026/04/09/graphics-notes/opengl-02-shaders-attributes-uniform/">
+                                <span class="archive-timeline-title">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</span>
+                            </a>
+                        </article>
+                        
+                    </div>
+                </section>
+                
+            </div>
+        </section>
         
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.13
-            </span>
-            <a href="/2026/04/13/graphics-notes/opengl-04-transformations-coordinate-systems-camera/">
-                从矩阵到视角：OpenGL 变换、坐标系统与摄像机
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.13
-            </span>
-            <a href="/2026/04/13/graphics-notes/opengl-03-textures-stb-image-and-samplers/">
-                从颜色到贴图：OpenGL 纹理、采样器与 `stb_image` 入门
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.13
-            </span>
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-05-rdg-rhi-shader-bridge/">
-                UE引擎中的 RDG 与 RHI：一帧渲染是怎样真正提交到 GPU 的
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.13
-            </span>
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-04-thread-cooperation-and-proxy/">
-                UE引擎中的渲染线程协作：从 GameThread 到 FPrimitiveSceneProxy
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.13
-            </span>
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-03-deferred-main-flow-part2/">
-                UE引擎中的延迟渲染主流程（二）：后处理如何接管最终输出
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.13
-            </span>
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-02-deferred-main-flow-part1/">
-                UE引擎中的延迟渲染主流程（一）：从 RenderThread 到环境与透明阶段
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.13
-            </span>
-            <a href="/2026/04/13/ue-rendering-notes/ue-rendering-01-preparation-viewfamily-to-fviewinfo/">
-                UE引擎中的渲染准备工作：视图描述是如何生成并交给 Renderer 的
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.09
-            </span>
-            <a href="/2026/04/09/graphics-notes/opengl-02-shaders-attributes-uniform/">
-                从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门
-            </a>
-        </div>
-        
-        <div class="archive-item">
-            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
-                2026.04.08
-            </span>
-            <a href="/2026/04/08/graphics-notes/opengl-01-from-window-to-triangle/">
-                从创建窗口到第一个三角形：我的 OpenGL 入门笔记
-            </a>
-        </div>
-        
-    </div>
+    </section>
 
     
-    <div class="pagination" style="margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-        <span class="page-number current">1</span><a class="page-number" href="/archives/2026/04/page/2/">2</a><a class="extend next" rel="next" href="/archives/2026/04/page/2/">下一页 &amp;rarr;</a>
+    <div class="pagination" style="margin-top: 36px; border-top: 1px solid var(--border-color); padding-top: 18px;">
+        <span class="page-number current">1</span><a class="page-number" href="/archives/2026/04/page/2/">2</a><a class="extend next" rel="next" href="/archives/2026/04/page/2/">下一页 →</a>
     </div>
     
 </article>
@@ -176,8 +189,9 @@
         </div>
 
         
-            <script src="/js/codeblocks.js?v=20260410e"></script>
-            <script src="/js/toc.js?v=20260410e"></script>
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
         
 
         <script>
