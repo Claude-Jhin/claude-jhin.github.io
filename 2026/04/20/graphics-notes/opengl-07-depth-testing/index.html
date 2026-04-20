@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>谁应该显示在最前面：OpenGL 深度测试到底解决了什么 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260419a">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">谁应该显示在最前面：OpenGL 深度测试到底解决了什么</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.20
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Depth Testing</span>
+            
+            <span style="color: var(--accent);">#Depth Buffer</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 7 篇</span>
+                <span>已发布 7 / 7</span>
+                
+                <span>阶段：基础入门</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E8%8A%82%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、这节到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E6%B7%B1%E5%BA%A6%E7%BC%93%E5%86%B2%E9%87%8C%E5%AD%98%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">二、深度缓冲里存的是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%90%AF%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E7%9A%84%E6%9C%80%E5%85%B3%E9%94%AE%E4%B8%A4%E5%8F%A5"><span class="post-toc-list-text">三、开启深度测试的最关键两句</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#glEnable-GL-DEPTH-TEST"><span class="post-toc-list-text">glEnable(GL_DEPTH_TEST)</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#glDepthFunc-GL-LESS"><span class="post-toc-list-text">glDepthFunc(GL_LESS)</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E5%B8%A7%E9%83%BD%E8%A6%81%E6%B8%85%E6%B7%B1%E5%BA%A6%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">四、为什么每帧都要清深度缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E6%88%91%E8%BF%99%E6%AC%A1%E5%AE%9E%E9%AA%8C%E9%87%8C%E6%9C%80%E5%80%BC%E5%BE%97%E8%A7%82%E5%AF%9F%E7%9A%84%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">五、我这次实验里最值得观察的现象</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%BD%93%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E5%BC%80%E5%90%AF"><span class="post-toc-list-text">当深度测试开启</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%BD%93%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E5%85%B3%E9%97%AD"><span class="post-toc-list-text">当深度测试关闭</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%92%8C%E5%89%8D%E9%9D%A2%E5%86%85%E5%AE%B9%E6%98%AF%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">六、这一节和前面内容是什么关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E4%BB%A3%E7%A0%81%E9%87%8C%E6%9C%80%E8%AF%A5%E6%8A%93%E4%BD%8F%E7%9A%84%E5%87%A0%E5%A4%84"><span class="post-toc-list-text">七、这一节代码里最该抓住的几处</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E7%8A%B6%E6%80%81%E5%8F%AF%E4%BB%A5%E5%8A%A8%E6%80%81%E5%BC%80%E5%85%B3"><span class="post-toc-list-text">1. 深度测试状态可以动态开关</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-glEnable-GL-DEPTH-TEST-%E5%92%8C-glDisable-GL-DEPTH-TEST"><span class="post-toc-list-text">2. glEnable(GL_DEPTH_TEST) 和 glDisable(GL_DEPTH_TEST)</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-glClear-GL-DEPTH-BUFFER-BIT"><span class="post-toc-list-text">3. glClear(GL_DEPTH_BUFFER_BIT)</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%B8%B2%E6%9F%93%E9%A1%BA%E5%BA%8F%E4%BB%8D%E7%84%B6%E5%AD%98%E5%9C%A8%EF%BC%8C%E4%BD%86%E5%AE%83%E4%B8%8D%E5%86%8D%E6%98%AF%E5%94%AF%E4%B8%80%E5%86%B3%E5%AE%9A%E5%9B%A0%E7%B4%A0"><span class="post-toc-list-text">4. 渲染顺序仍然存在，但它不再是唯一决定因素</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">八、这一节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%B8%8D%E6%98%AF%E2%80%9C%E5%8F%AA%E7%BB%99-3D-%E6%A8%A1%E5%9E%8B%E7%94%A8%E7%9A%84%E9%AB%98%E7%BA%A7%E7%89%B9%E6%95%88%E2%80%9D"><span class="post-toc-list-text">1. 深度测试不是“只给 3D 模型用的高级特效”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B7%B1%E5%BA%A6%E7%BC%93%E5%86%B2%E5%92%8C%E9%A2%9C%E8%89%B2%E7%BC%93%E5%86%B2%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">2. 深度缓冲和颜色缓冲不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%BC%80%E5%90%AF%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%BB%A5%E5%90%8E%EF%BC%8C%E4%B8%8D%E4%BB%A3%E8%A1%A8%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%AE%8C%E5%85%A8%E4%B8%8D%E7%AE%A1%E7%BB%98%E5%88%B6%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">3. 开启深度测试以后，不代表就可以完全不管绘制顺序</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%88%91%E7%8E%B0%E5%9C%A8%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">九、这一节我现在应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E7%9A%84%E6%94%B6%E8%8E%B7"><span class="post-toc-list-text">十、这一节的收获</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>在进入高级 OpenGL 之后，第一件真正影响 3D 真实感的事情，其实不是更复杂的光照，也不是更炫的特效，而是“前后的遮挡关系到底对不对”。</p>
+<p>如果没有深度测试，OpenGL 更像是在做一件很朴素的事：谁后画，谁就把前面画过的内容盖掉。<br>
+这在 2D 场景里不一定是问题，但在 3D 里几乎立刻就会出错。</p>
+<p>这一节的核心目标，就是建立一个非常稳定的直觉：</p>
+<ul>
+<li>颜色缓冲决定“像素是什么颜色”</li>
+<li>深度缓冲决定“哪个像素应该留在最前面”</li>
+</ul>
+<h2 id="一、这节到底解决了什么问题">一、这节到底解决了什么问题</h2>
+<p>假设场景里有两个立方体和一块地板：</p>
+<ul>
+<li>立方体离摄像机更近</li>
+<li>地板离摄像机更远</li>
+</ul>
+<p>如果只按绘制顺序来处理，而不比较前后关系，那么只要地板最后画，它就会错误地盖到前面的立方体上。<br>
+这不是模型数据错了，也不是矩阵错了，而是 GPU 根本不知道“谁更靠近观察者”。</p>
+<p>深度测试就是为了解决这件事。</p>
+<p>它让 GPU 在写入像素颜色之前，先比较当前片段和深度缓冲中的深度值，然后决定：</p>
+<ul>
+<li>当前片段应该通过</li>
+<li>还是应该被丢弃</li>
+</ul>
+<p>所以这节最重要的一句话是：</p>
+<p><strong>深度测试解决的不是“画不画”，而是“谁应该显示在前面”。</strong></p>
+<h2 id="二、深度缓冲里存的是什么">二、深度缓冲里存的是什么</h2>
+<p>深度缓冲可以先粗略理解成一张“只存距离信息的图”。</p>
+<p>屏幕上的每个像素位置，除了有颜色值，还会额外对应一个深度值。<br>
+这个深度值不是世界坐标里的原始 <code>z</code>，而是经过投影和后续变换后，用来参与深度比较的结果。</p>
+<p>你现在先不用急着把所有数学细节一次吃完，只要先记住：</p>
+<ul>
+<li>每个片段都会带一个深度值</li>
+<li>深度缓冲会记录当前这个像素位置上“已经通过测试的最近深度”</li>
+<li>新来的片段要先和这个值比较</li>
+</ul>
+<p>如果更近，就替换；如果更远，就丢弃。</p>
+<h2 id="三、开启深度测试的最关键两句">三、开启深度测试的最关键两句</h2>
+<p>这一节代码里最核心的设置是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_DEPTH_TEST);</span><br><span class="line"><span class="built_in">glDepthFunc</span>(GL_LESS);</span><br></pre></td></tr></table></figure>
+<p>它们的含义分别是：</p>
+<h3 id="glEnable-GL-DEPTH-TEST"><code>glEnable(GL_DEPTH_TEST)</code></h3>
+<p>开启深度测试功能。</p>
+<p>如果没有这句，OpenGL 在默认情况下不会替你处理 3D 场景里的前后遮挡关系，结果更接近“按绘制顺序覆盖”。</p>
+<h3 id="glDepthFunc-GL-LESS"><code>glDepthFunc(GL_LESS)</code></h3>
+<p>设置深度测试的比较规则。</p>
+<p><code>GL_LESS</code> 的意思是：</p>
+<ul>
+<li>如果当前片段的深度值比深度缓冲里已有的值更小</li>
+<li>那么当前片段通过测试</li>
+</ul>
+<p>这通常就可以理解成：</p>
+<ul>
+<li>更靠近摄像机的片段保留</li>
+<li>更远的片段被挡住</li>
+</ul>
+<p>这也是最常用、最符合直觉的一种深度比较方式。</p>
+<h2 id="四、为什么每帧都要清深度缓冲">四、为什么每帧都要清深度缓冲</h2>
+<p>只开深度测试还不够，还必须记住这句：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glClear</span>(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);</span><br></pre></td></tr></table></figure>
+<p>很多初学者刚进这节时，会觉得：</p>
+<ul>
+<li>我已经清了颜色缓冲</li>
+<li>为什么还要清深度缓冲</li>
+</ul>
+<p>原因很直接：</p>
+<ul>
+<li>颜色缓冲存的是上一帧画出来的颜色</li>
+<li>深度缓冲存的是上一帧留下来的深度结果</li>
+</ul>
+<p>如果你不清深度缓冲，那么新一帧的片段在做深度比较时，会和“上一帧残留的深度数据”比，结果就会莫名其妙。</p>
+<p>所以一旦使用深度测试，就要把这条规则记牢：</p>
+<p><strong>每一帧通常都要同时清颜色缓冲和深度缓冲。</strong></p>
+<h2 id="五、我这次实验里最值得观察的现象">五、我这次实验里最值得观察的现象</h2>
+<p>为了把这节讲得更直观，我把项目写成了一个对比实验。</p>
+<p>场景里有：</p>
+<ul>
+<li>两个立方体</li>
+<li>一块地板</li>
+<li>摄像机可移动</li>
+<li><code>T</code> 键可切换深度测试开关</li>
+</ul>
+<p>并且我故意让地板在渲染顺序上“最后绘制”。</p>
+<p>这样就会出现两种非常清楚的结果：</p>
+<h3 id="当深度测试开启">当深度测试开启</h3>
+<ul>
+<li>更近的立方体会正确挡住地板</li>
+<li>即使地板最后画，遮挡关系仍然是对的</li>
+</ul>
+<h3 id="当深度测试关闭">当深度测试关闭</h3>
+<ul>
+<li>OpenGL 不再关心谁更近</li>
+<li>只关心谁最后画</li>
+<li>因为地板最后画，所以它会错误地覆盖本该挡住它的立方体部分</li>
+</ul>
+<p>这个对比特别好，因为它会让你从“记 API”变成“理解现象”。</p>
+<h2 id="六、这一节和前面内容是什么关系">六、这一节和前面内容是什么关系</h2>
+<p>深度测试不是孤立出现的，它是建立在你前面已经学会的 3D 渲染链路之上的。</p>
+<p>你前面已经有了：</p>
+<ul>
+<li>顶点数据</li>
+<li><code>model / view / projection</code></li>
+<li>摄像机移动</li>
+<li>纹理采样</li>
+</ul>
+<p>这意味着你已经能把 3D 场景画出来了。</p>
+<p>而这一节做的事情是：</p>
+<ul>
+<li>不再只问“能不能画出来”</li>
+<li>开始问“画出来之后，前后关系对不对”</li>
+</ul>
+<p>所以从学习节奏上说，这一节是很自然的一步。<br>
+它把“3D 看起来像真的”这件事推进了一大截。</p>
+<h2 id="七、这一节代码里最该抓住的几处">七、这一节代码里最该抓住的几处</h2>
+<p>如果只从代码层面抓重点，我会优先记这几件事：</p>
+<h3 id="1-深度测试状态可以动态开关">1. 深度测试状态可以动态开关</h3>
+<p>项目里用了一个布尔值来控制当前是否启用深度测试，并把它绑定到 <code>T</code> 键上。</p>
+<p>这件事很适合学习，因为你能立刻看到同一个场景在两种状态下的区别。</p>
+<h3 id="2-glEnable-GL-DEPTH-TEST-和-glDisable-GL-DEPTH-TEST">2. <code>glEnable(GL_DEPTH_TEST)</code> 和 <code>glDisable(GL_DEPTH_TEST)</code></h3>
+<p>这两个 API 让你看到，深度测试本质上也是 OpenGL 的一项状态。</p>
+<h3 id="3-glClear-GL-DEPTH-BUFFER-BIT">3. <code>glClear(GL_DEPTH_BUFFER_BIT)</code></h3>
+<p>它提醒你：深度缓存不是抽象概念，而是每帧都要被维护的真实缓冲区。</p>
+<h3 id="4-渲染顺序仍然存在，但它不再是唯一决定因素">4. 渲染顺序仍然存在，但它不再是唯一决定因素</h3>
+<p>这点特别重要。</p>
+<p>开启深度测试后，渲染顺序并没有消失。<br>
+只是最终哪个片段能留下，不再完全由“谁最后画”决定，而是由深度比较参与共同决定。</p>
+<h2 id="八、这一节最容易混淆的几个点">八、这一节最容易混淆的几个点</h2>
+<h3 id="1-深度测试不是“只给-3D-模型用的高级特效”">1. 深度测试不是“只给 3D 模型用的高级特效”</h3>
+<p>它其实是 3D 渲染里非常基础的一层机制。<br>
+只要场景里存在前后遮挡，它几乎就是默认需要的。</p>
+<h3 id="2-深度缓冲和颜色缓冲不是一回事">2. 深度缓冲和颜色缓冲不是一回事</h3>
+<ul>
+<li>颜色缓冲：存颜色</li>
+<li>深度缓冲：存深度比较结果</li>
+</ul>
+<p>它们通常要一起工作，但职责完全不同。</p>
+<h3 id="3-开启深度测试以后，不代表就可以完全不管绘制顺序">3. 开启深度测试以后，不代表就可以完全不管绘制顺序</h3>
+<p>对于不透明物体，深度测试通常能帮你把大部分遮挡关系处理正确。<br>
+但到了后面的混合、透明物体阶段，绘制顺序又会重新变得很重要。</p>
+<p>所以这节不是终点，而是给后面的“模板测试、混合、面剔除”打基础。</p>
+<h2 id="九、这一节我现在应该能回答的问题">九、这一节我现在应该能回答的问题</h2>
+<p>学完这节之后，至少应该能自己回答下面这些问题：</p>
+<ol>
+<li>深度测试解决的是什么问题？</li>
+<li>为什么 3D 场景不能只靠绘制顺序？</li>
+<li><code>glEnable(GL_DEPTH_TEST)</code> 是在做什么？</li>
+<li><code>glDepthFunc(GL_LESS)</code> 的含义是什么？</li>
+<li>为什么每帧要清 <code>GL_DEPTH_BUFFER_BIT</code>？</li>
+<li>为什么关闭深度测试后，后绘制的地板会错误覆盖前面的立方体？</li>
+</ol>
+<p>如果这六个问题你都能比较顺地答出来，这一节就算真正进脑子了。</p>
+<h2 id="十、这一节的收获">十、这一节的收获</h2>
+<p>这一节最值得带走的，不是某一个 API 名字，而是一种新的观察角度：</p>
+<p>在 3D 渲染里，一个像素最终能不能显示在屏幕最前面，除了颜色，还要经过一轮“前后关系”的判断。</p>
+<p>而这层判断，就是深度测试。</p>
+<p>所以这一节可以收成一句总结：</p>
+<p><strong>颜色告诉 GPU“画成什么样”，深度测试告诉 GPU“谁应该留在最前面”。</strong></p>
+<p>后续阅读会继续沿着这个方向展开：</p>
+<ul>
+<li>深度测试解决“前后”</li>
+<li>模板测试开始解决“哪些区域允许被画、哪些区域不允许被画”</li>
+</ul>
+<p>这条高级 OpenGL 的主线，到这里就真正开始展开了。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/04/19/graphics-notes/opengl-06-model-loading-assimp-mesh-model/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">把模型从文件带进场景：OpenGL 模型加载、Mesh 与 Model</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E8%8A%82%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、这节到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E6%B7%B1%E5%BA%A6%E7%BC%93%E5%86%B2%E9%87%8C%E5%AD%98%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">二、深度缓冲里存的是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%90%AF%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E7%9A%84%E6%9C%80%E5%85%B3%E9%94%AE%E4%B8%A4%E5%8F%A5"><span class="post-toc-list-text">三、开启深度测试的最关键两句</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#glEnable-GL-DEPTH-TEST"><span class="post-toc-list-text">glEnable(GL_DEPTH_TEST)</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#glDepthFunc-GL-LESS"><span class="post-toc-list-text">glDepthFunc(GL_LESS)</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E5%B8%A7%E9%83%BD%E8%A6%81%E6%B8%85%E6%B7%B1%E5%BA%A6%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">四、为什么每帧都要清深度缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E6%88%91%E8%BF%99%E6%AC%A1%E5%AE%9E%E9%AA%8C%E9%87%8C%E6%9C%80%E5%80%BC%E5%BE%97%E8%A7%82%E5%AF%9F%E7%9A%84%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">五、我这次实验里最值得观察的现象</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%BD%93%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E5%BC%80%E5%90%AF"><span class="post-toc-list-text">当深度测试开启</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%BD%93%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E5%85%B3%E9%97%AD"><span class="post-toc-list-text">当深度测试关闭</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%92%8C%E5%89%8D%E9%9D%A2%E5%86%85%E5%AE%B9%E6%98%AF%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">六、这一节和前面内容是什么关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E4%BB%A3%E7%A0%81%E9%87%8C%E6%9C%80%E8%AF%A5%E6%8A%93%E4%BD%8F%E7%9A%84%E5%87%A0%E5%A4%84"><span class="post-toc-list-text">七、这一节代码里最该抓住的几处</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E7%8A%B6%E6%80%81%E5%8F%AF%E4%BB%A5%E5%8A%A8%E6%80%81%E5%BC%80%E5%85%B3"><span class="post-toc-list-text">1. 深度测试状态可以动态开关</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-glEnable-GL-DEPTH-TEST-%E5%92%8C-glDisable-GL-DEPTH-TEST"><span class="post-toc-list-text">2. glEnable(GL_DEPTH_TEST) 和 glDisable(GL_DEPTH_TEST)</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-glClear-GL-DEPTH-BUFFER-BIT"><span class="post-toc-list-text">3. glClear(GL_DEPTH_BUFFER_BIT)</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%B8%B2%E6%9F%93%E9%A1%BA%E5%BA%8F%E4%BB%8D%E7%84%B6%E5%AD%98%E5%9C%A8%EF%BC%8C%E4%BD%86%E5%AE%83%E4%B8%8D%E5%86%8D%E6%98%AF%E5%94%AF%E4%B8%80%E5%86%B3%E5%AE%9A%E5%9B%A0%E7%B4%A0"><span class="post-toc-list-text">4. 渲染顺序仍然存在，但它不再是唯一决定因素</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">八、这一节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%B8%8D%E6%98%AF%E2%80%9C%E5%8F%AA%E7%BB%99-3D-%E6%A8%A1%E5%9E%8B%E7%94%A8%E7%9A%84%E9%AB%98%E7%BA%A7%E7%89%B9%E6%95%88%E2%80%9D"><span class="post-toc-list-text">1. 深度测试不是“只给 3D 模型用的高级特效”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B7%B1%E5%BA%A6%E7%BC%93%E5%86%B2%E5%92%8C%E9%A2%9C%E8%89%B2%E7%BC%93%E5%86%B2%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">2. 深度缓冲和颜色缓冲不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%BC%80%E5%90%AF%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%BB%A5%E5%90%8E%EF%BC%8C%E4%B8%8D%E4%BB%A3%E8%A1%A8%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%AE%8C%E5%85%A8%E4%B8%8D%E7%AE%A1%E7%BB%98%E5%88%B6%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">3. 开启深度测试以后，不代表就可以完全不管绘制顺序</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%88%91%E7%8E%B0%E5%9C%A8%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">九、这一节我现在应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E7%9A%84%E6%94%B6%E8%8E%B7"><span class="post-toc-list-text">十、这一节的收获</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
