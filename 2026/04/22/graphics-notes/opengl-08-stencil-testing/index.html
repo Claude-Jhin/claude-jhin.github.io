@@ -1,0 +1,420 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>哪些区域允许被画：OpenGL 模板测试与物体描边 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260423a">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">哪些区域允许被画：OpenGL 模板测试与物体描边</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.04.22
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Stencil Testing</span>
+            
+            <span style="color: var(--accent);">#Stencil Buffer</span>
+            
+            <span style="color: var(--accent);">#Object Outline</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 8 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：高级 OpenGL</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、模板测试解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">二、模板缓冲是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%90%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">三、开启模板测试</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81glStencilFunc%EF%BC%9A%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E6%80%8E%E4%B9%88%E6%AF%94%E8%BE%83"><span class="post-toc-list-text">四、glStencilFunc：模板测试怎么比较</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81glStencilOp%EF%BC%9A%E6%B5%8B%E8%AF%95%E4%B9%8B%E5%90%8E%E6%A8%A1%E6%9D%BF%E5%80%BC%E6%80%8E%E4%B9%88%E6%94%B9"><span class="post-toc-list-text">五、glStencilOp：测试之后模板值怎么改</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81glStencilMask%EF%BC%9A%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E8%83%BD%E4%B8%8D%E8%83%BD%E5%86%99"><span class="post-toc-list-text">六、glStencilMask：模板缓冲能不能写</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E5%B8%A7%E8%A6%81%E6%B8%85%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">七、为什么每帧要清模板缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%89%A9%E4%BD%93%E6%8F%8F%E8%BE%B9%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">八、物体描边的完整流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E7%94%BB%E5%9C%B0%E6%9D%BF%EF%BC%8C%E4%BD%86%E4%B8%8D%E5%86%99%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">第一步：画地板，但不写模板</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%AD%A3%E5%B8%B8%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%B9%B6%E6%8A%8A%E7%AE%B1%E5%AD%90%E5%8C%BA%E5%9F%9F%E5%86%99%E6%88%90-1"><span class="post-toc-list-text">第二步：画正常箱子，并把箱子区域写成 1</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%94%BE%E5%A4%A7%E7%9A%84%E7%BA%AF%E8%89%B2%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%8F%AA%E7%94%BB-stencil-1-%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="post-toc-list-text">第三步：画放大的纯色箱子，只画 stencil !&#x3D; 1 的地方</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E6%8F%8F%E8%BE%B9%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="post-toc-list-text">九、描边流程图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%81%A2%E5%A4%8D%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">十、为什么要恢复状态</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十一、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-glStencilFunc-%E5%92%8C-glStencilOp-%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">1. glStencilFunc 和 glStencilOp 不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-glStencilMask-%E4%B8%8D%E6%98%AF%E6%AF%94%E8%BE%83%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">2. glStencilMask 不是比较条件</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8F%8F%E8%BE%B9%E4%B8%8D%E6%98%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E7%9A%84%E5%94%AF%E4%B8%80%E7%94%A8%E9%80%94"><span class="post-toc-list-text">3. 描边不是模板测试的唯一用途</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十二、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十三、总结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学完深度测试之后，我们已经知道 GPU 可以根据深度缓冲判断“谁应该显示在前面”。<br>
+而模板测试解决的是另一个问题：</p>
+<p><strong>哪些屏幕区域允许继续被绘制，哪些区域不允许。</strong></p>
+<p>这一节最经典的例子就是物体描边。<br>
+描边效果本身不是重点，真正重要的是理解模板缓冲的用法：</p>
+<ul>
+<li>先把某些区域标记出来</li>
+<li>再让后续绘制只发生在符合条件的区域</li>
+</ul>
+<h2 id="一、模板测试解决的是什么问题">一、模板测试解决的是什么问题</h2>
+<p>深度测试关心的是前后关系：</p>
+<ul>
+<li>当前片段是不是比已有片段更靠前</li>
+<li>如果更靠前，就保留</li>
+<li>如果更靠后，就丢弃</li>
+</ul>
+<p>模板测试关心的是区域规则：</p>
+<ul>
+<li>当前片段所在的屏幕位置是否符合某个模板条件</li>
+<li>如果符合，就允许继续绘制</li>
+<li>如果不符合，就丢弃</li>
+</ul>
+<p>所以两者的直觉区别可以这样记：</p>
+<ul>
+<li>深度测试：判断“谁在前面”</li>
+<li>模板测试：判断“这个位置能不能画”</li>
+</ul>
+<h2 id="二、模板缓冲是什么">二、模板缓冲是什么</h2>
+<p>模板缓冲可以理解成一张和屏幕尺寸一致的“整数标记图”。</p>
+<p>每个像素位置除了可能有：</p>
+<ul>
+<li>颜色值</li>
+<li>深度值</li>
+</ul>
+<p>还可以有一个模板值。</p>
+<p>常见窗口配置里，模板缓冲是 <code>8 bit</code>，也就是每个像素可以存 <code>0~255</code> 的整数值。</p>
+<p>在项目里，我们通过：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glfwWindowHint</span>(GLFW_STENCIL_BITS, <span class="number">8</span>);</span><br></pre></td></tr></table></figure>
+<p>向窗口请求一个 8 位模板缓冲。</p>
+<h2 id="三、开启模板测试">三、开启模板测试</h2>
+<p>模板测试需要显式开启：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_STENCIL_TEST);</span><br></pre></td></tr></table></figure>
+<p>和深度测试类似，它也是 OpenGL 的一个状态开关。<br>
+一旦开启，后续片段在写入颜色缓冲之前，就会先经过模板测试。</p>
+<p>这一节里，我们同时开启了深度测试和模板测试：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_DEPTH_TEST);</span><br><span class="line"><span class="built_in">glDepthFunc</span>(GL_LESS);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glEnable</span>(GL_STENCIL_TEST);</span><br><span class="line"><span class="built_in">glStencilOp</span>(GL_KEEP, GL_KEEP, GL_REPLACE);</span><br></pre></td></tr></table></figure>
+<p>这样场景既能处理前后遮挡，也能根据模板值控制描边区域。</p>
+<h2 id="四、glStencilFunc：模板测试怎么比较">四、<code>glStencilFunc</code>：模板测试怎么比较</h2>
+<p><code>glStencilFunc</code> 决定模板测试的比较规则：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilFunc</span>(func, ref, mask);</span><br></pre></td></tr></table></figure>
+<p>三个参数分别是：</p>
+<ul>
+<li><code>func</code>：比较函数</li>
+<li><code>ref</code>：参考值</li>
+<li><code>mask</code>：比较时使用哪些位</li>
+</ul>
+<p>例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilFunc</span>(GL_ALWAYS, <span class="number">1</span>, <span class="number">0xFF</span>);</span><br></pre></td></tr></table></figure>
+<p>意思是：</p>
+<ul>
+<li>模板测试总是通过</li>
+<li>参考值是 <code>1</code></li>
+<li>比较时使用所有位</li>
+</ul>
+<p>又比如描边时用到：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilFunc</span>(GL_NOTEQUAL, <span class="number">1</span>, <span class="number">0xFF</span>);</span><br></pre></td></tr></table></figure>
+<p>意思是：</p>
+<ul>
+<li>只有模板值不等于 <code>1</code> 的地方才通过</li>
+</ul>
+<p>这个判断正是描边效果能出现的关键。</p>
+<h2 id="五、glStencilOp：测试之后模板值怎么改">五、<code>glStencilOp</code>：测试之后模板值怎么改</h2>
+<p><code>glStencilOp</code> 决定模板值如何更新：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilOp</span>(sfail, dpfail, dppass);</span><br></pre></td></tr></table></figure>
+<p>三个参数分别对应：</p>
+<ul>
+<li><code>sfail</code>：模板测试失败时怎么处理</li>
+<li><code>dpfail</code>：模板测试通过，但深度测试失败时怎么处理</li>
+<li><code>dppass</code>：模板测试和深度测试都通过时怎么处理</li>
+</ul>
+<p>这一节使用的是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilOp</span>(GL_KEEP, GL_KEEP, GL_REPLACE);</span><br></pre></td></tr></table></figure>
+<p>意思是：</p>
+<ul>
+<li>模板测试失败：保持原值</li>
+<li>模板测试通过但深度测试失败：保持原值</li>
+<li>模板和深度都通过：替换成 <code>glStencilFunc</code> 指定的参考值</li>
+</ul>
+<p>这很适合物体描边，因为我们希望只有真正画到屏幕上的箱子区域，才被写成模板值 <code>1</code>。</p>
+<h2 id="六、glStencilMask：模板缓冲能不能写">六、<code>glStencilMask</code>：模板缓冲能不能写</h2>
+<p><code>glStencilMask</code> 控制模板缓冲的写入掩码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilMask</span>(mask);</span><br></pre></td></tr></table></figure>
+<p>常见用法有两个：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilMask</span>(<span class="number">0xFF</span>);</span><br></pre></td></tr></table></figure>
+<p>表示允许写入模板缓冲。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilMask</span>(<span class="number">0x00</span>);</span><br></pre></td></tr></table></figure>
+<p>表示禁止写入模板缓冲。</p>
+<p>这一节里，地板绘制时会关闭模板写入，因为我们只想让箱子在模板缓冲中留下标记。<br>
+如果地板也写模板，后面的描边判断就会被干扰。</p>
+<h2 id="七、为什么每帧要清模板缓冲">七、为什么每帧要清模板缓冲</h2>
+<p>渲染循环开始时，我们会清空三个缓冲：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glClear</span>(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);</span><br></pre></td></tr></table></figure>
+<p>这和深度测试的逻辑一样。</p>
+<p>如果不清模板缓冲，上一帧留下来的模板值会继续影响下一帧。<br>
+这样描边区域可能出现残留、错位或者无法解释的结果。</p>
+<p>所以开启模板测试后，要记住：</p>
+<p><strong>每帧通常也要清 <code>GL_STENCIL_BUFFER_BIT</code>。</strong></p>
+<h2 id="八、物体描边的完整流程">八、物体描边的完整流程</h2>
+<p>这一节的描边效果分成三步。</p>
+<h3 id="第一步：画地板，但不写模板">第一步：画地板，但不写模板</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilMask</span>(<span class="number">0x00</span>);</span><br></pre></td></tr></table></figure>
+<p>地板正常绘制，但不修改模板缓冲。<br>
+这样模板缓冲里不会出现地板的标记。</p>
+<h3 id="第二步：画正常箱子，并把箱子区域写成-1">第二步：画正常箱子，并把箱子区域写成 <code>1</code></h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilFunc</span>(GL_ALWAYS, <span class="number">1</span>, <span class="number">0xFF</span>);</span><br><span class="line"><span class="built_in">glStencilMask</span>(<span class="number">0xFF</span>);</span><br></pre></td></tr></table></figure>
+<p>这表示：</p>
+<ul>
+<li>箱子片段总是通过模板测试</li>
+<li>允许写入模板缓冲</li>
+<li>通过深度测试的箱子片段会把模板值写成 <code>1</code></li>
+</ul>
+<p>这一遍的作用是：</p>
+<ol>
+<li>正常显示箱子</li>
+<li>在模板缓冲里标记箱子的屏幕区域</li>
+</ol>
+<h3 id="第三步：画放大的纯色箱子，只画-stencil-1-的地方">第三步：画放大的纯色箱子，只画 <code>stencil != 1</code> 的地方</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilFunc</span>(GL_NOTEQUAL, <span class="number">1</span>, <span class="number">0xFF</span>);</span><br><span class="line"><span class="built_in">glStencilMask</span>(<span class="number">0x00</span>);</span><br><span class="line"><span class="built_in">glDisable</span>(GL_DEPTH_TEST);</span><br></pre></td></tr></table></figure>
+<p>这表示：</p>
+<ul>
+<li>原箱子区域，也就是模板值等于 <code>1</code> 的地方，不允许画</li>
+<li>非箱子区域允许画</li>
+<li>第二遍不再修改模板缓冲</li>
+<li>临时关闭深度测试，让外轮廓稳定显示</li>
+</ul>
+<p>然后把箱子模型稍微放大一点：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">model = glm::<span class="built_in">scale</span>(model, glm::<span class="built_in">vec3</span>(<span class="number">1.06f</span>));</span><br></pre></td></tr></table></figure>
+<p>由于原箱子区域被模板测试挡掉，放大后多出来的外圈就会留下来。<br>
+这就是描边。</p>
+<h2 id="九、描边流程图">九、描边流程图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;清空颜色、深度、模板缓冲&quot;] --&gt; B[&quot;画地板：模板写入关闭&quot;]</span><br><span class="line">    B --&gt; C[&quot;画正常箱子：模板总是通过&quot;]</span><br><span class="line">    C --&gt; D[&quot;箱子真正画到的区域写成 1&quot;]</span><br><span class="line">    D --&gt; E[&quot;切换规则：stencil != 1 才允许画&quot;]</span><br><span class="line">    E --&gt; F[&quot;画放大的纯色箱子&quot;]</span><br><span class="line">    F --&gt; G[&quot;原箱子区域被挡掉，只剩外圈&quot;]</span><br><span class="line">    G --&gt; H[&quot;恢复模板写入和深度测试状态&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="十、为什么要恢复状态">十、为什么要恢复状态</h2>
+<p>这一节最后会恢复：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glStencilMask</span>(<span class="number">0xFF</span>);</span><br><span class="line"><span class="built_in">glStencilFunc</span>(GL_ALWAYS, <span class="number">1</span>, <span class="number">0xFF</span>);</span><br><span class="line"><span class="built_in">glEnable</span>(GL_DEPTH_TEST);</span><br></pre></td></tr></table></figure>
+<p>这是很重要的一步。</p>
+<p>OpenGL 是状态机。<br>
+如果你不恢复状态，后续绘制很可能还沿用上一段的模板规则或深度测试状态，结果就会非常难排查。</p>
+<p>所以模板测试这一节除了学习 API，也是在训练一个习惯：</p>
+<p><strong>改完 OpenGL 状态后，要知道什么时候恢复它。</strong></p>
+<h2 id="十一、这一节最容易混淆的点">十一、这一节最容易混淆的点</h2>
+<h3 id="1-glStencilFunc-和-glStencilOp-不是一回事">1. <code>glStencilFunc</code> 和 <code>glStencilOp</code> 不是一回事</h3>
+<ul>
+<li><code>glStencilFunc</code>：决定当前片段能不能通过模板测试</li>
+<li><code>glStencilOp</code>：决定测试之后模板缓冲怎么更新</li>
+</ul>
+<p>一个管“能不能过”，一个管“过不过之后怎么改值”。</p>
+<h3 id="2-glStencilMask-不是比较条件">2. <code>glStencilMask</code> 不是比较条件</h3>
+<p><code>glStencilMask</code> 控制的是能不能写模板缓冲。<br>
+它不是用来决定片段是否通过测试的。</p>
+<h3 id="3-描边不是模板测试的唯一用途">3. 描边不是模板测试的唯一用途</h3>
+<p>描边只是最容易理解的示例。</p>
+<p>模板测试还可以用于：</p>
+<ul>
+<li>镜子区域</li>
+<li>传送门</li>
+<li>UI 遮罩</li>
+<li>只在特定区域做后处理</li>
+<li>标记某些屏幕区域</li>
+</ul>
+<p>真正的核心是区域控制。</p>
+<h2 id="十二、这一节应该能回答的问题">十二、这一节应该能回答的问题</h2>
+<p>学完这一节后，我应该能回答：</p>
+<ol>
+<li>模板测试和深度测试分别解决什么问题？</li>
+<li>模板缓冲里存的是什么？</li>
+<li><code>glStencilFunc</code> 的三个参数是什么意思？</li>
+<li><code>glStencilOp</code> 的三个参数分别对应什么情况？</li>
+<li>为什么地板不应该写入模板缓冲？</li>
+<li>为什么第二遍放大的箱子只剩外圈？</li>
+<li>为什么画完描边后要恢复深度测试和模板状态？</li>
+</ol>
+<p>如果这些问题能回答清楚，模板测试这节就算真正理解了。</p>
+<h2 id="十三、总结">十三、总结</h2>
+<p>模板测试的本质不是描边，而是区域控制。</p>
+<p>它提供了一种非常有用的机制：</p>
+<ul>
+<li>先在模板缓冲中留下标记</li>
+<li>再根据标记决定后续绘制能不能发生</li>
+</ul>
+<p>所以这节可以收成一句话：</p>
+<p><strong>深度测试控制前后关系，模板测试控制屏幕区域。</strong></p>
+<p>后续阅读会继续围绕状态控制展开。<br>
+尤其是透明物体，绘制顺序会重新变得非常重要，这会和前面深度测试形成一个很好的对照。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/04/20/graphics-notes/opengl-07-depth-testing/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">谁应该显示在最前面：OpenGL 深度测试到底解决了什么</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、模板测试解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">二、模板缓冲是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%90%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">三、开启模板测试</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81glStencilFunc%EF%BC%9A%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E6%80%8E%E4%B9%88%E6%AF%94%E8%BE%83"><span class="post-toc-list-text">四、glStencilFunc：模板测试怎么比较</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81glStencilOp%EF%BC%9A%E6%B5%8B%E8%AF%95%E4%B9%8B%E5%90%8E%E6%A8%A1%E6%9D%BF%E5%80%BC%E6%80%8E%E4%B9%88%E6%94%B9"><span class="post-toc-list-text">五、glStencilOp：测试之后模板值怎么改</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81glStencilMask%EF%BC%9A%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E8%83%BD%E4%B8%8D%E8%83%BD%E5%86%99"><span class="post-toc-list-text">六、glStencilMask：模板缓冲能不能写</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E5%B8%A7%E8%A6%81%E6%B8%85%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">七、为什么每帧要清模板缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%89%A9%E4%BD%93%E6%8F%8F%E8%BE%B9%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">八、物体描边的完整流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E7%94%BB%E5%9C%B0%E6%9D%BF%EF%BC%8C%E4%BD%86%E4%B8%8D%E5%86%99%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">第一步：画地板，但不写模板</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%AD%A3%E5%B8%B8%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%B9%B6%E6%8A%8A%E7%AE%B1%E5%AD%90%E5%8C%BA%E5%9F%9F%E5%86%99%E6%88%90-1"><span class="post-toc-list-text">第二步：画正常箱子，并把箱子区域写成 1</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%94%BE%E5%A4%A7%E7%9A%84%E7%BA%AF%E8%89%B2%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%8F%AA%E7%94%BB-stencil-1-%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="post-toc-list-text">第三步：画放大的纯色箱子，只画 stencil !&#x3D; 1 的地方</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E6%8F%8F%E8%BE%B9%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="post-toc-list-text">九、描边流程图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%81%A2%E5%A4%8D%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">十、为什么要恢复状态</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十一、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-glStencilFunc-%E5%92%8C-glStencilOp-%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">1. glStencilFunc 和 glStencilOp 不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-glStencilMask-%E4%B8%8D%E6%98%AF%E6%AF%94%E8%BE%83%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">2. glStencilMask 不是比较条件</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8F%8F%E8%BE%B9%E4%B8%8D%E6%98%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E7%9A%84%E5%94%AF%E4%B8%80%E7%94%A8%E9%80%94"><span class="post-toc-list-text">3. 描边不是模板测试的唯一用途</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十二、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十三、总结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
