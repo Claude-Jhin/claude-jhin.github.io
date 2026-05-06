@@ -1,0 +1,389 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.05.06
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Face Culling</span>
+            
+            <span style="color: var(--accent);">#Winding Order</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 9 篇</span>
+                <span>已发布 9 / 9</span>
+                
+                <span>阶段：高级 OpenGL</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E9%9D%A2%E5%89%94%E9%99%A4%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、面剔除解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E5%AE%83%E5%8F%91%E7%94%9F%E5%9C%A8-CPU-%E8%BF%98%E6%98%AF-GPU"><span class="post-toc-list-text">二、它发生在 CPU 还是 GPU</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E6%AD%A3%E9%9D%A2%E5%92%8C%E8%83%8C%E9%9D%A2%E7%94%B1%E4%BB%80%E4%B9%88%E5%86%B3%E5%AE%9A"><span class="post-toc-list-text">三、正面和背面由什么决定</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E6%A0%B8%E5%BF%83-API"><span class="post-toc-list-text">四、核心 API</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E8%A7%82%E5%AF%9F%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">五、项目里的观察方式</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#OFF%EF%BC%9A%E5%85%B3%E9%97%AD%E9%9D%A2%E5%89%94%E9%99%A4"><span class="post-toc-list-text">OFF：关闭面剔除</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#BACK%EF%BC%9A%E5%89%94%E9%99%A4%E8%83%8C%E9%9D%A2"><span class="post-toc-list-text">BACK：剔除背面</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FRONT%EF%BC%9A%E5%89%94%E9%99%A4%E6%AD%A3%E9%9D%A2"><span class="post-toc-list-text">FRONT：剔除正面</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E9%9D%A2%E5%89%94%E9%99%A4%E5%92%8C%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">六、面剔除和深度测试的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%80%82%E5%90%88%E5%BC%80%E5%90%AF%E9%9D%A2%E5%89%94%E9%99%A4"><span class="post-toc-list-text">七、什么时候不适合开启面剔除</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E4%B8%80%E4%B8%AA%E5%AE%B9%E6%98%93%E8%B8%A9%E5%9D%91%E7%9A%84%E7%82%B9%EF%BC%9A%E6%A8%A1%E5%9E%8B%E7%8E%AF%E7%BB%95%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">八、一个容易踩坑的点：模型环绕顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">九、这一节可以做的实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十、本节小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h1>OpenGL 学习笔记 11：面剔除、环绕顺序与不可见面的优化</h1>
+<p>在深度测试、模板测试和混合之后，我们进入高级 OpenGL 里的另一个基础状态：面剔除。</p>
+<p>如果说深度测试是在回答：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">同一个像素位置上，谁离相机更近？</span><br></pre></td></tr></table></figure>
+<p>那么面剔除回答的是另一个更早的问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这个三角形的这一面，需不需要进入后续绘制流程？</span><br></pre></td></tr></table></figure>
+<p>这一节最重要的直觉是：</p>
+<p><strong>面剔除不是在 CPU 上删除模型数据，而是 GPU 在光栅化之前，根据三角形的环绕顺序决定是否丢弃这个图元。</strong></p>
+<h2 id="一、面剔除解决的是什么问题">一、面剔除解决的是什么问题</h2>
+<p>大多数 3D 模型都是封闭物体，例如立方体、角色、石头、建筑、武器等。</p>
+<p>当我们站在物体外部观察时，物体背向相机的那一面通常是看不见的。<br>
+即使不开启面剔除，这些背面的片段最后也很可能被深度测试挡掉。</p>
+<p>但区别在于：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">不开启面剔除：</span><br><span class="line">背面三角形仍然会被送入后续流程，可能还会产生大量片段。</span><br><span class="line"></span><br><span class="line">开启面剔除：</span><br><span class="line">背面三角形在光栅化之前就被丢弃，后面不再生成片段。</span><br></pre></td></tr></table></figure>
+<p>所以面剔除最直接的价值是减少无意义的绘制工作。</p>
+<p>它特别适合封闭、不透明、从外部观察的模型。<br>
+例如一个普通箱子，如果我们只从外面看它，箱子内侧的面通常没有必要被画出来。</p>
+<h2 id="二、它发生在-CPU-还是-GPU">二、它发生在 CPU 还是 GPU</h2>
+<p>面剔除主要发生在 GPU 上。</p>
+<p>CPU 做的事情只是设置 OpenGL 状态：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_CULL_FACE);</span><br><span class="line"><span class="built_in">glCullFace</span>(GL_BACK);</span><br><span class="line"><span class="built_in">glFrontFace</span>(GL_CCW);</span><br></pre></td></tr></table></figure>
+<p>这些调用的含义是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">开启面剔除</span><br><span class="line">剔除背面</span><br><span class="line">逆时针环绕的三角形被认为是正面</span><br></pre></td></tr></table></figure>
+<p>但真正逐三角形判断“这个面要不要被丢弃”的，是 GPU。</p>
+<p>它在渲染管线中的位置可以粗略理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">顶点数据</span><br><span class="line">  ↓</span><br><span class="line">顶点着色器 Vertex Shader</span><br><span class="line">  ↓</span><br><span class="line">图元装配 Primitive Assembly</span><br><span class="line">  ↓</span><br><span class="line">面剔除 Face Culling</span><br><span class="line">  ↓</span><br><span class="line">光栅化 Rasterization</span><br><span class="line">  ↓</span><br><span class="line">片段着色器 Fragment Shader</span><br><span class="line">  ↓</span><br><span class="line">深度测试、模板测试、混合</span><br></pre></td></tr></table></figure>
+<p>也就是说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">面剔除发生在顶点着色器之后</span><br><span class="line">面剔除发生在片段着色器之前</span><br><span class="line">面剔除发生在光栅化之前</span><br></pre></td></tr></table></figure>
+<p>如果一个三角形被面剔除丢弃，它就不会继续生成片段，也不会执行片段着色器。</p>
+<p>这也是它能节省性能的原因。</p>
+<h2 id="三、正面和背面由什么决定">三、正面和背面由什么决定</h2>
+<p>OpenGL 并不知道一个模型的“外侧”到底在哪里。</p>
+<p>它不会理解：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">这是箱子的外面</span><br><span class="line">这是箱子的里面</span><br><span class="line">这是角色的皮肤外侧</span><br><span class="line">这是墙的背面</span><br></pre></td></tr></table></figure>
+<p>OpenGL 判断正面和背面依赖的是一个更机械的规则：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">三角形顶点的环绕顺序</span><br></pre></td></tr></table></figure>
+<p>一个三角形有三个顶点。<br>
+从当前观察方向看过去，如果这三个点在屏幕上的排列是逆时针，那么它就是逆时针环绕；如果是顺时针，就是顺时针环绕。</p>
+<p>默认情况下，OpenGL 认为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glFrontFace</span>(GL_CCW);</span><br></pre></td></tr></table></figure>
+<p>也就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">逆时针 Counter-Clockwise = 正面</span><br><span class="line">顺时针 Clockwise = 背面</span><br></pre></td></tr></table></figure>
+<p>这里要注意一个很重要的点：</p>
+<p><strong>正面和背面不是由世界坐标方向决定的，而是由三角形投影后的环绕顺序决定的。</strong></p>
+<p>同一个三角形，从不同方向观察，它在屏幕上呈现出来的环绕方向可能不同。<br>
+这就是为什么一个封闭模型从外部看是正面，从内部看可能就变成了背面。</p>
+<h2 id="四、核心-API">四、核心 API</h2>
+<p>面剔除相关的 API 不多，核心就是三类。</p>
+<p>开启面剔除：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_CULL_FACE);</span><br></pre></td></tr></table></figure>
+<p>关闭面剔除：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDisable</span>(GL_CULL_FACE);</span><br></pre></td></tr></table></figure>
+<p>指定剔除哪一类面：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glCullFace</span>(GL_BACK);</span><br></pre></td></tr></table></figure>
+<p>常见参数有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GL_BACK           剔除背面，最常用</span><br><span class="line">GL_FRONT          剔除正面，常用于调试或特殊效果</span><br><span class="line">GL_FRONT_AND_BACK 正面背面都剔除，正常绘制中很少使用</span><br></pre></td></tr></table></figure>
+<p>指定什么样的环绕顺序算正面：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glFrontFace</span>(GL_CCW);</span><br></pre></td></tr></table></figure>
+<p>常见参数有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GL_CCW  逆时针为正面，OpenGL 默认</span><br><span class="line">GL_CW   顺时针为正面</span><br></pre></td></tr></table></figure>
+<p>通常绘制普通不透明模型时，会使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_CULL_FACE);</span><br><span class="line"><span class="built_in">glCullFace</span>(GL_BACK);</span><br><span class="line"><span class="built_in">glFrontFace</span>(GL_CCW);</span><br></pre></td></tr></table></figure>
+<h2 id="五、项目里的观察方式">五、项目里的观察方式</h2>
+<p>这一节对应的项目是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">19_face_culling</span><br></pre></td></tr></table></figure>
+<p>项目里我保留了一个简单的相机，并加入了一个可切换的面剔除模式。</p>
+<p>按键操作是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">W/A/S/D 移动相机</span><br><span class="line">鼠标移动控制视角</span><br><span class="line">鼠标滚轮缩放视野</span><br><span class="line">C 切换面剔除模式</span><br><span class="line">ESC 关闭窗口</span><br></pre></td></tr></table></figure>
+<p><code>C</code> 会在三种模式之间循环：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OFF   关闭面剔除</span><br><span class="line">BACK  剔除背面</span><br><span class="line">FRONT 剔除正面</span><br></pre></td></tr></table></figure>
+<p>这三个模式的观察重点不同。</p>
+<h3 id="OFF：关闭面剔除">OFF：关闭面剔除</h3>
+<p>关闭面剔除时，所有三角形都会进入后续绘制流程。</p>
+<p>这时你可以把它当成对照组：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">正面会画</span><br><span class="line">背面也会画</span><br></pre></td></tr></table></figure>
+<p>如果你看到某些物体从内外两侧都可见，说明当前没有剔除它们。</p>
+<h3 id="BACK：剔除背面">BACK：剔除背面</h3>
+<p>这是最常见的面剔除模式。</p>
+<p>对于普通封闭物体，从外部观察时，背面通常本来就看不见，所以剔除它们可以减少绘制开销。</p>
+<p>但如果相机进入一个模型内部，就会出现有趣的现象：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">模型外侧通常是正面</span><br><span class="line">模型内侧通常是背面</span><br></pre></td></tr></table></figure>
+<p>如果你站在一个大盒子内部，并且开启 <code>GL_BACK</code>，你看到的内壁可能会消失。<br>
+这不是纹理坏了，也不是深度测试错了，而是这些内壁从当前视角看属于背面，被提前剔除了。</p>
+<h3 id="FRONT：剔除正面">FRONT：剔除正面</h3>
+<p>剔除正面不常用于普通模型渲染，但非常适合调试。</p>
+<p>它可以帮我们反过来观察：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">OpenGL 到底把哪些三角形当成正面？</span><br><span class="line">哪些三角形又被认为是背面？</span><br></pre></td></tr></table></figure>
+<p>在我们的示例里，切到 <code>FRONT</code> 后，你会更明显地感受到“外侧正面”和“内侧背面”的区别。</p>
+<h2 id="六、面剔除和深度测试的关系">六、面剔除和深度测试的关系</h2>
+<p>面剔除和深度测试都能减少最终被看到的内容，但它们处理的问题不一样。</p>
+<p>面剔除处理的是三角形级别的问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这个三角形是不是要继续画？</span><br></pre></td></tr></table></figure>
+<p>深度测试处理的是片段级别的问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这个片段是不是被更近的片段挡住？</span><br></pre></td></tr></table></figure>
+<p>它们的位置也不同：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">面剔除：光栅化之前</span><br><span class="line">深度测试：片段生成之后的逐片段测试阶段</span><br></pre></td></tr></table></figure>
+<p>这里说的是 OpenGL 的概念管线。实际 GPU 为了性能，可能会做 Early-Z 之类的提前深度测试优化；但理解面剔除时，关键仍然是它发生在光栅化之前。</p>
+<p>所以可以这样记：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">面剔除管“这个面要不要进入光栅化”</span><br><span class="line">深度测试管“这个像素位置谁离相机更近”</span><br></pre></td></tr></table></figure>
+<p>两者经常一起使用，但不能互相替代。</p>
+<p>例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_DEPTH_TEST);</span><br><span class="line"><span class="built_in">glEnable</span>(GL_CULL_FACE);</span><br><span class="line"><span class="built_in">glCullFace</span>(GL_BACK);</span><br></pre></td></tr></table></figure>
+<p>这是一组非常常见的不透明物体渲染状态。</p>
+<h2 id="七、什么时候不适合开启面剔除">七、什么时候不适合开启面剔除</h2>
+<p>面剔除很有用，但不能无脑开启。</p>
+<p>下面这些情况要特别小心：</p>
+<ul>
+<li>草、树叶、纸片、布料等双面模型</li>
+<li>透明物体或半透明贴片</li>
+<li>从内部观察的物体，例如房间、天空盒、洞穴</li>
+<li>顶点环绕顺序不一致的模型</li>
+<li>使用负缩放导致环绕顺序翻转的模型</li>
+<li>需要正反两面都可见的特殊材质</li>
+</ul>
+<p>例如一片草叶可能只是由两个三角形组成的平面。<br>
+如果开启背面剔除，从背后看这片草叶就会消失。</p>
+<p>再比如天空盒，常见做法是让相机处在立方体内部。<br>
+这时如果仍然按普通模型的方式剔除背面，可能会把本来需要看到的内侧面剔除掉。</p>
+<p>所以面对一个模型时，可以先问自己：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">这个物体是不是封闭的？</span><br><span class="line">我是不是只会从外部观察它？</span><br><span class="line">它的正反面是不是都需要显示？</span><br><span class="line">它的顶点环绕顺序是否可靠？</span><br></pre></td></tr></table></figure>
+<p>如果答案不确定，先关闭面剔除观察，再逐步开启调试会更稳。</p>
+<h2 id="八、一个容易踩坑的点：模型环绕顺序">八、一个容易踩坑的点：模型环绕顺序</h2>
+<p>面剔除依赖顶点环绕顺序，所以模型数据本身必须比较规范。</p>
+<p>如果一个模型的部分三角形是逆时针，另一部分却是顺时针，那么开启面剔除后，模型表面可能会出现“缺一块”的现象。</p>
+<p>这类问题不一定是 OpenGL 状态错了，也可能是：</p>
+<ul>
+<li>建模软件导出时坐标系转换导致环绕顺序翻转</li>
+<li>模型局部使用了负缩放</li>
+<li>面被手动翻转过</li>
+<li>加载模型时没有统一处理 winding order</li>
+</ul>
+<p>遇到这种问题时，可以用几个方法排查：</p>
+<ul>
+<li>临时关闭 <code>GL_CULL_FACE</code></li>
+<li>切换 <code>glCullFace(GL_BACK)</code> 和 <code>glCullFace(GL_FRONT)</code></li>
+<li>切换 <code>glFrontFace(GL_CCW)</code> 和 <code>glFrontFace(GL_CW)</code></li>
+<li>在建模软件里检查法线方向</li>
+</ul>
+<p>如果关闭面剔除后模型恢复完整，就说明问题很可能和正反面判断有关。</p>
+<h2 id="九、这一节可以做的实验">九、这一节可以做的实验</h2>
+<p>为了真正理解面剔除，可以在当前项目里做几个小实验。</p>
+<p>实验一：切换剔除模式</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">按 C 在 OFF / BACK / FRONT 之间切换</span><br><span class="line">观察大盒子内壁和小立方体的变化</span><br></pre></td></tr></table></figure>
+<p>实验二：修改正面规则</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glFrontFace</span>(GL_CW);</span><br></pre></td></tr></table></figure>
+<p>把逆时针为正面改成顺时针为正面，然后重新观察 <code>BACK</code> 和 <code>FRONT</code> 的变化。</p>
+<p>实验三：关闭深度测试，只保留面剔除</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// glEnable(GL_DEPTH_TEST);</span></span><br><span class="line"><span class="built_in">glEnable</span>(GL_CULL_FACE);</span><br></pre></td></tr></table></figure>
+<p>这样可以更直接地区分：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">哪些现象来自深度测试</span><br><span class="line">哪些现象来自面剔除</span><br></pre></td></tr></table></figure>
+<p>实验四：把大盒子去掉，只观察普通小立方体</p>
+<p>这个实验能帮助你回到最常见的情况：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">从外部观察封闭模型时，剔除背面通常是合理的。</span><br></pre></td></tr></table></figure>
+<h2 id="十、本节小结">十、本节小结</h2>
+<p>面剔除的核心可以压缩成四句话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">三角形有正面和背面。</span><br><span class="line">正面和背面由顶点环绕顺序决定。</span><br><span class="line">面剔除发生在 GPU 的光栅化之前。</span><br><span class="line">被剔除的三角形不会生成片段，也不会进入片段着色器。</span><br></pre></td></tr></table></figure>
+<p>最常见的使用方式是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_CULL_FACE);</span><br><span class="line"><span class="built_in">glCullFace</span>(GL_BACK);</span><br><span class="line"><span class="built_in">glFrontFace</span>(GL_CCW);</span><br></pre></td></tr></table></figure>
+<p>但它的前提是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">模型是封闭的</span><br><span class="line">主要从外部观察</span><br><span class="line">顶点环绕顺序一致</span><br><span class="line">不需要双面显示</span><br></pre></td></tr></table></figure>
+<p>这一节掌握以后，后面学习天空盒、模型导入、阴影、法线方向、双面材质时会更轻松。</p>
+<p>尤其要记住：</p>
+<p><strong>面剔除不是“把看不见的像素删掉”，而是“在生成像素之前，把不需要的三角形提前丢掉”。</strong></p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/04/22/graphics-notes/opengl-08-stencil-testing/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 8 篇</span>
+                    <strong class="series-nav-title">哪些区域允许被画：OpenGL 模板测试与物体描边</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E9%9D%A2%E5%89%94%E9%99%A4%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、面剔除解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E5%AE%83%E5%8F%91%E7%94%9F%E5%9C%A8-CPU-%E8%BF%98%E6%98%AF-GPU"><span class="post-toc-list-text">二、它发生在 CPU 还是 GPU</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E6%AD%A3%E9%9D%A2%E5%92%8C%E8%83%8C%E9%9D%A2%E7%94%B1%E4%BB%80%E4%B9%88%E5%86%B3%E5%AE%9A"><span class="post-toc-list-text">三、正面和背面由什么决定</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E6%A0%B8%E5%BF%83-API"><span class="post-toc-list-text">四、核心 API</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E8%A7%82%E5%AF%9F%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">五、项目里的观察方式</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#OFF%EF%BC%9A%E5%85%B3%E9%97%AD%E9%9D%A2%E5%89%94%E9%99%A4"><span class="post-toc-list-text">OFF：关闭面剔除</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#BACK%EF%BC%9A%E5%89%94%E9%99%A4%E8%83%8C%E9%9D%A2"><span class="post-toc-list-text">BACK：剔除背面</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FRONT%EF%BC%9A%E5%89%94%E9%99%A4%E6%AD%A3%E9%9D%A2"><span class="post-toc-list-text">FRONT：剔除正面</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E9%9D%A2%E5%89%94%E9%99%A4%E5%92%8C%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">六、面剔除和深度测试的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%80%82%E5%90%88%E5%BC%80%E5%90%AF%E9%9D%A2%E5%89%94%E9%99%A4"><span class="post-toc-list-text">七、什么时候不适合开启面剔除</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E4%B8%80%E4%B8%AA%E5%AE%B9%E6%98%93%E8%B8%A9%E5%9D%91%E7%9A%84%E7%82%B9%EF%BC%9A%E6%A8%A1%E5%9E%8B%E7%8E%AF%E7%BB%95%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">八、一个容易踩坑的点：模型环绕顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">九、这一节可以做的实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十、本节小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
