@@ -1,0 +1,515 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从离屏到后处理：OpenGL 帧缓冲、屏幕纹理与两阶段渲染 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从离屏到后处理：OpenGL 帧缓冲、屏幕纹理与两阶段渲染</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.05.07
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Framebuffer</span>
+            
+            <span style="color: var(--accent);">#Offscreen Rendering</span>
+            
+            <span style="color: var(--accent);">#Post Processing</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 10 篇</span>
+                <span>已发布 10 / 10</span>
+                
+                <span>阶段：高级 OpenGL</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E5%B8%A7%E7%BC%93%E5%86%B2%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、帧缓冲解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E9%BB%98%E8%AE%A4%E5%B8%A7%E7%BC%93%E5%86%B2%E5%92%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B8%A7%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">二、默认帧缓冲和自定义帧缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81Framebuffer%E3%80%81Attachment%E3%80%81Texture%E3%80%81RBO-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">三、Framebuffer、Attachment、Texture、RBO 的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E6%A0%B8%E5%BF%83-API"><span class="post-toc-list-text">四、核心 API</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%88%9B%E5%BB%BA%E5%92%8C%E7%BB%91%E5%AE%9A%E5%B8%A7%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">1. 创建和绑定帧缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%8A%8A%E7%BA%B9%E7%90%86%E6%8C%82%E5%88%B0-FBO-%E4%B8%8A"><span class="post-toc-list-text">2. 把纹理挂到 FBO 上</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%88%9B%E5%BB%BA%E5%B9%B6%E6%8C%82%E8%BD%BD-RBO"><span class="post-toc-list-text">3. 创建并挂载 RBO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%A3%80%E6%9F%A5-FBO-%E6%98%AF%E5%90%A6%E5%AE%8C%E6%95%B4"><span class="post-toc-list-text">4. 检查 FBO 是否完整</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E8%A7%82%E5%AF%9F%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">五、项目里的观察方式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E4%BB%A3%E7%A0%81%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">六、项目里的代码结构</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%9C%BA%E6%99%AF-Shader"><span class="post-toc-list-text">1. 场景 Shader</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%B1%8F%E5%B9%95-Shader"><span class="post-toc-list-text">2. 屏幕 Shader</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%8A%8A%E5%9C%BA%E6%99%AF%E6%B8%B2%E6%9F%93%E5%88%B0-FBO"><span class="post-toc-list-text">七、第一阶段：把场景渲染到 FBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%8A%8A-FBO-%E7%BA%B9%E7%90%86%E7%94%BB%E5%9B%9E%E5%B1%8F%E5%B9%95"><span class="post-toc-list-text">八、第二阶段：把 FBO 纹理画回屏幕</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%BB%91%E5%AE%9A%E5%9B%9E%E9%BB%98%E8%AE%A4%E5%B8%A7%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">1. 绑定回默认帧缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%85%B3%E9%97%AD%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">2. 关闭深度测试</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%BB%91%E5%AE%9A%E7%9A%84%E6%98%AF-FBO-%E7%94%9F%E6%88%90%E7%9A%84%E7%BA%B9%E7%90%86"><span class="post-toc-list-text">3. 绑定的是 FBO 生成的纹理</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E5%90%8E%E5%A4%84%E7%90%86%E6%95%88%E6%9E%9C%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">九、后处理效果是怎么来的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%8E%9F%E5%9B%BE"><span class="post-toc-list-text">1. 原图</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%8F%8D%E7%9B%B8"><span class="post-toc-list-text">2. 反相</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%81%B0%E5%BA%A6"><span class="post-toc-list-text">3. 灰度</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E9%94%90%E5%8C%96%E3%80%81%E6%A8%A1%E7%B3%8A%E5%92%8C%E8%BE%B9%E7%BC%98%E6%A3%80%E6%B5%8B"><span class="post-toc-list-text">4. 锐化、模糊和边缘检测</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E7%BA%B9%E7%90%86%E8%BE%B9%E7%BC%98%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8-GL-CLAMP-TO-EDGE"><span class="post-toc-list-text">十、纹理边缘为什么要用 GL_CLAMP_TO_EDGE</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十一、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Framebuffer-%E4%B8%8D%E6%98%AF-Texture"><span class="post-toc-list-text">1. Framebuffer 不是 Texture</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-RBO-%E4%B8%8D%E8%83%BD%E5%83%8F%E6%99%AE%E9%80%9A%E7%BA%B9%E7%90%86%E4%B8%80%E6%A0%B7%E9%87%87%E6%A0%B7"><span class="post-toc-list-text">2. RBO 不能像普通纹理一样采样</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%E4%B8%8D%E6%98%AF%E9%87%8D%E6%96%B0%E7%94%BB%E5%9C%BA%E6%99%AF"><span class="post-toc-list-text">3. 第二阶段不是重新画场景</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-glBindFramebuffer-GL-FRAMEBUFFER-0-%E4%B8%8D%E8%83%BD%E5%BF%98"><span class="post-toc-list-text">4. glBindFramebuffer(GL_FRAMEBUFFER, 0) 不能忘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E7%94%BB%E5%B1%8F%E5%B9%95%E5%9B%9B%E8%BE%B9%E5%BD%A2%E9%80%9A%E5%B8%B8%E8%A6%81%E5%85%B3%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">5. 画屏幕四边形通常要关深度测试</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E7%9A%84%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十二、这一节的渲染流程</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%9C%80%E5%B0%8F%E5%AE%9E%E9%AA%8C%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">十三、最小实验建议</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%80%EF%BC%9A%E5%8F%AA%E7%9C%8B%E5%8E%9F%E5%9B%BE%E6%A8%A1%E5%BC%8F"><span class="post-toc-list-text">实验一：只看原图模式</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%BA%8C%EF%BC%9A%E6%94%B9-FBO-%E9%A2%9C%E8%89%B2%E7%BA%B9%E7%90%86%E5%B0%BA%E5%AF%B8"><span class="post-toc-list-text">实验二：改 FBO 颜色纹理尺寸</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%89%EF%BC%9A%E8%87%AA%E5%B7%B1%E6%94%B9%E4%B8%80%E4%B8%AA%E5%8D%B7%E7%A7%AF%E6%A0%B8"><span class="post-toc-list-text">实验三：自己改一个卷积核</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E5%9B%9B%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E5%90%8E%E8%A7%86%E9%95%9C"><span class="post-toc-list-text">实验四：做一个后视镜</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十四、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十五、总结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学完深度测试、模板测试、混合和面剔除之后，我们已经能控制很多“片段最终能不能写入屏幕”的规则。</p>
+<p>但这些章节默认都有一个共同前提：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">场景最后直接画到窗口上。</span><br></pre></td></tr></table></figure>
+<p>帧缓冲这一节解决的是另一个更大的问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">如果我不想立刻把画面画到窗口，</span><br><span class="line">而是想先把整张画面画到一张纹理里，</span><br><span class="line">后面再决定怎么使用它，该怎么办？</span><br></pre></td></tr></table></figure>
+<p>这一节最重要的直觉是：</p>
+<p><strong>帧缓冲让“渲染结果”本身变成一张可以继续采样、加工和复用的纹理。</strong></p>
+<p>有了这个能力，后处理、镜子、监视器、后视镜、阴影贴图、HDR、Bloom、延迟渲染这些效果才有了基础。</p>
+<h2 id="一、帧缓冲解决的是什么问题">一、帧缓冲解决的是什么问题</h2>
+<p>前面大部分章节的渲染流程可以粗略理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">顶点数据</span><br><span class="line">  ↓</span><br><span class="line">顶点着色器</span><br><span class="line">  ↓</span><br><span class="line">光栅化</span><br><span class="line">  ↓</span><br><span class="line">片段着色器</span><br><span class="line">  ↓</span><br><span class="line">深度测试 / 模板测试 / 混合</span><br><span class="line">  ↓</span><br><span class="line">默认帧缓冲</span><br><span class="line">  ↓</span><br><span class="line">窗口显示</span><br></pre></td></tr></table></figure>
+<p>默认帧缓冲是窗口系统帮我们创建好的。我们平时调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glfwSwapBuffers</span>(window);</span><br></pre></td></tr></table></figure>
+<p>看到窗口画面，本质上就是默认帧缓冲中的颜色结果被交换并显示出来。</p>
+<p>但如果直接画到默认帧缓冲，画面就基本进入“准备显示”的阶段了。<br>
+如果我想对整张画面做统一处理，比如：</p>
+<ul>
+<li>反相</li>
+<li>灰度</li>
+<li>模糊</li>
+<li>锐化</li>
+<li>边缘检测</li>
+<li>屏幕空间特效</li>
+<li>后视镜画中画</li>
+<li>把场景结果贴到另一个物体表面</li>
+</ul>
+<p>直接画到窗口就不够灵活。</p>
+<p>帧缓冲的思路是加一个中间层：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">场景先不要画到窗口</span><br><span class="line">先画到自定义帧缓冲</span><br><span class="line">自定义帧缓冲把颜色结果存进一张纹理</span><br><span class="line">再把这张纹理画回屏幕</span><br></pre></td></tr></table></figure>
+<p>所以这一章的渲染流程变成了两段：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">第一阶段：场景 -&gt; 自定义帧缓冲 FBO -&gt; 颜色纹理</span><br><span class="line">第二阶段：颜色纹理 -&gt; 屏幕四边形 -&gt; 默认帧缓冲 -&gt; 窗口</span><br></pre></td></tr></table></figure>
+<h2 id="二、默认帧缓冲和自定义帧缓冲">二、默认帧缓冲和自定义帧缓冲</h2>
+<p>默认帧缓冲可以理解为“窗口自带的渲染目标”。</p>
+<p>我们平时不显式创建它，但一直在用它：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>绑定到 <code>0</code>，就是回到默认帧缓冲。</p>
+<p>自定义帧缓冲则需要自己创建：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">int</span> framebuffer = <span class="number">0</span>;</span><br><span class="line"><span class="built_in">glGenFramebuffers</span>(<span class="number">1</span>, &amp;framebuffer);</span><br><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, framebuffer);</span><br></pre></td></tr></table></figure>
+<p>它的意义不是“多一个窗口”，而是多一个离屏渲染目标。</p>
+<p>可以这样记：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">默认帧缓冲：最终显示到窗口</span><br><span class="line">自定义帧缓冲：先把结果存起来，后面再用</span><br></pre></td></tr></table></figure>
+<p>这一节真正学的就是：如何创建这个“先存起来”的中间渲染目标。</p>
+<h2 id="三、Framebuffer、Attachment、Texture、RBO-的关系">三、Framebuffer、Attachment、Texture、RBO 的关系</h2>
+<p>帧缓冲本身更像一个容器。<br>
+它不直接存储颜色、深度或模板数据，真正存数据的是挂在它上面的<strong>附件 Attachment</strong>。</p>
+<p>常见附件有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">颜色附件 Color Attachment</span><br><span class="line">深度附件 Depth Attachment</span><br><span class="line">模板附件 Stencil Attachment</span><br><span class="line">深度模板附件 Depth-Stencil Attachment</span><br></pre></td></tr></table></figure>
+<p>附件又常见两种实现方式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">纹理附件 Texture Attachment</span><br><span class="line">渲染缓冲对象 Renderbuffer Object，简称 RBO</span><br></pre></td></tr></table></figure>
+<p>这几个东西的关系可以这样理解：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Framebuffer Object / FBO</span><br><span class="line">  ├─ Color Attachment：一张 2D 纹理</span><br><span class="line">  └─ Depth-Stencil Attachment：一个 RBO</span><br></pre></td></tr></table></figure>
+<p>本章项目里我就是这样组织的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">unsigned</span> <span class="type">int</span> framebufferTexture = <span class="built_in">create_framebuffer_color_texture</span>(kScreenWidth, kScreenHeight);</span><br><span class="line"><span class="built_in">glFramebufferTexture2D</span>(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="type">unsigned</span> <span class="type">int</span> rbo = <span class="number">0</span>;</span><br><span class="line"><span class="built_in">glGenRenderbuffers</span>(<span class="number">1</span>, &amp;rbo);</span><br><span class="line"><span class="built_in">glBindRenderbuffer</span>(GL_RENDERBUFFER, rbo);</span><br><span class="line"><span class="built_in">glRenderbufferStorage</span>(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, kScreenWidth, kScreenHeight);</span><br><span class="line"><span class="built_in">glFramebufferRenderbuffer</span>(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);</span><br></pre></td></tr></table></figure>
+<p>为什么颜色附件用纹理？</p>
+<p>因为第二阶段要在屏幕片段着色器里采样这张图：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uniform</span> <span class="type">sampler2D</span> screenTexture;</span><br></pre></td></tr></table></figure>
+<p>为什么深度模板附件用 RBO？</p>
+<p>因为这一节只需要它帮助第一阶段做深度测试，不需要在 Shader 里读取深度值。<br>
+不需要采样时，用 RBO 很合适。</p>
+<h2 id="四、核心-API">四、核心 API</h2>
+<p>这一节新增的 API 主要分三组。</p>
+<h3 id="1-创建和绑定帧缓冲">1. 创建和绑定帧缓冲</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glGenFramebuffers</span>(<span class="number">1</span>, &amp;framebuffer);</span><br><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, framebuffer);</span><br><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>其中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">绑定 framebuffer：后续渲染写入自定义 FBO</span><br><span class="line">绑定 0：回到默认帧缓冲，也就是窗口</span><br></pre></td></tr></table></figure>
+<h3 id="2-把纹理挂到-FBO-上">2. 把纹理挂到 FBO 上</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glFramebufferTexture2D</span>(</span><br><span class="line">    GL_FRAMEBUFFER,</span><br><span class="line">    GL_COLOR_ATTACHMENT0,</span><br><span class="line">    GL_TEXTURE_2D,</span><br><span class="line">    framebufferTexture,</span><br><span class="line">    <span class="number">0</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这行代码的含义是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把 framebufferTexture 作为当前 FBO 的颜色附件 0。</span><br></pre></td></tr></table></figure>
+<p>之后第一阶段场景的颜色输出，就会写入这张纹理。</p>
+<h3 id="3-创建并挂载-RBO">3. 创建并挂载 RBO</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glGenRenderbuffers</span>(<span class="number">1</span>, &amp;rbo);</span><br><span class="line"><span class="built_in">glBindRenderbuffer</span>(GL_RENDERBUFFER, rbo);</span><br><span class="line"><span class="built_in">glRenderbufferStorage</span>(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, kScreenWidth, kScreenHeight);</span><br><span class="line"><span class="built_in">glFramebufferRenderbuffer</span>(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>GL_DEPTH24_STENCIL8</code> 表示：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">每个像素 24 位深度</span><br><span class="line">每个像素 8 位模板</span><br></pre></td></tr></table></figure>
+<p>也就是把深度缓冲和模板缓冲合在一个附件里。</p>
+<h3 id="4-检查-FBO-是否完整">4. 检查 FBO 是否完整</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">glCheckFramebufferStatus</span>(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)</span><br><span class="line">&#123;</span><br><span class="line">    std::cerr &lt;&lt; <span class="string">&quot;ERROR::FRAMEBUFFER:: Framebuffer is not complete!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这一步很重要。<br>
+自定义 FBO 必须完整，OpenGL 才能把它当作合法的渲染目标。</p>
+<p>常见完整条件包括：</p>
+<ul>
+<li>至少有一个附件</li>
+<li>至少有颜色附件</li>
+<li>附件已经分配存储空间</li>
+<li>附件尺寸和采样数匹配</li>
+</ul>
+<p>如果忘了检查，后面画不出来时会很难排查。</p>
+<h2 id="五、项目里的观察方式">五、项目里的观察方式</h2>
+<p>这一节对应的项目是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">20_framebuffers</span><br></pre></td></tr></table></figure>
+<p>工程路径：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">projects/learnopengl/learnopengl/20_framebuffers/</span><br></pre></td></tr></table></figure>
+<p>运行时按键是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">W/A/S/D 移动相机</span><br><span class="line">鼠标移动控制视角</span><br><span class="line">鼠标滚轮缩放视野</span><br><span class="line">1 原图</span><br><span class="line">2 反相</span><br><span class="line">3 灰度</span><br><span class="line">4 锐化</span><br><span class="line">5 模糊</span><br><span class="line">6 边缘检测</span><br><span class="line">ESC 关闭窗口</span><br></pre></td></tr></table></figure>
+<p>这些效果都不是重新绘制 3D 模型实现的，而是在第二阶段屏幕片段着色器里处理同一张帧缓冲颜色纹理。</p>
+<p>这点很关键。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">第一阶段负责把场景画成一张图</span><br><span class="line">第二阶段负责决定这张图最终长什么样</span><br></pre></td></tr></table></figure>
+<h2 id="六、项目里的代码结构">六、项目里的代码结构</h2>
+<p>本章项目主要有两组 Shader。</p>
+<h3 id="1-场景-Shader">1. 场景 Shader</h3>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shaders/framebuffers_scene.vs</span><br><span class="line">shaders/framebuffers_scene.fs</span><br></pre></td></tr></table></figure>
+<p>它负责正常绘制 3D 场景：两个箱子和一个地面。</p>
+<p>顶点着色器仍然使用：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = projection * view * model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>片段着色器也只是普通纹理采样：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="built_in">texture</span>(texture1, TexCoords);</span><br></pre></td></tr></table></figure>
+<p>也就是说，第一阶段和前面的普通 3D 渲染没什么本质区别。<br>
+区别只是它画到的目标不是窗口，而是自定义 FBO。</p>
+<h3 id="2-屏幕-Shader">2. 屏幕 Shader</h3>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shaders/framebuffers_screen.vs</span><br><span class="line">shaders/framebuffers_screen.fs</span><br></pre></td></tr></table></figure>
+<p>它负责画一个覆盖屏幕的四边形。</p>
+<p>屏幕四边形的顶点不是三维世界里的物体，而是直接位于 NDC 坐标中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">float</span> quadVertices[] = &#123;</span><br><span class="line">    <span class="number">-1.0f</span>,  <span class="number">1.0f</span>,  <span class="number">0.0f</span>, <span class="number">1.0f</span>,</span><br><span class="line">    <span class="number">-1.0f</span>, <span class="number">-1.0f</span>,  <span class="number">0.0f</span>, <span class="number">0.0f</span>,</span><br><span class="line">     <span class="number">1.0f</span>, <span class="number">-1.0f</span>,  <span class="number">1.0f</span>, <span class="number">0.0f</span>,</span><br><span class="line"></span><br><span class="line">    <span class="number">-1.0f</span>,  <span class="number">1.0f</span>,  <span class="number">0.0f</span>, <span class="number">1.0f</span>,</span><br><span class="line">     <span class="number">1.0f</span>, <span class="number">-1.0f</span>,  <span class="number">1.0f</span>, <span class="number">0.0f</span>,</span><br><span class="line">     <span class="number">1.0f</span>,  <span class="number">1.0f</span>,  <span class="number">1.0f</span>, <span class="number">1.0f</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>所以它的顶点着色器不需要 <code>model/view/projection</code>：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = <span class="type">vec4</span>(aPos, <span class="number">0.0</span>, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>这说明它已经不是“场景里的平面”，而是“屏幕上的全屏贴图”。</p>
+<h2 id="七、第一阶段：把场景渲染到-FBO">七、第一阶段：把场景渲染到 FBO</h2>
+<p>渲染循环里第一段是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, framebuffer);</span><br><span class="line"><span class="built_in">glEnable</span>(GL_DEPTH_TEST);</span><br><span class="line"><span class="built_in">glViewport</span>(<span class="number">0</span>, <span class="number">0</span>, kScreenWidth, kScreenHeight);</span><br><span class="line"><span class="built_in">glClearColor</span>(<span class="number">0.08f</span>, <span class="number">0.10f</span>, <span class="number">0.14f</span>, <span class="number">1.0f</span>);</span><br><span class="line"><span class="built_in">glClear</span>(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);</span><br><span class="line"><span class="built_in">draw_scene</span>(sceneShader, cubeVAO, planeVAO, sceneTexture);</span><br></pre></td></tr></table></figure>
+<p>这一段做了几件事：</p>
+<ol>
+<li>绑定自定义 FBO</li>
+<li>开启深度测试</li>
+<li>清空 FBO 的颜色和深度缓冲</li>
+<li>正常绘制 3D 场景</li>
+</ol>
+<p>最关键的是第一行：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, framebuffer);</span><br></pre></td></tr></table></figure>
+<p>从这一刻开始，后面的绘制不会进入窗口，而是进入我们自己的 FBO。</p>
+<p>所以：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">片段颜色写入 framebufferTexture</span><br><span class="line">深度测试使用 rbo 里的深度附件</span><br></pre></td></tr></table></figure>
+<p>可以把它理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">我们先拍了一张完整的场景照片。</span><br></pre></td></tr></table></figure>
+<p>但这张照片暂时还没有显示在窗口上，它只是存在 <code>framebufferTexture</code> 里。</p>
+<h2 id="八、第二阶段：把-FBO-纹理画回屏幕">八、第二阶段：把 FBO 纹理画回屏幕</h2>
+<p>第二段代码是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, <span class="number">0</span>);</span><br><span class="line"><span class="built_in">glDisable</span>(GL_DEPTH_TEST);</span><br><span class="line"><span class="built_in">glViewport</span>(<span class="number">0</span>, <span class="number">0</span>, kScreenWidth, kScreenHeight);</span><br><span class="line"><span class="built_in">glClearColor</span>(<span class="number">0.96f</span>, <span class="number">0.96f</span>, <span class="number">0.96f</span>, <span class="number">1.0f</span>);</span><br><span class="line"><span class="built_in">glClear</span>(GL_COLOR_BUFFER_BIT);</span><br><span class="line"></span><br><span class="line">screenShader.<span class="built_in">use</span>();</span><br><span class="line">screenShader.<span class="built_in">setInt</span>(<span class="string">&quot;effect&quot;</span>, <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(gEffect));</span><br><span class="line"><span class="built_in">glBindVertexArray</span>(quadVAO);</span><br><span class="line"><span class="built_in">glBindTexture</span>(GL_TEXTURE_2D, framebufferTexture);</span><br><span class="line"><span class="built_in">glDrawArrays</span>(GL_TRIANGLES, <span class="number">0</span>, <span class="number">6</span>);</span><br></pre></td></tr></table></figure>
+<p>这段代码容易误解。</p>
+<p>它不是再画一次箱子和地板。<br>
+它只是画一个覆盖整个屏幕的四边形，然后把第一阶段得到的纹理贴上去。</p>
+<p>这里有三个重点。</p>
+<h3 id="1-绑定回默认帧缓冲">1. 绑定回默认帧缓冲</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindFramebuffer</span>(GL_FRAMEBUFFER, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>这表示后续绘制结果要回到窗口。<br>
+如果忘记这句，就会继续画到离屏 FBO 里，窗口上可能什么都看不到。</p>
+<h3 id="2-关闭深度测试">2. 关闭深度测试</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDisable</span>(GL_DEPTH_TEST);</span><br></pre></td></tr></table></figure>
+<p>屏幕四边形不是 3D 场景里的物体，不需要跟场景做前后遮挡。<br>
+关闭深度测试可以避免旧的深度状态影响最终显示。</p>
+<h3 id="3-绑定的是-FBO-生成的纹理">3. 绑定的是 FBO 生成的纹理</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindTexture</span>(GL_TEXTURE_2D, framebufferTexture);</span><br></pre></td></tr></table></figure>
+<p>这张纹理不是从磁盘图片加载的。<br>
+它是第一阶段渲染出来的整张场景图。</p>
+<p>所以第二阶段可以理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把刚才拍下来的场景照片贴到屏幕上。</span><br></pre></td></tr></table></figure>
+<h2 id="九、后处理效果是怎么来的">九、后处理效果是怎么来的</h2>
+<p>后处理都在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shaders/framebuffers_screen.fs</span><br></pre></td></tr></table></figure>
+<p>里面完成。</p>
+<p>片段着色器先采样原始画面：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> baseColor = <span class="built_in">texture</span>(screenTexture, TexCoords).rgb;</span><br></pre></td></tr></table></figure>
+<p>然后根据 <code>effect</code> 做不同处理。</p>
+<h3 id="1-原图">1. 原图</h3>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="type">vec4</span>(baseColor, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>这时只是把 FBO 的颜色纹理原样显示出来。</p>
+<h3 id="2-反相">2. 反相</h3>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="type">vec4</span>(<span class="type">vec3</span>(<span class="number">1.0</span>) - baseColor, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>每个颜色通道都变成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1.0 - 原颜色</span><br></pre></td></tr></table></figure>
+<p>所以亮的变暗，暗的变亮。</p>
+<h3 id="3-灰度">3. 灰度</h3>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">float</span> average = <span class="number">0.2126</span> * baseColor.r + <span class="number">0.7152</span> * baseColor.g + <span class="number">0.0722</span> * baseColor.b;</span><br><span class="line">FragColor = <span class="type">vec4</span>(<span class="type">vec3</span>(average), <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>这里用了加权灰度，而不是简单平均。</p>
+<p>原因是人眼对不同颜色的敏感度不一样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">绿色最敏感</span><br><span class="line">红色其次</span><br><span class="line">蓝色最低</span><br></pre></td></tr></table></figure>
+<p>所以绿色权重最高。</p>
+<h3 id="4-锐化、模糊和边缘检测">4. 锐化、模糊和边缘检测</h3>
+<p>这三个效果都属于卷积核处理。</p>
+<p>它们不是只看当前像素，而是看当前像素周围 3x3 的九个采样点：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> sampleTex[<span class="number">9</span>];</span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">9</span>; ++i)</span><br><span class="line">&#123;</span><br><span class="line">    sampleTex[i] = <span class="built_in">texture</span>(screenTexture, TexCoords + offsets[i]).rgb;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后用不同权重混合这些采样值。</p>
+<p>锐化核是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">-1 -1 -1</span><br><span class="line">-1  9 -1</span><br><span class="line">-1 -1 -1</span><br></pre></td></tr></table></figure>
+<p>它会放大中心像素和周围像素的差异，所以边缘更清晰。</p>
+<p>模糊核是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1 2 1</span><br><span class="line">2 4 2  / 16</span><br><span class="line">1 2 1</span><br></pre></td></tr></table></figure>
+<p>它会把周围颜色平均进来，所以画面变柔和。</p>
+<p>边缘检测核是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1  1  1</span><br><span class="line">1 -8  1</span><br><span class="line">1  1  1</span><br></pre></td></tr></table></figure>
+<p>它会压掉变化小的区域，突出颜色变化剧烈的区域，所以能看到轮廓边缘。</p>
+<p>这就是为什么帧缓冲非常适合做后处理：<br>
+当整个场景已经变成一张纹理之后，我们就可以像处理图片一样处理画面。</p>
+<h2 id="十、纹理边缘为什么要用-GL-CLAMP-TO-EDGE">十、纹理边缘为什么要用 <code>GL_CLAMP_TO_EDGE</code></h2>
+<p>FBO 颜色纹理创建时设置了：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);</span><br></pre></td></tr></table></figure>
+<p>原因和混合章节里的透明纹理类似：边缘采样容易出问题。</p>
+<p>卷积核会采样当前像素周围的点。<br>
+当当前像素在屏幕边缘时，某些采样点会跑到纹理范围之外。</p>
+<p>如果使用 <code>GL_REPEAT</code>，就可能从纹理另一侧采样，导致边缘出现奇怪条纹。</p>
+<p><code>GL_CLAMP_TO_EDGE</code> 的意思是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">超出边缘时，不要重复到另一侧，直接使用边缘像素。</span><br></pre></td></tr></table></figure>
+<p>这样后处理结果更稳定。</p>
+<h2 id="十一、这一节最容易混淆的点">十一、这一节最容易混淆的点</h2>
+<h3 id="1-Framebuffer-不是-Texture">1. Framebuffer 不是 Texture</h3>
+<p>FBO 是渲染目标容器，Texture 是挂在它上面的附件。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FBO 决定画到哪里</span><br><span class="line">Texture 决定颜色结果存在哪里，并且后面能不能采样</span><br></pre></td></tr></table></figure>
+<h3 id="2-RBO-不能像普通纹理一样采样">2. RBO 不能像普通纹理一样采样</h3>
+<p>RBO 适合作为深度、模板这类“不需要在 Shader 中读取”的附件。</p>
+<p>如果后面要做阴影贴图，想在 Shader 里读取深度值，那就应该用深度纹理，而不是 RBO。</p>
+<h3 id="3-第二阶段不是重新画场景">3. 第二阶段不是重新画场景</h3>
+<p>第二阶段只画屏幕四边形。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">3D 场景已经在第一阶段变成了一张纹理</span><br><span class="line">第二阶段只是决定这张纹理如何显示</span><br></pre></td></tr></table></figure>
+<h3 id="4-glBindFramebuffer-GL-FRAMEBUFFER-0-不能忘">4. <code>glBindFramebuffer(GL_FRAMEBUFFER, 0)</code> 不能忘</h3>
+<p>绑定 0 就是回到窗口默认帧缓冲。</p>
+<p>忘了这句，最终画面可能一直留在离屏 FBO 里，窗口不会显示正确结果。</p>
+<h3 id="5-画屏幕四边形通常要关深度测试">5. 画屏幕四边形通常要关深度测试</h3>
+<p>屏幕四边形是最后的全屏合成结果，不应该再被 3D 场景的深度规则干扰。</p>
+<p>所以第二阶段使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDisable</span>(GL_DEPTH_TEST);</span><br></pre></td></tr></table></figure>
+<h2 id="十二、这一节的渲染流程">十二、这一节的渲染流程</h2>
+<p>本章项目的完整流程可以写成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[创建自定义 FBO] --&gt; B[创建颜色纹理附件]</span><br><span class="line">    B --&gt; C[创建深度模板 RBO]</span><br><span class="line">    C --&gt; D[检查 FBO 完整性]</span><br><span class="line">    D --&gt; E[Pass 1：绑定自定义 FBO]</span><br><span class="line">    E --&gt; F[绘制 3D 场景]</span><br><span class="line">    F --&gt; G[颜色结果写入 framebufferTexture]</span><br><span class="line">    G --&gt; H[Pass 2：绑定默认帧缓冲]</span><br><span class="line">    H --&gt; I[绘制屏幕四边形]</span><br><span class="line">    I --&gt; J[采样 framebufferTexture]</span><br><span class="line">    J --&gt; K[执行后处理]</span><br><span class="line">    K --&gt; L[显示到窗口]</span><br></pre></td></tr></table></figure>
+<p>如果不用图，也可以压缩成这几步：</p>
+<ol>
+<li>创建 FBO</li>
+<li>给 FBO 挂颜色纹理附件</li>
+<li>给 FBO 挂深度模板 RBO</li>
+<li>检查 FBO 是否完整</li>
+<li>第一阶段把 3D 场景画进 FBO</li>
+<li>第二阶段把 FBO 的颜色纹理画到屏幕四边形上</li>
+<li>在屏幕片段着色器里做后处理</li>
+</ol>
+<h2 id="十三、最小实验建议">十三、最小实验建议</h2>
+<p>这一节最适合通过小实验验证理解。</p>
+<h3 id="实验一：只看原图模式">实验一：只看原图模式</h3>
+<p>按 <code>1</code> 切换到 Normal。</p>
+<p>如果原图模式都不对，优先检查：</p>
+<ul>
+<li>FBO 是否完整</li>
+<li>是否绑定回默认帧缓冲</li>
+<li><code>framebufferTexture</code> 是否绑定给了 <code>screenTexture</code></li>
+<li>屏幕四边形 VAO 是否正确</li>
+</ul>
+<h3 id="实验二：改-FBO-颜色纹理尺寸">实验二：改 FBO 颜色纹理尺寸</h3>
+<p>把颜色附件尺寸从：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kScreenWidth, kScreenHeight</span><br></pre></td></tr></table></figure>
+<p>改成更小，比如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">640</span>, <span class="number">360</span></span><br></pre></td></tr></table></figure>
+<p>观察画面是否变糊或比例异常。<br>
+这个实验能帮助理解：FBO 的尺寸不一定必须等于窗口尺寸，但视口和采样会影响最后显示。</p>
+<h3 id="实验三：自己改一个卷积核">实验三：自己改一个卷积核</h3>
+<p>例如尝试浮雕效果：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">-2 -1  0</span><br><span class="line">-1  1  1</span><br><span class="line"> 0  1  2</span><br></pre></td></tr></table></figure>
+<p>看看画面会不会出现类似凸起的方向感。</p>
+<h3 id="实验四：做一个后视镜">实验四：做一个后视镜</h3>
+<p>这是教程里的练习方向。</p>
+<p>思路是：</p>
+<ol>
+<li>用反向相机把场景渲染到 FBO</li>
+<li>正常渲染主场景到默认帧缓冲</li>
+<li>在屏幕上方画一个小四边形，显示 FBO 纹理</li>
+</ol>
+<p>这个实验能帮助理解多 Pass 渲染和渲染到纹理的实际用途。</p>
+<h2 id="十四、这一节应该能回答的问题">十四、这一节应该能回答的问题</h2>
+<p>学完这一节后，我应该能回答：</p>
+<ol>
+<li>默认帧缓冲和自定义帧缓冲有什么区别？</li>
+<li>FBO 自己是否直接存储颜色和深度数据？</li>
+<li>什么是颜色附件？为什么本章颜色附件要用纹理？</li>
+<li>什么是 RBO？为什么深度模板附件可以用 RBO？</li>
+<li><code>glTexImage2D</code> 最后一个参数传 <code>nullptr</code> 是什么意思？</li>
+<li>为什么创建 FBO 后必须检查 <code>glCheckFramebufferStatus</code>？</li>
+<li>为什么渲染循环要分成两个 Pass？</li>
+<li>为什么第二阶段要绑定回默认帧缓冲？</li>
+<li>为什么画屏幕四边形时通常要关闭深度测试？</li>
+<li>为什么反相、灰度、模糊、锐化、边缘检测都能写在屏幕片段着色器里？</li>
+</ol>
+<p>如果这些问题能答清楚，帧缓冲这一节就算真正过关了。</p>
+<h2 id="十五、总结">十五、总结</h2>
+<p>帧缓冲把 OpenGL 的渲染思路从：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">场景直接画到窗口</span><br></pre></td></tr></table></figure>
+<p>升级成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">场景先画到一张纹理</span><br><span class="line">再由第二阶段决定这张纹理如何显示</span><br></pre></td></tr></table></figure>
+<p>它的核心价值不是多背几个 API，而是让“渲染结果”变成了后续渲染流程中的输入。</p>
+<p>所以这一节可以收成一句话：</p>
+<p><strong>帧缓冲让我们获得离屏渲染能力：先把场景画成纹理，再把这张纹理拿来做后处理、镜面、后视镜或更复杂的多 Pass 渲染。</strong></p>
+<p>下一节进入立方体贴图时，我们会继续接触另一个重要纹理类型：不再只从二维平面采样，而是从六个方向组成的环境中采样。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/05/06/graphics-notes/opengl-09-face-culling/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 9 篇</span>
+                    <strong class="series-nav-title">哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E5%B8%A7%E7%BC%93%E5%86%B2%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、帧缓冲解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E9%BB%98%E8%AE%A4%E5%B8%A7%E7%BC%93%E5%86%B2%E5%92%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B8%A7%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">二、默认帧缓冲和自定义帧缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81Framebuffer%E3%80%81Attachment%E3%80%81Texture%E3%80%81RBO-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">三、Framebuffer、Attachment、Texture、RBO 的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E6%A0%B8%E5%BF%83-API"><span class="post-toc-list-text">四、核心 API</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%88%9B%E5%BB%BA%E5%92%8C%E7%BB%91%E5%AE%9A%E5%B8%A7%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">1. 创建和绑定帧缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%8A%8A%E7%BA%B9%E7%90%86%E6%8C%82%E5%88%B0-FBO-%E4%B8%8A"><span class="post-toc-list-text">2. 把纹理挂到 FBO 上</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%88%9B%E5%BB%BA%E5%B9%B6%E6%8C%82%E8%BD%BD-RBO"><span class="post-toc-list-text">3. 创建并挂载 RBO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%A3%80%E6%9F%A5-FBO-%E6%98%AF%E5%90%A6%E5%AE%8C%E6%95%B4"><span class="post-toc-list-text">4. 检查 FBO 是否完整</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E8%A7%82%E5%AF%9F%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">五、项目里的观察方式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E4%BB%A3%E7%A0%81%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">六、项目里的代码结构</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%9C%BA%E6%99%AF-Shader"><span class="post-toc-list-text">1. 场景 Shader</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%B1%8F%E5%B9%95-Shader"><span class="post-toc-list-text">2. 屏幕 Shader</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%8A%8A%E5%9C%BA%E6%99%AF%E6%B8%B2%E6%9F%93%E5%88%B0-FBO"><span class="post-toc-list-text">七、第一阶段：把场景渲染到 FBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%8A%8A-FBO-%E7%BA%B9%E7%90%86%E7%94%BB%E5%9B%9E%E5%B1%8F%E5%B9%95"><span class="post-toc-list-text">八、第二阶段：把 FBO 纹理画回屏幕</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%BB%91%E5%AE%9A%E5%9B%9E%E9%BB%98%E8%AE%A4%E5%B8%A7%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">1. 绑定回默认帧缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%85%B3%E9%97%AD%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">2. 关闭深度测试</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%BB%91%E5%AE%9A%E7%9A%84%E6%98%AF-FBO-%E7%94%9F%E6%88%90%E7%9A%84%E7%BA%B9%E7%90%86"><span class="post-toc-list-text">3. 绑定的是 FBO 生成的纹理</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E5%90%8E%E5%A4%84%E7%90%86%E6%95%88%E6%9E%9C%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">九、后处理效果是怎么来的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%8E%9F%E5%9B%BE"><span class="post-toc-list-text">1. 原图</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%8F%8D%E7%9B%B8"><span class="post-toc-list-text">2. 反相</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%81%B0%E5%BA%A6"><span class="post-toc-list-text">3. 灰度</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E9%94%90%E5%8C%96%E3%80%81%E6%A8%A1%E7%B3%8A%E5%92%8C%E8%BE%B9%E7%BC%98%E6%A3%80%E6%B5%8B"><span class="post-toc-list-text">4. 锐化、模糊和边缘检测</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E7%BA%B9%E7%90%86%E8%BE%B9%E7%BC%98%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8-GL-CLAMP-TO-EDGE"><span class="post-toc-list-text">十、纹理边缘为什么要用 GL_CLAMP_TO_EDGE</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十一、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Framebuffer-%E4%B8%8D%E6%98%AF-Texture"><span class="post-toc-list-text">1. Framebuffer 不是 Texture</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-RBO-%E4%B8%8D%E8%83%BD%E5%83%8F%E6%99%AE%E9%80%9A%E7%BA%B9%E7%90%86%E4%B8%80%E6%A0%B7%E9%87%87%E6%A0%B7"><span class="post-toc-list-text">2. RBO 不能像普通纹理一样采样</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%E4%B8%8D%E6%98%AF%E9%87%8D%E6%96%B0%E7%94%BB%E5%9C%BA%E6%99%AF"><span class="post-toc-list-text">3. 第二阶段不是重新画场景</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-glBindFramebuffer-GL-FRAMEBUFFER-0-%E4%B8%8D%E8%83%BD%E5%BF%98"><span class="post-toc-list-text">4. glBindFramebuffer(GL_FRAMEBUFFER, 0) 不能忘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-%E7%94%BB%E5%B1%8F%E5%B9%95%E5%9B%9B%E8%BE%B9%E5%BD%A2%E9%80%9A%E5%B8%B8%E8%A6%81%E5%85%B3%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">5. 画屏幕四边形通常要关深度测试</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E7%9A%84%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十二、这一节的渲染流程</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%9C%80%E5%B0%8F%E5%AE%9E%E9%AA%8C%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">十三、最小实验建议</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%80%EF%BC%9A%E5%8F%AA%E7%9C%8B%E5%8E%9F%E5%9B%BE%E6%A8%A1%E5%BC%8F"><span class="post-toc-list-text">实验一：只看原图模式</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%BA%8C%EF%BC%9A%E6%94%B9-FBO-%E9%A2%9C%E8%89%B2%E7%BA%B9%E7%90%86%E5%B0%BA%E5%AF%B8"><span class="post-toc-list-text">实验二：改 FBO 颜色纹理尺寸</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%89%EF%BC%9A%E8%87%AA%E5%B7%B1%E6%94%B9%E4%B8%80%E4%B8%AA%E5%8D%B7%E7%A7%AF%E6%A0%B8"><span class="post-toc-list-text">实验三：自己改一个卷积核</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E5%9B%9B%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E5%90%8E%E8%A7%86%E9%95%9C"><span class="post-toc-list-text">实验四：做一个后视镜</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十四、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十五、总结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
