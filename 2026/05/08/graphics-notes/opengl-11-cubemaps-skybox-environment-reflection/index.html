@@ -1,0 +1,526 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从天空盒到环境反射：OpenGL 立方体贴图与方向采样 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从天空盒到环境反射：OpenGL 立方体贴图与方向采样</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.05.08
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Cubemap</span>
+            
+            <span style="color: var(--accent);">#Skybox</span>
+            
+            <span style="color: var(--accent);">#Environment Reflection</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 11 篇</span>
+                <span>已发布 11 / 11</span>
+                
+                <span>阶段：高级 OpenGL</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E7%AB%8B%E6%96%B9%E4%BD%93%E8%B4%B4%E5%9B%BE%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、立方体贴图解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81Cubemap-%E7%9A%84%E5%85%AD%E4%B8%AA%E9%9D%A2"><span class="post-toc-list-text">二、Cubemap 的六个面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E6%A0%B8%E5%BF%83-API"><span class="post-toc-list-text">三、核心 API</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%88%9B%E5%BB%BA%E5%B9%B6%E7%BB%91%E5%AE%9A-cubemap"><span class="post-toc-list-text">1. 创建并绑定 cubemap</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%BB%99%E5%85%AD%E4%B8%AA%E9%9D%A2%E4%B8%8A%E4%BC%A0%E5%9B%BE%E7%89%87"><span class="post-toc-list-text">2. 给六个面上传图片</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E8%AE%BE%E7%BD%AE%E4%B8%89%E4%B8%AA%E6%96%B9%E5%90%91%E7%9A%84%E7%8E%AF%E7%BB%95%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">3. 设置三个方向的环绕方式</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88-cubemap-%E8%A6%81%E7%94%A8-GL-CLAMP-TO-EDGE"><span class="post-toc-list-text">四、为什么 cubemap 要用 GL_CLAMP_TO_EDGE</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E8%A7%82%E5%AF%9F%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">五、项目里的观察方式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E4%BB%A3%E7%A0%81%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">六、项目里的代码结构</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%99%AE%E9%80%9A%E5%9C%BA%E6%99%AF-Shader"><span class="post-toc-list-text">1. 普通场景 Shader</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%8E%AF%E5%A2%83%E5%8F%8D%E5%B0%84-Shader"><span class="post-toc-list-text">2. 环境反射 Shader</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%A4%A9%E7%A9%BA%E7%9B%92-Shader"><span class="post-toc-list-text">3. 天空盒 Shader</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E5%8A%A0%E8%BD%BD-Cubemap"><span class="post-toc-list-text">七、加载 Cubemap</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%BB%98%E5%88%B6%E5%A4%A9%E7%A9%BA%E7%9B%92"><span class="post-toc-list-text">八、绘制天空盒</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E5%A4%A9%E7%A9%BA%E7%9B%92-view-%E8%A6%81%E5%8E%BB%E6%8E%89%E5%B9%B3%E7%A7%BB"><span class="post-toc-list-text">九、为什么天空盒 view 要去掉平移</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E5%A4%A9%E7%A9%BA%E7%9B%92%E5%92%8C%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">十、天空盒和深度测试</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%8D%E5%B0%84%E7%9A%84%E5%8E%9F%E7%90%86"><span class="post-toc-list-text">十一、环境反射的原理</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81Cubemap-%E5%92%8C-Framebuffer-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">十二、Cubemap 和 Framebuffer 的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十三、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Cubemap-%E7%9A%84%E9%87%87%E6%A0%B7%E5%9D%90%E6%A0%87%E4%B8%8D%E6%98%AF-UV"><span class="post-toc-list-text">1. Cubemap 的采样坐标不是 UV</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%85%AD%E9%9D%A2%E5%9B%BE%E9%A1%BA%E5%BA%8F%E4%B8%8D%E8%83%BD%E4%B9%B1"><span class="post-toc-list-text">2. 六面图顺序不能乱</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Cubemap-%E9%80%9A%E5%B8%B8%E4%B8%8D%E8%A6%81%E5%9E%82%E7%9B%B4%E7%BF%BB%E8%BD%AC"><span class="post-toc-list-text">3. Cubemap 通常不要垂直翻转</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%A4%A9%E7%A9%BA%E7%9B%92%E8%A6%81%E5%8E%BB%E6%8E%89-view-%E5%B9%B3%E7%A7%BB"><span class="post-toc-list-text">4. 天空盒要去掉 view 平移</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-GL-TEXTURE-WRAP-R-%E4%B8%8D%E8%83%BD%E5%BF%98"><span class="post-toc-list-text">5. GL_TEXTURE_WRAP_R 不能忘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#6-samplerCube-%E7%BB%91%E5%AE%9A%E7%9A%84%E4%B8%8D%E6%98%AF-GL-TEXTURE-2D"><span class="post-toc-list-text">6. samplerCube 绑定的不是 GL_TEXTURE_2D</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#7-%E7%8E%AF%E5%A2%83%E5%8F%8D%E5%B0%84%E5%8F%AA%E6%98%AF%E8%BF%91%E4%BC%BC"><span class="post-toc-list-text">7. 环境反射只是近似</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E7%9A%84%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十四、这一节的渲染流程</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E6%9C%80%E5%B0%8F%E5%AE%9E%E9%AA%8C%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">十五、最小实验建议</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%80%EF%BC%9A%E8%B0%83%E6%8D%A2-right-%E5%92%8C-left"><span class="post-toc-list-text">实验一：调换 right 和 left</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%BA%8C%EF%BC%9A%E6%8A%8A-GL-CLAMP-TO-EDGE-%E6%94%B9%E6%88%90-GL-REPEAT"><span class="post-toc-list-text">实验二：把 GL_CLAMP_TO_EDGE 改成 GL_REPEAT</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%89%EF%BC%9A%E4%B8%8D%E5%8E%BB%E6%8E%89-view-%E5%B9%B3%E7%A7%BB"><span class="post-toc-list-text">实验三：不去掉 view 平移</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E5%9B%9B%EF%BC%9A%E5%8E%BB%E6%8E%89-gl-Position-pos-xyww"><span class="post-toc-list-text">实验四：去掉 gl_Position &#x3D; pos.xyww</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%BA%94%EF%BC%9A%E6%8A%8A%E5%8F%8D%E5%B0%84%E6%94%B9%E6%88%90%E6%8A%98%E5%B0%84"><span class="post-toc-list-text">实验五：把反射改成折射</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十六、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%83%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十七、总结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>上一节帧缓冲把“渲染结果”变成了一张可以继续采样的 2D 纹理。</p>
+<p>这一节继续扩展纹理的概念：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">如果一张 2D 纹理只能表示一个平面，</span><br><span class="line">那怎么表示从任意方向看到的环境？</span><br></pre></td></tr></table></figure>
+<p>立方体贴图解决的就是这个问题。</p>
+<p>这一节最重要的直觉是：</p>
+<p><strong>立方体贴图不是用二维 UV 采样，而是用三维方向向量去采样一个由六张图组成的环境。</strong></p>
+<p>有了这个能力，我们就能做天空盒、环境反射、环境折射，以及后面 PBR 里的 IBL 环境光照。</p>
+<h2 id="一、立方体贴图解决的是什么问题">一、立方体贴图解决的是什么问题</h2>
+<p>普通 2D 纹理的采样方式是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">texture</span>(texture1, <span class="type">vec2</span>(u, v));</span><br></pre></td></tr></table></figure>
+<p>也就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">二维坐标 -&gt; 一张平面图片上的颜色</span><br></pre></td></tr></table></figure>
+<p>但很多时候，我们想表达的不是一个平面，而是“整个周围环境”。</p>
+<p>比如：</p>
+<ul>
+<li>天空</li>
+<li>远处山脉</li>
+<li>房间四周</li>
+<li>物体表面反射到的环境</li>
+<li>从某个点向六个方向看到的世界</li>
+</ul>
+<p>这时如果仍然只用一张 2D 纹理，就很难自然表示所有方向。</p>
+<p>立方体贴图的思路是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">用六张图片组成一个立方体，</span><br><span class="line">把观察点放在立方体中心，</span><br><span class="line">根据方向向量决定采样哪一面、哪一个位置。</span><br></pre></td></tr></table></figure>
+<p>所以 cubemap 的采样方式是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">texture</span>(skybox, direction);</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>direction</code> 是 <code>vec3</code>，不是 <code>vec2</code>。</p>
+<p>可以这样对比：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sampler2D    ：vec2 UV 坐标  -&gt; 平面颜色</span><br><span class="line">samplerCube  ：vec3 方向向量 -&gt; 环境颜色</span><br></pre></td></tr></table></figure>
+<h2 id="二、Cubemap-的六个面">二、Cubemap 的六个面</h2>
+<p>OpenGL 中一个 cubemap 有六个面，对应三维坐标轴的正负方向：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+X：right</span><br><span class="line">-X：left</span><br><span class="line">+Y：top</span><br><span class="line">-Y：bottom</span><br><span class="line">+Z：front</span><br><span class="line">-Z：back</span><br></pre></td></tr></table></figure>
+<p>本章项目中的六面图放在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">projects/learnopengl/learnopengl/21_cubemaps/textures/skybox/</span><br></pre></td></tr></table></figure>
+<p>对应文件是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">right.jpg</span><br><span class="line">left.jpg</span><br><span class="line">top.jpg</span><br><span class="line">bottom.jpg</span><br><span class="line">front.jpg</span><br><span class="line">back.jpg</span><br></pre></td></tr></table></figure>
+<p>加载顺序非常重要。</p>
+<p>项目里使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> std::array&lt;<span class="type">const</span> <span class="type">char</span>*, 6&gt; kCubemapFaceNames = &#123;</span><br><span class="line">    <span class="string">&quot;right.jpg&quot;</span>,</span><br><span class="line">    <span class="string">&quot;left.jpg&quot;</span>,</span><br><span class="line">    <span class="string">&quot;top.jpg&quot;</span>,</span><br><span class="line">    <span class="string">&quot;bottom.jpg&quot;</span>,</span><br><span class="line">    <span class="string">&quot;front.jpg&quot;</span>,</span><br><span class="line">    <span class="string">&quot;back.jpg&quot;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>然后依次上传到：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexImage2D</span>(</span><br><span class="line">    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    format,</span><br><span class="line">    width,</span><br><span class="line">    height,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    format,</span><br><span class="line">    GL_UNSIGNED_BYTE,</span><br><span class="line">    data</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>GL_TEXTURE_CUBE_MAP_POSITIVE_X + i</code> 会依次对应：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GL_TEXTURE_CUBE_MAP_POSITIVE_X</span><br><span class="line">GL_TEXTURE_CUBE_MAP_NEGATIVE_X</span><br><span class="line">GL_TEXTURE_CUBE_MAP_POSITIVE_Y</span><br><span class="line">GL_TEXTURE_CUBE_MAP_NEGATIVE_Y</span><br><span class="line">GL_TEXTURE_CUBE_MAP_POSITIVE_Z</span><br><span class="line">GL_TEXTURE_CUBE_MAP_NEGATIVE_Z</span><br></pre></td></tr></table></figure>
+<p>如果顺序乱了，天空盒不会黑屏，但方向会错。比如本来应该在右边的图跑到左边，转动相机时会明显感觉世界错位。</p>
+<h2 id="三、核心-API">三、核心 API</h2>
+<p>这一节新增的 API 和状态主要围绕 <code>GL_TEXTURE_CUBE_MAP</code>。</p>
+<h3 id="1-创建并绑定-cubemap">1. 创建并绑定 cubemap</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">int</span> textureID = <span class="number">0</span>;</span><br><span class="line"><span class="built_in">glGenTextures</span>(<span class="number">1</span>, &amp;textureID);</span><br><span class="line"><span class="built_in">glBindTexture</span>(GL_TEXTURE_CUBE_MAP, textureID);</span><br></pre></td></tr></table></figure>
+<p>它和普通 2D 纹理类似，区别是绑定目标不再是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GL_TEXTURE_2D</span><br></pre></td></tr></table></figure>
+<p>而是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GL_TEXTURE_CUBE_MAP</span><br></pre></td></tr></table></figure>
+<p>这个绑定目标必须和 Shader 里的采样器对应：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uniform</span> <span class="type">samplerCube</span> skybox;</span><br></pre></td></tr></table></figure>
+<h3 id="2-给六个面上传图片">2. 给六个面上传图片</h3>
+<p>普通 2D 纹理只需要上传一次：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexImage2D</span>(GL_TEXTURE_2D, ...);</span><br></pre></td></tr></table></figure>
+<p>cubemap 要上传六次：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexImage2D</span>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, ...);</span><br></pre></td></tr></table></figure>
+<p>这行代码的含义是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把第 i 张图片上传到 cubemap 的第 i 个面。</span><br></pre></td></tr></table></figure>
+<h3 id="3-设置三个方向的环绕方式">3. 设置三个方向的环绕方式</h3>
+<p>普通 2D 纹理只有 S/T 两个方向：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);</span><br></pre></td></tr></table></figure>
+<p>cubemap 是三维方向采样，所以多了 R 方向：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);</span><br></pre></td></tr></table></figure>
+<p>这里 <code>GL_TEXTURE_WRAP_R</code> 很容易忘。</p>
+<h2 id="四、为什么-cubemap-要用-GL-CLAMP-TO-EDGE">四、为什么 cubemap 要用 <code>GL_CLAMP_TO_EDGE</code></h2>
+<p>天空盒六个面是拼接在一起的。</p>
+<p>如果边缘采样时使用 <code>GL_REPEAT</code>，采样坐标一旦越界，就可能从同一张图的另一侧取颜色。这样六个面交界处就会出现明显接缝。</p>
+<p><code>GL_CLAMP_TO_EDGE</code> 的意思是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">采样越过边界时，不要重复到另一侧，直接使用边缘像素。</span><br></pre></td></tr></table></figure>
+<p>这和上一章帧缓冲后处理里避免屏幕边缘异常的思路相似，只是这一章更关键，因为 cubemap 的六个面天然需要拼接。</p>
+<h2 id="五、项目里的观察方式">五、项目里的观察方式</h2>
+<p>这一节对应的项目是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">21_cubemaps</span><br></pre></td></tr></table></figure>
+<p>工程路径：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">projects/learnopengl/learnopengl/21_cubemaps/</span><br></pre></td></tr></table></figure>
+<p>运行时按键是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">W/A/S/D 移动相机</span><br><span class="line">鼠标移动控制视角</span><br><span class="line">鼠标滚轮缩放视野</span><br><span class="line">ESC 关闭窗口</span><br></pre></td></tr></table></figure>
+<p>本章场景里有三类对象：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">普通纹理箱子：继续使用 sampler2D</span><br><span class="line">反射箱子    ：使用 samplerCube 做环境反射</span><br><span class="line">天空盒      ：使用 samplerCube 作为背景环境</span><br></pre></td></tr></table></figure>
+<p>观察时重点看两件事：</p>
+<ol>
+<li>移动相机时，天空盒不应该像普通物体一样产生明显平移。</li>
+<li>转动相机时，天空盒方向应该跟着视角正常变化。</li>
+</ol>
+<p>这说明天空盒并不是一个“真的远处立方体”，而是一个始终围绕相机的环境背景。</p>
+<h2 id="六、项目里的代码结构">六、项目里的代码结构</h2>
+<p>本章项目主要有三组 Shader。</p>
+<h3 id="1-普通场景-Shader">1. 普通场景 Shader</h3>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shaders/cubemaps_scene.vs</span><br><span class="line">shaders/cubemaps_scene.fs</span><br></pre></td></tr></table></figure>
+<p>它负责绘制两个普通箱子。</p>
+<p>顶点着色器仍然是之前熟悉的 MVP 变换：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = projection * view * model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>片段着色器也只是普通 2D 纹理采样：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="built_in">texture</span>(texture1, TexCoords);</span><br></pre></td></tr></table></figure>
+<p>这组 Shader 的作用是保留一个普通场景参照物，方便和 cubemap 采样对比。</p>
+<h3 id="2-环境反射-Shader">2. 环境反射 Shader</h3>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shaders/cubemaps_reflect.vs</span><br><span class="line">shaders/cubemaps_reflect.fs</span><br></pre></td></tr></table></figure>
+<p>它负责绘制中间的反射箱子。</p>
+<p>顶点着色器输出世界空间位置和法线：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec4</span> worldPosition = model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br><span class="line">WorldPos = worldPosition.xyz;</span><br><span class="line">Normal = <span class="type">mat3</span>(<span class="built_in">transpose</span>(<span class="built_in">inverse</span>(model))) * aNormal;</span><br></pre></td></tr></table></figure>
+<p>片段着色器根据视线方向和法线算出反射方向：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> I = <span class="built_in">normalize</span>(WorldPos - cameraPos);</span><br><span class="line"><span class="type">vec3</span> R = <span class="built_in">reflect</span>(I, <span class="built_in">normalize</span>(Normal));</span><br><span class="line">FragColor = <span class="built_in">texture</span>(skybox, R);</span><br></pre></td></tr></table></figure>
+<p>这里最关键的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">反射方向 R 不是颜色，</span><br><span class="line">它是一个方向向量，</span><br><span class="line">用来去 cubemap 里采样环境颜色。</span><br></pre></td></tr></table></figure>
+<h3 id="3-天空盒-Shader">3. 天空盒 Shader</h3>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shaders/cubemaps_skybox.vs</span><br><span class="line">shaders/cubemaps_skybox.fs</span><br></pre></td></tr></table></figure>
+<p>天空盒顶点只有位置，没有 UV。</p>
+<p>顶点位置本身就可以当作采样方向：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TexCoords = aPos;</span><br></pre></td></tr></table></figure>
+<p>片段着色器直接采样 cubemap：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="built_in">texture</span>(skybox, TexCoords);</span><br></pre></td></tr></table></figure>
+<p>这说明天空盒不是靠普通 2D UV 贴图，而是靠立方体顶点方向从 cubemap 中取色。</p>
+<h2 id="七、加载-Cubemap">七、加载 Cubemap</h2>
+<p>项目里 cubemap 加载函数是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">unsigned</span> <span class="type">int</span> <span class="title">load_cubemap</span><span class="params">(<span class="type">const</span> std::array&lt;std::filesystem::path, <span class="number">6</span>&gt;&amp; faces)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> textureID = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">glGenTextures</span>(<span class="number">1</span>, &amp;textureID);</span><br><span class="line">    <span class="built_in">glBindTexture</span>(GL_TEXTURE_CUBE_MAP, textureID);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">stbi_set_flip_vertically_on_load</span>(<span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">unsigned</span> <span class="type">int</span> i = <span class="number">0</span>; i &lt; faces.<span class="built_in">size</span>(); ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">char</span>* data = <span class="built_in">stbi_load</span>(faces[i].<span class="built_in">string</span>().<span class="built_in">c_str</span>(), &amp;width, &amp;height, &amp;nrChannels, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">glTexImage2D</span>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, <span class="number">0</span>, format, width, height, <span class="number">0</span>, format, GL_UNSIGNED_BYTE, data);</span><br><span class="line">        <span class="built_in">stbi_image_free</span>(data);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);</span><br><span class="line">    <span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);</span><br><span class="line">    <span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);</span><br><span class="line">    <span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);</span><br><span class="line">    <span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> textureID;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里和普通纹理加载最大的区别有三个：</p>
+<ol>
+<li>绑定目标是 <code>GL_TEXTURE_CUBE_MAP</code>。</li>
+<li><code>glTexImage2D</code> 调用六次，每次目标是不同 cubemap 面。</li>
+<li>cubemap 加载时关闭垂直翻转。</li>
+</ol>
+<p>为什么关闭垂直翻转？</p>
+<p>普通 2D 纹理经常因为图片坐标和 OpenGL 纹理坐标方向不同，需要：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">stbi_set_flip_vertically_on_load</span>(<span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+<p>但 cubemap 的六张图已经按照特定方向拼接。盲目翻转会破坏上下左右关系，导致天空盒上下颠倒或者接缝方向错乱。</p>
+<p>所以项目里做了区分：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">普通 2D 纹理：flip = true</span><br><span class="line">cubemap      ：flip = false</span><br></pre></td></tr></table></figure>
+<h2 id="八、绘制天空盒">八、绘制天空盒</h2>
+<p>天空盒本质上也是一个立方体 VAO。</p>
+<p>但它和普通箱子有两个关键区别：</p>
+<ol>
+<li>它只需要位置属性。</li>
+<li>它不是作为场景里的实体物体被观察，而是作为背景环境被采样。</li>
+</ol>
+<p>项目中天空盒绘制代码是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDepthFunc</span>(GL_LEQUAL);</span><br><span class="line"></span><br><span class="line">skyboxShader.<span class="built_in">use</span>();</span><br><span class="line"><span class="type">const</span> glm::mat4 skyboxView = glm::<span class="built_in">mat4</span>(glm::<span class="built_in">mat3</span>(view));</span><br><span class="line">skyboxShader.<span class="built_in">setMat4</span>(<span class="string">&quot;view&quot;</span>, skyboxView);</span><br><span class="line">skyboxShader.<span class="built_in">setMat4</span>(<span class="string">&quot;projection&quot;</span>, projection);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBindVertexArray</span>(skyboxVAO);</span><br><span class="line"><span class="built_in">glActiveTexture</span>(GL_TEXTURE0);</span><br><span class="line"><span class="built_in">glBindTexture</span>(GL_TEXTURE_CUBE_MAP, cubemapTexture);</span><br><span class="line"><span class="built_in">glDrawArrays</span>(GL_TRIANGLES, <span class="number">0</span>, <span class="number">36</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glDepthFunc</span>(GL_LESS);</span><br></pre></td></tr></table></figure>
+<p>这里重点不是 VAO，而是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 skyboxView = glm::<span class="built_in">mat4</span>(glm::<span class="built_in">mat3</span>(view));</span><br></pre></td></tr></table></figure>
+<p>和：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDepthFunc</span>(GL_LEQUAL);</span><br></pre></td></tr></table></figure>
+<h2 id="九、为什么天空盒-view-要去掉平移">九、为什么天空盒 view 要去掉平移</h2>
+<p>普通物体使用完整 view 矩阵：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">view = glm::<span class="built_in">lookAt</span>(gCameraPos, gCameraPos + gCameraFront, gCameraUp);</span><br></pre></td></tr></table></figure>
+<p>这个矩阵包含：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">相机旋转</span><br><span class="line">相机平移</span><br></pre></td></tr></table></figure>
+<p>如果天空盒也使用完整 view，移动相机时就会感觉自己正在靠近天空盒某个面。这样天空盒就不像无限远背景，而像一个普通大盒子。</p>
+<p>所以天空盒使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 skyboxView = glm::<span class="built_in">mat4</span>(glm::<span class="built_in">mat3</span>(view));</span><br></pre></td></tr></table></figure>
+<p>这行代码的意思是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">取 view 矩阵左上角 3x3 的旋转部分，丢掉平移部分，</span><br><span class="line">再重新构造一个 4x4 矩阵。</span><br></pre></td></tr></table></figure>
+<p>结果是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">转头时，天空盒方向会变化；</span><br><span class="line">移动时，天空盒不会产生平移。</span><br></pre></td></tr></table></figure>
+<p>这就是天空盒看起来无限远的关键。</p>
+<h2 id="十、天空盒和深度测试">十、天空盒和深度测试</h2>
+<p>本章项目里先画普通箱子和反射箱子，最后画天空盒。</p>
+<p>原因是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">真实场景先写入深度；</span><br><span class="line">天空盒最后只填补没有被场景挡住的背景区域。</span><br></pre></td></tr></table></figure>
+<p>天空盒绘制前设置：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDepthFunc</span>(GL_LEQUAL);</span><br></pre></td></tr></table></figure>
+<p>默认深度函数通常是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GL_LESS</span><br></pre></td></tr></table></figure>
+<p>也就是片段深度必须小于已有深度才通过。</p>
+<p>天空盒顶点着色器里有一个特殊写法：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec4</span> pos = projection * view * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br><span class="line"><span class="built_in">gl_Position</span> = pos.xyww;</span><br></pre></td></tr></table></figure>
+<p><code>pos.xyww</code> 会让透视除法后的深度接近最远处。</p>
+<p>配合 <code>GL_LEQUAL</code>，天空盒能在深度值等于最远处时通过测试，稳定显示在背景上。</p>
+<p>画完后恢复：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDepthFunc</span>(GL_LESS);</span><br></pre></td></tr></table></figure>
+<p>这是一个好习惯，避免天空盒的特殊深度状态影响后续绘制。</p>
+<h2 id="十一、环境反射的原理">十一、环境反射的原理</h2>
+<p>环境反射使用的是 cubemap 的另一个典型用途。</p>
+<p>片段着色器核心代码是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> I = <span class="built_in">normalize</span>(WorldPos - cameraPos);</span><br><span class="line"><span class="type">vec3</span> R = <span class="built_in">reflect</span>(I, <span class="built_in">normalize</span>(Normal));</span><br><span class="line">FragColor = <span class="built_in">texture</span>(skybox, R);</span><br></pre></td></tr></table></figure>
+<p>这三行可以拆开理解。</p>
+<p>第一行：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> I = <span class="built_in">normalize</span>(WorldPos - cameraPos);</span><br></pre></td></tr></table></figure>
+<p>表示从相机指向片段的方向。</p>
+<p>第二行：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> R = <span class="built_in">reflect</span>(I, <span class="built_in">normalize</span>(Normal));</span><br></pre></td></tr></table></figure>
+<p>表示这个方向经过表面法线反射后，得到反射方向。</p>
+<p>第三行：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FragColor = <span class="built_in">texture</span>(skybox, R);</span><br></pre></td></tr></table></figure>
+<p>表示用反射方向去 cubemap 中采样。</p>
+<p>所以环境反射可以理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">我看向物体表面某一点，</span><br><span class="line">这条视线被表面法线反射到环境中的某个方向，</span><br><span class="line">那个方向上的 cubemap 颜色就是这个片段的反射颜色。</span><br></pre></td></tr></table></figure>
+<p>注意，这不是真正的光线追踪反射。</p>
+<p>它不会真的计算场景中其他物体的位置和遮挡，只是从预先准备好的环境贴图里取一个方向颜色。优点是便宜、简单、效果直观。</p>
+<h2 id="十二、Cubemap-和-Framebuffer-的关系">十二、Cubemap 和 Framebuffer 的关系</h2>
+<p>上一章和这一章都在强调“纹理不只是贴图”。</p>
+<p>上一章帧缓冲：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把渲染结果变成一张 2D 纹理，后面继续采样。</span><br></pre></td></tr></table></figure>
+<p>这一章立方体贴图：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把六个方向的环境变成一个 cubemap，后面按方向采样。</span><br></pre></td></tr></table></figure>
+<p>二者的共同点是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Shader 里采样的不一定是磁盘上的普通图片，</span><br><span class="line">也可以是渲染结果、环境数据、深度数据或其他中间结果。</span><br></pre></td></tr></table></figure>
+<p>这正是现代实时渲染越来越重要的思路：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">把数据组织成 GPU 容易采样的纹理，</span><br><span class="line">再用 Shader 在不同 Pass 里组合它们。</span><br></pre></td></tr></table></figure>
+<h2 id="十三、这一节最容易混淆的点">十三、这一节最容易混淆的点</h2>
+<h3 id="1-Cubemap-的采样坐标不是-UV">1. Cubemap 的采样坐标不是 UV</h3>
+<p><code>sampler2D</code> 用 <code>vec2</code>，<code>samplerCube</code> 用 <code>vec3</code>。</p>
+<p>这个 <code>vec3</code> 表示方向，不表示世界空间里的某个点。</p>
+<h3 id="2-六面图顺序不能乱">2. 六面图顺序不能乱</h3>
+<p>顺序应当是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">right, left, top, bottom, front, back</span><br></pre></td></tr></table></figure>
+<p>对应：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">+X, -X, +Y, -Y, +Z, -Z</span><br></pre></td></tr></table></figure>
+<h3 id="3-Cubemap-通常不要垂直翻转">3. Cubemap 通常不要垂直翻转</h3>
+<p>普通 2D 纹理常常需要 <code>stbi_set_flip_vertically_on_load(true)</code>。</p>
+<p>cubemap 本身依赖六面图方向一致，通常使用 <code>false</code>。</p>
+<h3 id="4-天空盒要去掉-view-平移">4. 天空盒要去掉 view 平移</h3>
+<p>天空盒要保留旋转、去掉平移：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 skyboxView = glm::<span class="built_in">mat4</span>(glm::<span class="built_in">mat3</span>(view));</span><br></pre></td></tr></table></figure>
+<p>否则移动相机时会感觉自己在靠近天空盒边界。</p>
+<h3 id="5-GL-TEXTURE-WRAP-R-不能忘">5. <code>GL_TEXTURE_WRAP_R</code> 不能忘</h3>
+<p>Cubemap 是三维方向采样，除了 S/T，还要设置 R。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);</span><br></pre></td></tr></table></figure>
+<h3 id="6-samplerCube-绑定的不是-GL-TEXTURE-2D">6. <code>samplerCube</code> 绑定的不是 <code>GL_TEXTURE_2D</code></h3>
+<p>采样器类型和绑定目标要匹配：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uniform</span> <span class="type">samplerCube</span> skybox;</span><br></pre></td></tr></table></figure>
+<p>对应：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindTexture</span>(GL_TEXTURE_CUBE_MAP, cubemapTexture);</span><br></pre></td></tr></table></figure>
+<h3 id="7-环境反射只是近似">7. 环境反射只是近似</h3>
+<p>它反射的是 cubemap 环境，不会真实反射当前场景里的动态物体。</p>
+<h2 id="十四、这一节的渲染流程">十四、这一节的渲染流程</h2>
+<p>本章项目的完整流程可以写成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[加载普通 2D 纹理] --&gt; B[加载 cubemap 六面图]</span><br><span class="line">    B --&gt; C[创建普通箱子 VAO]</span><br><span class="line">    C --&gt; D[创建反射箱子 VAO]</span><br><span class="line">    D --&gt; E[创建天空盒 VAO]</span><br><span class="line">    E --&gt; F[清空颜色和深度缓冲]</span><br><span class="line">    F --&gt; G[绘制普通纹理箱子]</span><br><span class="line">    G --&gt; H[绘制环境反射箱子]</span><br><span class="line">    H --&gt; I[view 矩阵去掉平移]</span><br><span class="line">    I --&gt; J[设置 GL_LEQUAL]</span><br><span class="line">    J --&gt; K[绘制天空盒]</span><br><span class="line">    K --&gt; L[恢复 GL_LESS]</span><br><span class="line">    L --&gt; M[显示到窗口]</span><br></pre></td></tr></table></figure>
+<p>如果不用图，也可以压缩成这几步：</p>
+<ol>
+<li>准备普通 2D 纹理和 cubemap 纹理</li>
+<li>创建普通箱子、反射箱子、天空盒三个 VAO</li>
+<li>每帧计算 view/projection</li>
+<li>先画普通 3D 物体</li>
+<li>再用反射 Shader 采样 cubemap</li>
+<li>最后去掉 view 平移绘制天空盒</li>
+<li>恢复深度状态并交换缓冲</li>
+</ol>
+<h2 id="十五、最小实验建议">十五、最小实验建议</h2>
+<p>这一节非常适合通过“故意改坏”来验证理解。</p>
+<h3 id="实验一：调换-right-和-left">实验一：调换 right 和 left</h3>
+<p>把 cubemap 加载顺序里的：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">right.jpg</span><br><span class="line">left.jpg</span><br></pre></td></tr></table></figure>
+<p>对调。</p>
+<p>观察转动相机时天空盒方向是否错乱。</p>
+<p>这个实验能帮助理解：cubemap 六面图顺序不是随便写的。</p>
+<h3 id="实验二：把-GL-CLAMP-TO-EDGE-改成-GL-REPEAT">实验二：把 <code>GL_CLAMP_TO_EDGE</code> 改成 <code>GL_REPEAT</code></h3>
+<p>把：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);</span><br><span class="line"><span class="built_in">glTexParameteri</span>(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);</span><br></pre></td></tr></table></figure>
+<p>临时改成 <code>GL_REPEAT</code>。</p>
+<p>观察天空盒接缝处是否更容易出现异常。</p>
+<h3 id="实验三：不去掉-view-平移">实验三：不去掉 view 平移</h3>
+<p>把：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 skyboxView = glm::<span class="built_in">mat4</span>(glm::<span class="built_in">mat3</span>(view));</span><br></pre></td></tr></table></figure>
+<p>改成：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 skyboxView = view;</span><br></pre></td></tr></table></figure>
+<p>然后移动相机。</p>
+<p>如果感觉天空盒像普通盒子一样会靠近或远离，就说明去掉平移的意义理解对了。</p>
+<h3 id="实验四：去掉-gl-Position-pos-xyww">实验四：去掉 <code>gl_Position = pos.xyww</code></h3>
+<p>把天空盒顶点着色器里的：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = pos.xyww;</span><br></pre></td></tr></table></figure>
+<p>改成：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span> = pos;</span><br></pre></td></tr></table></figure>
+<p>观察天空盒和深度测试的关系是否变得不稳定。</p>
+<h3 id="实验五：把反射改成折射">实验五：把反射改成折射</h3>
+<p>把反射 Shader 中的：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> R = <span class="built_in">reflect</span>(I, <span class="built_in">normalize</span>(Normal));</span><br></pre></td></tr></table></figure>
+<p>改成：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span> R = <span class="built_in">refract</span>(I, <span class="built_in">normalize</span>(Normal), <span class="number">1.00</span> / <span class="number">1.52</span>);</span><br></pre></td></tr></table></figure>
+<p>可以得到类似玻璃折射的环境采样效果。</p>
+<h2 id="十六、这一节应该能回答的问题">十六、这一节应该能回答的问题</h2>
+<p>学完这一节后，我应该能回答：</p>
+<ol>
+<li>2D 纹理和 cubemap 的采样方式有什么区别？</li>
+<li>为什么 cubemap 使用 <code>samplerCube</code>？</li>
+<li>cubemap 的六个面分别对应哪些方向？</li>
+<li><code>GL_TEXTURE_CUBE_MAP_POSITIVE_X + i</code> 是什么意思？</li>
+<li>为什么 cubemap 要设置 <code>GL_TEXTURE_WRAP_R</code>？</li>
+<li>为什么 cubemap 常用 <code>GL_CLAMP_TO_EDGE</code>？</li>
+<li>为什么加载 cubemap 时通常不做垂直翻转？</li>
+<li>天空盒为什么可以用一个立方体绘制？</li>
+<li>为什么天空盒的 view 矩阵要去掉平移？</li>
+<li><code>gl_Position = pos.xyww</code> 在天空盒里有什么作用？</li>
+<li>为什么绘制天空盒时使用 <code>glDepthFunc(GL_LEQUAL)</code>？</li>
+<li>环境反射中的 <code>reflect(I, N)</code> 算出来的是什么？</li>
+<li>为什么环境反射只是近似反射？</li>
+</ol>
+<p>如果这些问题能答清楚，立方体贴图这一节就算真正过关了。</p>
+<h2 id="十七、总结">十七、总结</h2>
+<p>立方体贴图把纹理采样从：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">二维平面采样</span><br></pre></td></tr></table></figure>
+<p>扩展成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">三维方向采样</span><br></pre></td></tr></table></figure>
+<p>它的核心价值是让 Shader 能根据方向获取环境颜色。</p>
+<p>所以这一节可以收成一句话：</p>
+<p><strong>Cubemap 是一个按方向采样的六面环境纹理；天空盒用它显示远处背景，环境反射用它根据反射方向近似获取周围世界的颜色。</strong></p>
+<p>下一节进入高级数据时，重点会从“纹理类型和采样方式”转向“如何更高效、更灵活地把数据送进 GPU”。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/05/07/graphics-notes/opengl-10-framebuffers-offscreen-rendering-post-processing/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 10 篇</span>
+                    <strong class="series-nav-title">从离屏到后处理：OpenGL 帧缓冲、屏幕纹理与两阶段渲染</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E7%AB%8B%E6%96%B9%E4%BD%93%E8%B4%B4%E5%9B%BE%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、立方体贴图解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81Cubemap-%E7%9A%84%E5%85%AD%E4%B8%AA%E9%9D%A2"><span class="post-toc-list-text">二、Cubemap 的六个面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E6%A0%B8%E5%BF%83-API"><span class="post-toc-list-text">三、核心 API</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%88%9B%E5%BB%BA%E5%B9%B6%E7%BB%91%E5%AE%9A-cubemap"><span class="post-toc-list-text">1. 创建并绑定 cubemap</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%BB%99%E5%85%AD%E4%B8%AA%E9%9D%A2%E4%B8%8A%E4%BC%A0%E5%9B%BE%E7%89%87"><span class="post-toc-list-text">2. 给六个面上传图片</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E8%AE%BE%E7%BD%AE%E4%B8%89%E4%B8%AA%E6%96%B9%E5%90%91%E7%9A%84%E7%8E%AF%E7%BB%95%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">3. 设置三个方向的环绕方式</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88-cubemap-%E8%A6%81%E7%94%A8-GL-CLAMP-TO-EDGE"><span class="post-toc-list-text">四、为什么 cubemap 要用 GL_CLAMP_TO_EDGE</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E8%A7%82%E5%AF%9F%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">五、项目里的观察方式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E9%A1%B9%E7%9B%AE%E9%87%8C%E7%9A%84%E4%BB%A3%E7%A0%81%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">六、项目里的代码结构</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%99%AE%E9%80%9A%E5%9C%BA%E6%99%AF-Shader"><span class="post-toc-list-text">1. 普通场景 Shader</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%8E%AF%E5%A2%83%E5%8F%8D%E5%B0%84-Shader"><span class="post-toc-list-text">2. 环境反射 Shader</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%A4%A9%E7%A9%BA%E7%9B%92-Shader"><span class="post-toc-list-text">3. 天空盒 Shader</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E5%8A%A0%E8%BD%BD-Cubemap"><span class="post-toc-list-text">七、加载 Cubemap</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%BB%98%E5%88%B6%E5%A4%A9%E7%A9%BA%E7%9B%92"><span class="post-toc-list-text">八、绘制天空盒</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E5%A4%A9%E7%A9%BA%E7%9B%92-view-%E8%A6%81%E5%8E%BB%E6%8E%89%E5%B9%B3%E7%A7%BB"><span class="post-toc-list-text">九、为什么天空盒 view 要去掉平移</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E5%A4%A9%E7%A9%BA%E7%9B%92%E5%92%8C%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">十、天空盒和深度测试</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%8D%E5%B0%84%E7%9A%84%E5%8E%9F%E7%90%86"><span class="post-toc-list-text">十一、环境反射的原理</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81Cubemap-%E5%92%8C-Framebuffer-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">十二、Cubemap 和 Framebuffer 的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十三、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Cubemap-%E7%9A%84%E9%87%87%E6%A0%B7%E5%9D%90%E6%A0%87%E4%B8%8D%E6%98%AF-UV"><span class="post-toc-list-text">1. Cubemap 的采样坐标不是 UV</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%85%AD%E9%9D%A2%E5%9B%BE%E9%A1%BA%E5%BA%8F%E4%B8%8D%E8%83%BD%E4%B9%B1"><span class="post-toc-list-text">2. 六面图顺序不能乱</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Cubemap-%E9%80%9A%E5%B8%B8%E4%B8%8D%E8%A6%81%E5%9E%82%E7%9B%B4%E7%BF%BB%E8%BD%AC"><span class="post-toc-list-text">3. Cubemap 通常不要垂直翻转</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%A4%A9%E7%A9%BA%E7%9B%92%E8%A6%81%E5%8E%BB%E6%8E%89-view-%E5%B9%B3%E7%A7%BB"><span class="post-toc-list-text">4. 天空盒要去掉 view 平移</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#5-GL-TEXTURE-WRAP-R-%E4%B8%8D%E8%83%BD%E5%BF%98"><span class="post-toc-list-text">5. GL_TEXTURE_WRAP_R 不能忘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#6-samplerCube-%E7%BB%91%E5%AE%9A%E7%9A%84%E4%B8%8D%E6%98%AF-GL-TEXTURE-2D"><span class="post-toc-list-text">6. samplerCube 绑定的不是 GL_TEXTURE_2D</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#7-%E7%8E%AF%E5%A2%83%E5%8F%8D%E5%B0%84%E5%8F%AA%E6%98%AF%E8%BF%91%E4%BC%BC"><span class="post-toc-list-text">7. 环境反射只是近似</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E7%9A%84%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十四、这一节的渲染流程</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E6%9C%80%E5%B0%8F%E5%AE%9E%E9%AA%8C%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">十五、最小实验建议</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%80%EF%BC%9A%E8%B0%83%E6%8D%A2-right-%E5%92%8C-left"><span class="post-toc-list-text">实验一：调换 right 和 left</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%BA%8C%EF%BC%9A%E6%8A%8A-GL-CLAMP-TO-EDGE-%E6%94%B9%E6%88%90-GL-REPEAT"><span class="post-toc-list-text">实验二：把 GL_CLAMP_TO_EDGE 改成 GL_REPEAT</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%89%EF%BC%9A%E4%B8%8D%E5%8E%BB%E6%8E%89-view-%E5%B9%B3%E7%A7%BB"><span class="post-toc-list-text">实验三：不去掉 view 平移</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E5%9B%9B%EF%BC%9A%E5%8E%BB%E6%8E%89-gl-Position-pos-xyww"><span class="post-toc-list-text">实验四：去掉 gl_Position &#x3D; pos.xyww</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C%E4%BA%94%EF%BC%9A%E6%8A%8A%E5%8F%8D%E5%B0%84%E6%94%B9%E6%88%90%E6%8A%98%E5%B0%84"><span class="post-toc-list-text">实验五：把反射改成折射</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十六、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%83%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十七、总结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
