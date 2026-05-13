@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.05.13
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#Advanced Data</span>
+            
+            <span style="color: var(--accent);">#Buffer Object</span>
+            
+            <span style="color: var(--accent);">#Vertex Attributes</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 12 篇</span>
+                <span>已发布 12 / 12</span>
+                
+                <span>阶段：高级 OpenGL</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E7%BC%93%E5%86%B2%E5%AF%B9%E8%B1%A1%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">一、缓冲对象到底是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81glBufferData%EF%BC%9A%E5%88%86%E9%85%8D%E4%B8%8E%E4%B8%8A%E4%BC%A0"><span class="post-toc-list-text">二、glBufferData：分配与上传</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81glBufferSubData%EF%BC%9A%E6%9B%B4%E6%96%B0%E7%BC%93%E5%86%B2%E7%9A%84%E4%B8%80%E9%83%A8%E5%88%86"><span class="post-toc-list-text">三、glBufferSubData：更新缓冲的一部分</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81glMapBuffer%EF%BC%9A%E7%9B%B4%E6%8E%A5%E6%98%A0%E5%B0%84%E7%BC%93%E5%86%B2%E5%86%85%E5%AD%98"><span class="post-toc-list-text">四、glMapBuffer：直接映射缓冲内存</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E4%BA%A4%E9%94%99%E5%B8%83%E5%B1%80-Interleaved-Layout"><span class="post-toc-list-text">五、交错布局 Interleaved Layout</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E5%88%86%E6%89%B9%E5%B1%9E%E6%80%A7-Batched-Attributes"><span class="post-toc-list-text">六、分批属性 Batched Attributes</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81VAO-%E4%B8%8E-VBO-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">七、VAO 与 VBO 的职责边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81glCopyBufferSubData%EF%BC%9A%E7%BC%93%E5%86%B2%E4%B9%8B%E9%97%B4%E5%A4%8D%E5%88%B6%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">八、glCopyBufferSubData：缓冲之间复制数据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">九、这一节容易踩的坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">十、这一节可以做的实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十一、本节小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学完帧缓冲和立方体贴图之后，我们已经开始接触一些更“工程化”的 OpenGL 用法。</p>
+<p>这一节的名字叫“高级数据”，但它并不是在讲新的视觉效果。<br>
+它真正关心的是一个更底层的问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">OpenGL 中的缓冲对象到底是什么？</span><br><span class="line">除了 glBufferData 一次性上传数据，还有没有更灵活的方式管理 GPU 缓冲？</span><br></pre></td></tr></table></figure>
+<p>这一节最重要的直觉是：</p>
+<p><strong>Buffer 只是 GPU 侧的一块内存，VAO 和 glVertexAttribPointer 才决定这块内存如何被解释。</strong></p>
+<h2 id="一、缓冲对象到底是什么">一、缓冲对象到底是什么</h2>
+<p>我们从入门阶段就一直在使用 VBO、EBO 和 VAO。</p>
+<p>例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">int</span> VBO;</span><br><span class="line"><span class="built_in">glGenBuffers</span>(<span class="number">1</span>, &amp;VBO);</span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_ARRAY_BUFFER, VBO);</span><br><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, <span class="built_in">sizeof</span>(vertices), vertices, GL_STATIC_DRAW);</span><br></pre></td></tr></table></figure>
+<p>以前我们更关心“怎么把顶点传进去”。<br>
+这一节则需要退后一步，重新看缓冲对象本身。</p>
+<p>OpenGL 中的缓冲对象可以理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GPU 侧的一块连续内存</span><br></pre></td></tr></table></figure>
+<p>它本身没有固定身份。</p>
+<p>同一个 Buffer Object 绑定到不同目标时，OpenGL 会用不同方式理解它：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindBuffer</span>(GL_ARRAY_BUFFER, buffer);</span><br></pre></td></tr></table></figure>
+<p>这时它被当作顶点属性数据缓冲。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindBuffer</span>(GL_ELEMENT_ARRAY_BUFFER, buffer);</span><br></pre></td></tr></table></figure>
+<p>这时它被当作索引缓冲。</p>
+<p>所以可以这样记：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Buffer Object 管“数据在哪里”</span><br><span class="line">Buffer Target 管“这份数据当前被当成什么”</span><br><span class="line">VAO 管“顶点属性应该如何解释这些数据”</span><br></pre></td></tr></table></figure>
+<h2 id="二、glBufferData：分配与上传">二、glBufferData：分配与上传</h2>
+<p>我们最熟悉的上传方式是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, <span class="built_in">sizeof</span>(vertices), vertices, GL_STATIC_DRAW);</span><br></pre></td></tr></table></figure>
+<p>这行代码通常同时做两件事：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1. 在 GPU 侧为当前绑定的缓冲分配空间</span><br><span class="line">2. 把 CPU 侧的 vertices 数据复制到这块空间</span><br></pre></td></tr></table></figure>
+<p>第三个参数如果传入真实数据，OpenGL 会分配并上传：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, <span class="built_in">sizeof</span>(vertices), vertices, GL_STATIC_DRAW);</span><br></pre></td></tr></table></figure>
+<p>但第三个参数也可以传 <code>NULL</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, totalSize, <span class="literal">NULL</span>, GL_STATIC_DRAW);</span><br></pre></td></tr></table></figure>
+<p>这表示：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">只分配 totalSize 大小的 GPU 缓冲空间</span><br><span class="line">暂时不填入具体数据</span><br></pre></td></tr></table></figure>
+<p>这种方式常用于：</p>
+<ul>
+<li>先预留一整块大缓冲</li>
+<li>之后分批把不同数据写进去</li>
+<li>之后动态更新其中一部分数据</li>
+</ul>
+<p>所以 <code>glBufferData</code> 不只是“上传顶点数组”，它首先是一次缓冲存储分配。</p>
+<h2 id="三、glBufferSubData：更新缓冲的一部分">三、glBufferSubData：更新缓冲的一部分</h2>
+<p>如果缓冲已经分配好，我们可以用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferSubData</span>(GL_ARRAY_BUFFER, offset, size, data);</span><br></pre></td></tr></table></figure>
+<p>它的含义是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">从当前绑定缓冲的 offset 字节位置开始</span><br><span class="line">写入 size 字节的数据</span><br><span class="line">数据来源是 data 指针</span><br></pre></td></tr></table></figure>
+<p>例如我们有三组数据：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">float</span> positions[] = &#123; ... &#125;;</span><br><span class="line"><span class="type">float</span> colors[] = &#123; ... &#125;;</span><br><span class="line"><span class="type">float</span> texCoords[] = &#123; ... &#125;;</span><br></pre></td></tr></table></figure>
+<p>可以先分配一整块空间：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">size_t</span> positionsSize = <span class="built_in">sizeof</span>(positions);</span><br><span class="line"><span class="type">size_t</span> colorsSize = <span class="built_in">sizeof</span>(colors);</span><br><span class="line"><span class="type">size_t</span> texCoordsSize = <span class="built_in">sizeof</span>(texCoords);</span><br><span class="line"><span class="type">size_t</span> totalSize = positionsSize + colorsSize + texCoordsSize;</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, totalSize, <span class="literal">NULL</span>, GL_STATIC_DRAW);</span><br></pre></td></tr></table></figure>
+<p>再分三段写入：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferSubData</span>(GL_ARRAY_BUFFER, <span class="number">0</span>, positionsSize, positions);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBufferSubData</span>(</span><br><span class="line">    GL_ARRAY_BUFFER,</span><br><span class="line">    positionsSize,</span><br><span class="line">    colorsSize,</span><br><span class="line">    colors</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBufferSubData</span>(</span><br><span class="line">    GL_ARRAY_BUFFER,</span><br><span class="line">    positionsSize + colorsSize,</span><br><span class="line">    texCoordsSize,</span><br><span class="line">    texCoords</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这时一个 VBO 里的内存布局大概是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">| positions | colors | texCoords |</span><br></pre></td></tr></table></figure>
+<p>这里最容易踩坑的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">offset 和 size 的单位都是字节，不是 float 个数。</span><br></pre></td></tr></table></figure>
+<p>另一个关键前提是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">glBufferSubData 不能凭空扩容。</span><br><span class="line">在调用它之前，必须已经用 glBufferData 分配过足够大的空间。</span><br></pre></td></tr></table></figure>
+<p>如果你分配的是 <code>100</code> 字节，却试图从偏移 <code>80</code> 的位置写入 <code>40</code> 字节，这就越界了。</p>
+<h2 id="四、glMapBuffer：直接映射缓冲内存">四、glMapBuffer：直接映射缓冲内存</h2>
+<p>除了用 <code>glBufferSubData</code> 从 CPU 内存复制到 GPU 缓冲，我们还可以把缓冲映射出来：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindBuffer</span>(GL_ARRAY_BUFFER, VBO);</span><br><span class="line"></span><br><span class="line"><span class="type">void</span>* ptr = <span class="built_in">glMapBuffer</span>(GL_ARRAY_BUFFER, GL_WRITE_ONLY);</span><br><span class="line"><span class="built_in">memcpy</span>(ptr, data, <span class="built_in">sizeof</span>(data));</span><br><span class="line"><span class="built_in">glUnmapBuffer</span>(GL_ARRAY_BUFFER);</span><br></pre></td></tr></table></figure>
+<p>这个过程可以理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">向 OpenGL 请求当前缓冲的一段可写指针</span><br><span class="line">通过这个指针把数据写进去</span><br><span class="line">写完之后解除映射，把控制权还给 OpenGL</span><br></pre></td></tr></table></figure>
+<p>流程是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">绑定 Buffer</span><br><span class="line">  ↓</span><br><span class="line">glMapBuffer 获取指针</span><br><span class="line">  ↓</span><br><span class="line">memcpy 写入数据</span><br><span class="line">  ↓</span><br><span class="line">glUnmapBuffer 解除映射</span><br></pre></td></tr></table></figure>
+<p>需要注意：</p>
+<ul>
+<li><code>glUnmapBuffer</code> 之后，映射得到的指针就不能再用了</li>
+<li><code>glUnmapBuffer</code> 会返回是否成功解除映射</li>
+<li>如果映射失败，返回的指针可能是 <code>nullptr</code></li>
+<li>映射缓冲时要避免 GPU 正在使用同一块数据，否则可能产生同步等待</li>
+</ul>
+<p>所以 <code>glMapBuffer</code> 适合更底层、更灵活的数据写入场景。<br>
+但在普通练习里，<code>glBufferData</code> 和 <code>glBufferSubData</code> 已经足够常用。</p>
+<p>以后如果继续深入动态数据更新，还会遇到更细的接口，例如 <code>glMapBufferRange</code>。<br>
+不过在当前阶段，先理解“映射缓冲是一种直接写入 GPU 缓冲的方式”就够了。</p>
+<h2 id="五、交错布局-Interleaved-Layout">五、交错布局 Interleaved Layout</h2>
+<p>我们之前最常用的顶点数据布局是交错布局：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">float</span> vertices[] = &#123;</span><br><span class="line">    <span class="comment">// position        // color          // texcoord</span></span><br><span class="line">     <span class="number">0.5f</span>,  <span class="number">0.5f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">1.0f</span>,</span><br><span class="line">     <span class="number">0.5f</span>, <span class="number">-0.5f</span>, <span class="number">0.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.0f</span>,</span><br><span class="line">    <span class="number">-0.5f</span>, <span class="number">-0.5f</span>, <span class="number">0.0f</span>, <span class="number">0.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.0f</span>, <span class="number">0.0f</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>它的内存形式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">position color uv | position color uv | position color uv</span><br></pre></td></tr></table></figure>
+<p>也就是每个顶点的数据紧挨在一起。</p>
+<p>对应的属性设置通常是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">0</span>, <span class="number">3</span>, GL_FLOAT, GL_FALSE, <span class="number">8</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>), (<span class="type">void</span>*)<span class="number">0</span>);</span><br><span class="line"><span class="built_in">glEnableVertexAttribArray</span>(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">1</span>, <span class="number">3</span>, GL_FLOAT, GL_FALSE, <span class="number">8</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>), (<span class="type">void</span>*)(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)));</span><br><span class="line"><span class="built_in">glEnableVertexAttribArray</span>(<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">2</span>, <span class="number">2</span>, GL_FLOAT, GL_FALSE, <span class="number">8</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>), (<span class="type">void</span>*)(<span class="number">6</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)));</span><br><span class="line"><span class="built_in">glEnableVertexAttribArray</span>(<span class="number">2</span>);</span><br></pre></td></tr></table></figure>
+<p>这里有两个参数非常关键：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">stride：从当前顶点的这个属性，走到下一个顶点同类属性，需要跨过多少字节</span><br><span class="line">offset：当前属性在每个顶点数据块中的起始位置</span><br></pre></td></tr></table></figure>
+<p>在上面的例子里，每个顶点有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">3 个 position float</span><br><span class="line">3 个 color float</span><br><span class="line">2 个 texcoord float</span><br></pre></td></tr></table></figure>
+<p>所以 stride 是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">8</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)</span><br></pre></td></tr></table></figure>
+<p>position 的 offset 是 <code>0</code>。<br>
+color 的 offset 是 <code>3 * sizeof(float)</code>。<br>
+texcoord 的 offset 是 <code>6 * sizeof(float)</code>。</p>
+<p>交错布局的优点是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">一个顶点所需的属性数据在内存里很接近</span><br><span class="line">GPU 读取一个顶点时，数据局部性更好</span><br></pre></td></tr></table></figure>
+<p>所以在实时渲染中，交错布局非常常见。</p>
+<h2 id="六、分批属性-Batched-Attributes">六、分批属性 Batched Attributes</h2>
+<p>这一节还介绍了另一种布局：分批属性。</p>
+<p>它不是这样存：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">position color uv | position color uv | position color uv</span><br></pre></td></tr></table></figure>
+<p>而是这样存：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">positions | colors | texCoords</span><br></pre></td></tr></table></figure>
+<p>也就是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">float</span> positions[] = &#123; ... &#125;;</span><br><span class="line"><span class="type">float</span> colors[] = &#123; ... &#125;;</span><br><span class="line"><span class="type">float</span> texCoords[] = &#123; ... &#125;;</span><br></pre></td></tr></table></figure>
+<p>然后把三组数据依次写入同一个 VBO：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, totalSize, <span class="literal">NULL</span>, GL_STATIC_DRAW);</span><br><span class="line"><span class="built_in">glBufferSubData</span>(GL_ARRAY_BUFFER, <span class="number">0</span>, positionsSize, positions);</span><br><span class="line"><span class="built_in">glBufferSubData</span>(GL_ARRAY_BUFFER, positionsSize, colorsSize, colors);</span><br><span class="line"><span class="built_in">glBufferSubData</span>(GL_ARRAY_BUFFER, positionsSize + colorsSize, texCoordsSize, texCoords);</span><br></pre></td></tr></table></figure>
+<p>这时候属性指针就要换一种写法。</p>
+<p>位置属性：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glVertexAttribPointer</span>(</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    <span class="number">3</span>,</span><br><span class="line">    GL_FLOAT,</span><br><span class="line">    GL_FALSE,</span><br><span class="line">    <span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>),</span><br><span class="line">    (<span class="type">void</span>*)<span class="number">0</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>颜色属性：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glVertexAttribPointer</span>(</span><br><span class="line">    <span class="number">1</span>,</span><br><span class="line">    <span class="number">3</span>,</span><br><span class="line">    GL_FLOAT,</span><br><span class="line">    GL_FALSE,</span><br><span class="line">    <span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>),</span><br><span class="line">    (<span class="type">void</span>*)positionsSize</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>纹理坐标属性：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glVertexAttribPointer</span>(</span><br><span class="line">    <span class="number">2</span>,</span><br><span class="line">    <span class="number">2</span>,</span><br><span class="line">    GL_FLOAT,</span><br><span class="line">    GL_FALSE,</span><br><span class="line">    <span class="number">2</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>),</span><br><span class="line">    (<span class="type">void</span>*)(positionsSize + colorsSize)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这里的 stride 不再是 <code>8 * sizeof(float)</code>。</p>
+<p>因为 position 区域里只有 position：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">position position position ...</span><br></pre></td></tr></table></figure>
+<p>所以 position 的 stride 是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)</span><br></pre></td></tr></table></figure>
+<p>texcoord 区域里只有 UV：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">uv uv uv ...</span><br></pre></td></tr></table></figure>
+<p>所以 texcoord 的 stride 是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">2</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)</span><br></pre></td></tr></table></figure>
+<p>这一点很适合用来加深对 <code>glVertexAttribPointer</code> 的理解：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">它不是在“创建数据格式”</span><br><span class="line">它是在告诉 OpenGL：</span><br><span class="line">从当前绑定的 VBO 中，按照什么步长和偏移去取某个顶点属性</span><br></pre></td></tr></table></figure>
+<h2 id="七、VAO-与-VBO-的职责边界">七、VAO 与 VBO 的职责边界</h2>
+<p>高级数据这一节会让一个老问题重新变得重要：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">VBO 和 VAO 到底谁管什么？</span><br></pre></td></tr></table></figure>
+<p>可以先这样区分：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">VBO 保存原始字节数据</span><br><span class="line">VAO 保存顶点属性解释规则</span><br></pre></td></tr></table></figure>
+<p>当我们写：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindVertexArray</span>(VAO);</span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_ARRAY_BUFFER, VBO);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glVertexAttribPointer</span>(<span class="number">0</span>, <span class="number">3</span>, GL_FLOAT, GL_FALSE, stride, offset);</span><br><span class="line"><span class="built_in">glEnableVertexAttribArray</span>(<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>VAO 会记录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">属性 0 已启用</span><br><span class="line">属性 0 从哪个 VBO 读取</span><br><span class="line">属性 0 有几个分量</span><br><span class="line">属性 0 的类型是什么</span><br><span class="line">属性 0 的 stride 是多少</span><br><span class="line">属性 0 的 offset 是多少</span><br></pre></td></tr></table></figure>
+<p>这也是为什么设置属性指针时，要确保正确的 VBO 正绑定在 <code>GL_ARRAY_BUFFER</code> 上。</p>
+<p>可以把它想象成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">VBO 是一仓库原材料</span><br><span class="line">VAO 是一张取货说明书</span><br><span class="line">glVertexAttribPointer 是在写说明书</span><br></pre></td></tr></table></figure>
+<p>如果说明书写错了，即使仓库里的数据是对的，GPU 也会按错误方式取数据。</p>
+<h2 id="八、glCopyBufferSubData：缓冲之间复制数据">八、glCopyBufferSubData：缓冲之间复制数据</h2>
+<p>有时我们已经有一个缓冲填好了数据，希望把其中一部分复制到另一个缓冲。</p>
+<p>这时可以使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glCopyBufferSubData</span>(</span><br><span class="line">    readTarget,</span><br><span class="line">    writeTarget,</span><br><span class="line">    readOffset,</span><br><span class="line">    writeOffset,</span><br><span class="line">    size</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>它的含义是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">从 readTarget 当前绑定的缓冲中读取 size 字节</span><br><span class="line">从 readOffset 开始读</span><br><span class="line">写入 writeTarget 当前绑定的缓冲</span><br><span class="line">从 writeOffset 开始写</span><br></pre></td></tr></table></figure>
+<p>常见用法是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindBuffer</span>(GL_COPY_READ_BUFFER, vbo1);</span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_COPY_WRITE_BUFFER, vbo2);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glCopyBufferSubData</span>(</span><br><span class="line">    GL_COPY_READ_BUFFER,</span><br><span class="line">    GL_COPY_WRITE_BUFFER,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    <span class="built_in">sizeof</span>(vertexData)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>为什么需要 <code>GL_COPY_READ_BUFFER</code> 和 <code>GL_COPY_WRITE_BUFFER</code>？</p>
+<p>因为如果两个缓冲都想作为 <code>GL_ARRAY_BUFFER</code>，我们不能把两个不同缓冲同时绑定到同一个目标上。<br>
+复制专用目标让“读缓冲”和“写缓冲”可以同时存在。</p>
+<p>它的意义是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">缓冲之间的数据复制可以直接在 OpenGL 管理的缓冲中完成</span><br><span class="line">不需要先读回 CPU，再重新上传</span><br></pre></td></tr></table></figure>
+<h2 id="九、这一节容易踩的坑">九、这一节容易踩的坑</h2>
+<p>第一个坑：offset 单位写错。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferSubData</span>(GL_ARRAY_BUFFER, <span class="number">3</span>, size, data);</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>3</code> 是 3 字节，不是 3 个 float。<br>
+如果想偏移 3 个 float，应该写：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)</span><br></pre></td></tr></table></figure>
+<p>第二个坑：忘记先分配足够空间。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferSubData</span>(GL_ARRAY_BUFFER, offset, size, data);</span><br></pre></td></tr></table></figure>
+<p>这行代码之前，必须有：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, totalSize, <span class="literal">NULL</span>, usage);</span><br></pre></td></tr></table></figure>
+<p>或者已经通过其他方式为这个缓冲分配了足够空间。</p>
+<p>第三个坑：属性指针的 stride 和 offset 仍按交错布局写。</p>
+<p>如果你已经改成分批布局：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">positions | colors | texCoords</span><br></pre></td></tr></table></figure>
+<p>那么就不能继续使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">8</span> * <span class="built_in">sizeof</span>(<span class="type">float</span>)</span><br></pre></td></tr></table></figure>
+<p>作为每个属性的 stride。</p>
+<p>第四个坑：以为 Buffer 自己知道数据格式。</p>
+<p>Buffer 只是一块内存。<br>
+它不知道里面是位置、颜色、法线还是 UV。</p>
+<p>真正解释数据的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">glVertexAttribPointer</span><br><span class="line">VAO</span><br><span class="line">顶点着色器里的 layout(location = ...)</span><br></pre></td></tr></table></figure>
+<p>第五个坑：映射指针解除后继续使用。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span>* ptr = <span class="built_in">glMapBuffer</span>(...);</span><br><span class="line"><span class="built_in">glUnmapBuffer</span>(...);</span><br><span class="line"><span class="comment">// ptr 此后不能继续使用</span></span><br></pre></td></tr></table></figure>
+<p>解除映射后继续读写这个指针是不可靠的。</p>
+<h2 id="十、这一节可以做的实验">十、这一节可以做的实验</h2>
+<p>这一节不像帧缓冲或立方体贴图那样有强烈视觉反馈，所以实验应该围绕“同样画面，不同数据布局”来做。</p>
+<p>建议新建项目：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">22_advanced_data</span><br></pre></td></tr></table></figure>
+<p>实验目标：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">同样画一个带颜色或纹理的矩形</span><br><span class="line">但顶点数据不要使用交错数组</span><br><span class="line">而是拆成 positions、colors、texCoords 三段</span><br><span class="line">用 glBufferData 先预留总大小</span><br><span class="line">再用 glBufferSubData 分段上传</span><br></pre></td></tr></table></figure>
+<p>这样可以验证：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">画面没有变</span><br><span class="line">但底层数据组织方式变了</span><br></pre></td></tr></table></figure>
+<p>这正是本节最有价值的地方。</p>
+<p>它会让我们真正意识到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">VBO 不等于“某种固定顶点结构”</span><br><span class="line">VBO 只是字节内存</span><br><span class="line">顶点格式来自 VAO 和 glVertexAttribPointer</span><br></pre></td></tr></table></figure>
+<h2 id="十一、本节小结">十一、本节小结</h2>
+<p>高级数据这一节的重点不是新效果，而是新能力。</p>
+<p>我们以前主要会：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferData</span>(GL_ARRAY_BUFFER, <span class="built_in">sizeof</span>(vertices), vertices, GL_STATIC_DRAW);</span><br></pre></td></tr></table></figure>
+<p>现在多了几种操作缓冲的方式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">只分配空间：</span><br><span class="line">glBufferData(..., NULL, ...)</span><br><span class="line"></span><br><span class="line">更新缓冲的一部分：</span><br><span class="line">glBufferSubData(...)</span><br><span class="line"></span><br><span class="line">直接映射缓冲写入：</span><br><span class="line">glMapBuffer(...) + glUnmapBuffer(...)</span><br><span class="line"></span><br><span class="line">把属性分批写入一个 VBO：</span><br><span class="line">positions | colors | texCoords</span><br><span class="line"></span><br><span class="line">在两个缓冲之间复制：</span><br><span class="line">glCopyBufferSubData(...)</span><br></pre></td></tr></table></figure>
+<p>这一节最该记住的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Buffer 保存数据</span><br><span class="line">VAO 保存解释规则</span><br><span class="line">glVertexAttribPointer 描述如何从 Buffer 中取属性</span><br></pre></td></tr></table></figure>
+<p>当你真正理解了这一点，后面学习高级 GLSL、Uniform Buffer Object、实例化、动态顶点数据时，就不会再把 OpenGL 的状态和数据布局搅在一起。</p>
+<p>一句话收束：</p>
+<p><strong>高级数据让我们从“会上传顶点”进阶到“会管理和解释 GPU 缓冲内存”。</strong></p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/05/08/graphics-notes/opengl-11-cubemaps-skybox-environment-reflection/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 11 篇</span>
+                    <strong class="series-nav-title">从天空盒到环境反射：OpenGL 立方体贴图与方向采样</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E7%BC%93%E5%86%B2%E5%AF%B9%E8%B1%A1%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">一、缓冲对象到底是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81glBufferData%EF%BC%9A%E5%88%86%E9%85%8D%E4%B8%8E%E4%B8%8A%E4%BC%A0"><span class="post-toc-list-text">二、glBufferData：分配与上传</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81glBufferSubData%EF%BC%9A%E6%9B%B4%E6%96%B0%E7%BC%93%E5%86%B2%E7%9A%84%E4%B8%80%E9%83%A8%E5%88%86"><span class="post-toc-list-text">三、glBufferSubData：更新缓冲的一部分</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81glMapBuffer%EF%BC%9A%E7%9B%B4%E6%8E%A5%E6%98%A0%E5%B0%84%E7%BC%93%E5%86%B2%E5%86%85%E5%AD%98"><span class="post-toc-list-text">四、glMapBuffer：直接映射缓冲内存</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E4%BA%A4%E9%94%99%E5%B8%83%E5%B1%80-Interleaved-Layout"><span class="post-toc-list-text">五、交错布局 Interleaved Layout</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81%E5%88%86%E6%89%B9%E5%B1%9E%E6%80%A7-Batched-Attributes"><span class="post-toc-list-text">六、分批属性 Batched Attributes</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81VAO-%E4%B8%8E-VBO-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">七、VAO 与 VBO 的职责边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81glCopyBufferSubData%EF%BC%9A%E7%BC%93%E5%86%B2%E4%B9%8B%E9%97%B4%E5%A4%8D%E5%88%B6%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">八、glCopyBufferSubData：缓冲之间复制数据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">九、这一节容易踩的坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">十、这一节可以做的实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十一、本节小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
