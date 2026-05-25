@@ -1,0 +1,569 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.05.25
+            
+            /
+            
+            <span style="color: var(--accent);">#OpenGL</span>
+            
+            <span style="color: var(--accent);">#LearnOpenGL</span>
+            
+            <span style="color: var(--accent);">#图形学</span>
+            
+            <span style="color: var(--accent);">#GLSL</span>
+            
+            <span style="color: var(--accent);">#Interface Block</span>
+            
+            <span style="color: var(--accent);">#Uniform Buffer Object</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">OpenGL 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <div class="series-meta">
+                <span>第 13 篇</span>
+                <span>已发布 13 / 12</span>
+                
+                <span>阶段：高级 OpenGL</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、这一节解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81GLSL-%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">二、GLSL 的内建变量</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">三、顶点着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-Position"><span class="post-toc-list-text">1. gl_Position</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-PointSize"><span class="post-toc-list-text">2. gl_PointSize</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-VertexID"><span class="post-toc-list-text">3. gl_VertexID</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E7%89%87%E6%AE%B5%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">四、片段着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-FragCoord"><span class="post-toc-list-text">1. gl_FragCoord</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-FrontFacing"><span class="post-toc-list-text">2. gl_FrontFacing</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-FragDepth"><span class="post-toc-list-text">3. gl_FragDepth</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E6%8E%A5%E5%8F%A3%E5%9D%97-Interface-Block"><span class="post-toc-list-text">五、接口块 Interface Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81Uniform-%E7%BC%93%E5%86%B2%E5%AF%B9%E8%B1%A1-UBO"><span class="post-toc-list-text">六、Uniform 缓冲对象 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E5%9C%A8-GLSL-%E4%B8%AD%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">七、在 GLSL 中声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81std140-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">八、std140 是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81UBO-%E7%9A%84%E4%B8%89%E4%B8%AA%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">九、UBO 的三个角色</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81UBO-%E7%9A%84%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十、UBO 的使用流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%9C%A8-shader-%E9%87%8C%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">1. 在 shader 里声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%88%9B%E5%BB%BA%E5%B9%B6%E5%88%86%E9%85%8D-UBO"><span class="post-toc-list-text">2. 创建并分配 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8A%8A-UBO-%E7%BB%91%E5%AE%9A%E5%88%B0-binding-point"><span class="post-toc-list-text">3. 把 UBO 绑定到 binding point</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%8A%8A-shader-%E7%9A%84-Uniform-Block-%E7%BB%91%E5%AE%9A%E5%88%B0%E5%90%8C%E4%B8%80%E4%B8%AA-binding-point"><span class="post-toc-list-text">4. 把 shader 的 Uniform Block 绑定到同一个 binding point</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%9B%B4%E6%96%B0-UBO-%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">十一、更新 UBO 数据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81UBO-%E5%92%8C%E6%99%AE%E9%80%9A-uniform-%E6%80%8E%E4%B9%88%E9%85%8D%E5%90%88"><span class="post-toc-list-text">十二、UBO 和普通 uniform 怎么配合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%92%8C%E5%89%8D%E5%90%8E%E7%AB%A0%E8%8A%82%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">十三、这一节和前后章节的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">十四、容易踩的坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">十五、这一节可以做的实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十六、本节小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <p>学到高级 OpenGL 这一段时，我们已经不只是“把物体画出来”了。</p>
+<p>深度测试、模板测试、混合、面剔除、帧缓冲、立方体贴图这些内容，逐渐把我们带到了更接近真实渲染工程的位置。<br>
+上一节“高级数据”则进一步告诉我们：OpenGL 里的 Buffer 本质上是一块 GPU 内存，真正重要的是我们如何分配、更新和解释它。</p>
+<p>这一节“高级 GLSL”刚好接上这个思路。</p>
+<p>它不是为了展示一个新的视觉效果，而是在补一组 GLSL 与 OpenGL 程序协作时非常实用的机制：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GLSL 内建变量</span><br><span class="line">接口块 Interface Block</span><br><span class="line">Uniform 缓冲对象 Uniform Buffer Object</span><br></pre></td></tr></table></figure>
+<p>这一节最重要的直觉是：</p>
+<p><strong>当着色器越来越多时，我们不能只靠一个个零散的变量传数据，而要开始学会组织、共享和管理着色器数据。</strong></p>
+<h2 id="一、这一节解决的是什么问题">一、这一节解决的是什么问题</h2>
+<p>在前面的章节里，我们已经大量使用过 GLSL。</p>
+<p>顶点着色器里经常有：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">0</span>) <span class="keyword">in</span> <span class="type">vec3</span> aPos;</span><br><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">1</span>) <span class="keyword">in</span> <span class="type">vec3</span> aNormal;</span><br><span class="line"><span class="keyword">layout</span> (<span class="keyword">location</span> = <span class="number">2</span>) <span class="keyword">in</span> <span class="type">vec2</span> aTexCoords;</span><br><span class="line"></span><br><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> model;</span><br><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> view;</span><br><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> projection;</span><br></pre></td></tr></table></figure>
+<p>片段着色器里经常有：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">out</span> <span class="type">vec4</span> FragColor;</span><br><span class="line"></span><br><span class="line"><span class="keyword">in</span> <span class="type">vec3</span> Normal;</span><br><span class="line"><span class="keyword">in</span> <span class="type">vec3</span> FragPos;</span><br><span class="line"><span class="keyword">in</span> <span class="type">vec2</span> TexCoords;</span><br></pre></td></tr></table></figure>
+<p>这些写法在小项目里很直接，但当 shader 数量变多时，会出现几个问题。</p>
+<p>第一个问题：输入输出变量越来越散。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Normal、FragPos、TexCoords、Tangent、Bitangent、Color ...</span><br></pre></td></tr></table></figure>
+<p>如果每个变量都单独写 <code>in</code> 和 <code>out</code>，着色器之间的数据接口会变得越来越难维护。</p>
+<p>第二个问题：多个 shader 重复设置相同的 uniform。</p>
+<p>例如一个场景里有多个 shader：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">物体 shader</span><br><span class="line">灯光 shader</span><br><span class="line">天空盒 shader</span><br><span class="line">调试 shader</span><br><span class="line">后处理 shader</span><br></pre></td></tr></table></figure>
+<p>它们可能都需要：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">projection</span><br><span class="line">view</span><br><span class="line">camera position</span><br><span class="line">time</span><br><span class="line">global lighting settings</span><br></pre></td></tr></table></figure>
+<p>如果我们还像以前一样，对每个 shader 单独调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shader.<span class="built_in">setMat4</span>(<span class="string">&quot;projection&quot;</span>, projection);</span><br><span class="line">shader.<span class="built_in">setMat4</span>(<span class="string">&quot;view&quot;</span>, view);</span><br></pre></td></tr></table></figure>
+<p>代码会非常重复，也容易漏设置。</p>
+<p>第三个问题：GLSL 本身有一些管线内建变量，我们之前只是零散接触过。</p>
+<p>比如：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_Position</span></span><br><span class="line"><span class="built_in">gl_FragCoord</span></span><br><span class="line"><span class="built_in">gl_FrontFacing</span></span><br><span class="line"><span class="built_in">gl_FragDepth</span></span><br></pre></td></tr></table></figure>
+<p>这些变量不是我们自己声明的，但它们能让 shader 和渲染管线发生更细致的交互。</p>
+<p>所以这一节的核心目标是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">理解 GLSL 提供的内建变量</span><br><span class="line">用接口块整理 shader 阶段之间的数据传递</span><br><span class="line">用 UBO 让多个 shader 共享同一份 uniform 数据</span><br></pre></td></tr></table></figure>
+<h2 id="二、GLSL-的内建变量">二、GLSL 的内建变量</h2>
+<p>GLSL 中有一些以 <code>gl_</code> 开头的变量。<br>
+它们是 GLSL 或渲染管线提供的特殊输入输出变量，不需要我们自己定义。</p>
+<p>可以先这样理解：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">普通变量：我们自己声明，用于业务逻辑</span><br><span class="line">内建变量：GLSL 已经声明好，用于和渲染管线交互</span><br></pre></td></tr></table></figure>
+<p>这一节主要关注几个比较常用、比较有代表性的内建变量。</p>
+<h2 id="三、顶点着色器中的内建变量">三、顶点着色器中的内建变量</h2>
+<h3 id="1-gl-Position">1. gl_Position</h3>
+<p><code>gl_Position</code> 是我们最熟悉的内建变量。</p>
+<p>顶点着色器几乎一定要写它：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">gl_Position</span> = projection * view * model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它表示当前顶点最终输出到裁剪空间的位置。</p>
+<p>如果一个顶点着色器不写 <code>gl_Position</code>，后续管线就不知道这个顶点应该出现在什么位置。<br>
+所以可以把它理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gl_Position 是顶点着色器交给后续固定管线的最重要结果。</span><br></pre></td></tr></table></figure>
+<h3 id="2-gl-PointSize">2. gl_PointSize</h3>
+<p>当我们绘制的图元是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GL_POINTS</span><br></pre></td></tr></table></figure>
+<p>每个顶点会被渲染成一个点。</p>
+<p>点的大小可以在 OpenGL 程序里设置：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glPointSize</span>(<span class="number">10.0f</span>);</span><br></pre></td></tr></table></figure>
+<p>也可以在顶点着色器里设置：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">gl_Position</span> = projection * view * model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>);</span><br><span class="line">    <span class="built_in">gl_PointSize</span> = <span class="number">8.0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果要让 shader 中的 <code>gl_PointSize</code> 生效，需要开启：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_PROGRAM_POINT_SIZE);</span><br></pre></td></tr></table></figure>
+<p>这个变量在粒子系统里会很有用。</p>
+<p>因为粒子经常以点精灵的形式绘制，而不同粒子的大小可能不同。<br>
+这时就可以在顶点着色器里根据距离、生命值、速度等信息调整 <code>gl_PointSize</code>。</p>
+<h3 id="3-gl-VertexID">3. gl_VertexID</h3>
+<p><code>gl_VertexID</code> 是顶点着色器里的一个输入变量。</p>
+<p>它表示当前正在处理的顶点编号。</p>
+<p>如果使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDrawArrays</span>(...)</span><br></pre></td></tr></table></figure>
+<p>它大致表示从这次绘制调用开始，当前是第几个顶点。</p>
+<p>如果使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glDrawElements</span>(...)</span><br></pre></td></tr></table></figure>
+<p>它和索引绘制中的索引值有关。</p>
+<p><code>gl_VertexID</code> 的一个用途是：在不额外提供某些顶点属性的情况下，根据顶点编号在 shader 里生成一些数据。</p>
+<p>例如全屏三角形、简单调试图形、程序化几何数据，都可能用到它。</p>
+<p>不过当前阶段不需要急着大量使用它。<br>
+先知道它存在，并理解它来自绘制调用即可。</p>
+<h2 id="四、片段着色器中的内建变量">四、片段着色器中的内建变量</h2>
+<h3 id="1-gl-FragCoord">1. gl_FragCoord</h3>
+<p><code>gl_FragCoord</code> 是片段着色器里的输入变量。<br>
+它表示当前片段在窗口空间中的坐标。</p>
+<p>它是一个 <code>vec4</code>，最常用的是前三个分量：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gl_FragCoord.x：窗口空间 x 坐标</span><br><span class="line">gl_FragCoord.y：窗口空间 y 坐标</span><br><span class="line">gl_FragCoord.z：当前片段的深度值</span><br></pre></td></tr></table></figure>
+<p>窗口空间的原点通常在左下角。</p>
+<p>如果窗口大小是 <code>800 x 600</code>，那么大致可以理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">x 范围：0 到 800</span><br><span class="line">y 范围：0 到 600</span><br></pre></td></tr></table></figure>
+<p>一个简单用法是把屏幕左右两边渲染成不同颜色：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">gl_FragCoord</span>.x &lt; <span class="number">400.0</span>)</span><br><span class="line">        FragColor = <span class="type">vec4</span>(<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        FragColor = <span class="type">vec4</span>(<span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个变量在调试和后处理里也很常见。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">根据屏幕位置做分屏对比</span><br><span class="line">根据像素坐标生成调试颜色</span><br><span class="line">读取当前片段深度值</span><br><span class="line">做某些屏幕空间效果</span><br></pre></td></tr></table></figure>
+<h3 id="2-gl-FrontFacing">2. gl_FrontFacing</h3>
+<p><code>gl_FrontFacing</code> 是一个 <code>bool</code>。</p>
+<p>它告诉我们：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当前片段来自正面还是背面</span><br></pre></td></tr></table></figure>
+<p>这正好接上前面学过的面剔除。</p>
+<p>默认情况下，OpenGL 会根据三角形投影后的环绕顺序判断正面和背面：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">逆时针 CCW：正面</span><br><span class="line">顺时针 CW：背面</span><br></pre></td></tr></table></figure>
+<p>在片段着色器里可以这样写：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">gl_FrontFacing</span>)</span><br><span class="line">        FragColor = <span class="type">vec4</span>(<span class="number">1.0</span>, <span class="number">0.8</span>, <span class="number">0.2</span>, <span class="number">1.0</span>);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        FragColor = <span class="type">vec4</span>(<span class="number">0.2</span>, <span class="number">0.4</span>, <span class="number">1.0</span>, <span class="number">1.0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样正面和背面就会显示不同颜色。</p>
+<p>但这里有一个非常重要的前提：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">如果背面已经被面剔除丢掉，</span><br><span class="line">那么背面片段根本不会进入片段着色器。</span><br></pre></td></tr></table></figure>
+<p>也就是说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">想用 gl_FrontFacing 区分正反面，通常要关闭对应的面剔除。</span><br></pre></td></tr></table></figure>
+<p>比如你开启了：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glEnable</span>(GL_CULL_FACE);</span><br><span class="line"><span class="built_in">glCullFace</span>(GL_BACK);</span><br></pre></td></tr></table></figure>
+<p>那么背面片段已经被提前剔除了，片段着色器不会收到它们。<br>
+这时再在 shader 里判断 <code>gl_FrontFacing == false</code>，通常就没有意义。</p>
+<p>这也是一个很好记的关系：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">面剔除发生在片段着色器之前</span><br><span class="line">gl_FrontFacing 只能判断已经进入片段着色器的片段</span><br></pre></td></tr></table></figure>
+<h3 id="3-gl-FragDepth">3. gl_FragDepth</h3>
+<p>默认情况下，片段的深度值来自：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_FragCoord</span>.z</span><br></pre></td></tr></table></figure>
+<p>这个值是只读的。</p>
+<p>但 GLSL 还提供了一个输出变量：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">gl_FragDepth</span></span><br></pre></td></tr></table></figure>
+<p>我们可以在片段着色器里手动写入深度：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    FragColor = <span class="type">vec4</span>(<span class="number">1.0</span>);</span><br><span class="line">    <span class="built_in">gl_FragDepth</span> = <span class="number">0.5</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这表示当前片段最终参与深度测试时使用 <code>0.5</code> 作为深度值。</p>
+<p>它能做一些特殊效果，但要非常谨慎。</p>
+<p>原因是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">一旦片段着色器可能修改深度值，</span><br><span class="line">GPU 就很难在片段着色器执行前提前判断这个片段是否会被挡住。</span><br></pre></td></tr></table></figure>
+<p>这会影响提前深度测试 Early Depth Testing。</p>
+<p>正常情况下，GPU 可能在片段着色器之前就做一部分深度判断，从而避免执行一些没有必要的片段着色器。<br>
+但如果 shader 里写了 <code>gl_FragDepth</code>，GPU 就必须等 shader 执行完，才知道这个片段真正的深度。</p>
+<p>所以这一节要记住：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gl_FragDepth 很强，但可能让提前深度测试失效。</span><br></pre></td></tr></table></figure>
+<p>OpenGL 4.2 之后可以用更细的 depth layout 条件来给 GPU 一些保证，例如：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">depth_greater</span>) <span class="keyword">out</span> <span class="type">float</span> <span class="built_in">gl_FragDepth</span>;</span><br></pre></td></tr></table></figure>
+<p>但这是更进阶的优化话题。当前阶段先知道“手动写深度会有性能代价”就够了。</p>
+<h2 id="五、接口块-Interface-Block">五、接口块 Interface Block</h2>
+<p>以前我们在 shader 阶段之间传数据，通常会这样写。</p>
+<p>顶点着色器：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">out</span> <span class="type">vec3</span> FragPos;</span><br><span class="line"><span class="keyword">out</span> <span class="type">vec3</span> Normal;</span><br><span class="line"><span class="keyword">out</span> <span class="type">vec2</span> TexCoords;</span><br></pre></td></tr></table></figure>
+<p>片段着色器：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">in</span> <span class="type">vec3</span> FragPos;</span><br><span class="line"><span class="keyword">in</span> <span class="type">vec3</span> Normal;</span><br><span class="line"><span class="keyword">in</span> <span class="type">vec2</span> TexCoords;</span><br></pre></td></tr></table></figure>
+<p>变量少的时候，这样非常直观。</p>
+<p>但如果传递的数据越来越多：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">FragPos</span><br><span class="line">Normal</span><br><span class="line">TexCoords</span><br><span class="line">Tangent</span><br><span class="line">Bitangent</span><br><span class="line">Color</span><br><span class="line">WorldPos</span><br><span class="line">ViewDir</span><br></pre></td></tr></table></figure>
+<p>一个个散着写就会变得不太好管理。</p>
+<p>接口块就是为了解决这个问题的。</p>
+<p>顶点着色器可以这样写：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">out</span> VS_OUT</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">vec3</span> FragPos;</span><br><span class="line">    <span class="type">vec3</span> Normal;</span><br><span class="line">    <span class="type">vec2</span> TexCoords;</span><br><span class="line">&#125; vs_out;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    vs_out.FragPos = <span class="type">vec3</span>(model * <span class="type">vec4</span>(aPos, <span class="number">1.0</span>));</span><br><span class="line">    vs_out.Normal = <span class="type">mat3</span>(<span class="built_in">transpose</span>(<span class="built_in">inverse</span>(model))) * aNormal;</span><br><span class="line">    vs_out.TexCoords = aTexCoords;</span><br><span class="line">    <span class="built_in">gl_Position</span> = projection * view * <span class="type">vec4</span>(vs_out.FragPos, <span class="number">1.0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>片段着色器对应：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">in</span> VS_OUT</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">vec3</span> FragPos;</span><br><span class="line">    <span class="type">vec3</span> Normal;</span><br><span class="line">    <span class="type">vec2</span> TexCoords;</span><br><span class="line">&#125; fs_in;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">vec3</span> normal = <span class="built_in">normalize</span>(fs_in.Normal);</span><br><span class="line">    <span class="type">vec2</span> uv = fs_in.TexCoords;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以把接口块理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shader 阶段之间传递数据时使用的结构化数据包。</span><br></pre></td></tr></table></figure>
+<p>它有三个要点。</p>
+<p>第一，块名要匹配。</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">out</span> VS_OUT &#123; ... &#125; vs_out;</span><br><span class="line"><span class="keyword">in</span>  VS_OUT &#123; ... &#125; fs_in;</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>VS_OUT</code> 是块名。<br>
+前后阶段要能匹配，块名和内部成员需要对应。</p>
+<p>第二，实例名可以不同。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">顶点着色器里叫 vs_out</span><br><span class="line">片段着色器里叫 fs_in</span><br></pre></td></tr></table></figure>
+<p>这是可以的。</p>
+<p>第三，接口块只是整理传递方式，不会自动改变数据本身。</p>
+<p>它不会让法线自动变换，也不会让 UV 自动生成。<br>
+你仍然需要在顶点着色器中正确计算和赋值。</p>
+<p>接口块的价值在于：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">让 shader 输入输出更整洁</span><br><span class="line">减少大量零散变量</span><br><span class="line">为几何着色器这类中间阶段做准备</span><br></pre></td></tr></table></figure>
+<p>下一节几何着色器里，接口块会变得更有存在感。<br>
+因为几何着色器处理的是图元，输入输出数据经常会成组出现。</p>
+<h2 id="六、Uniform-缓冲对象-UBO">六、Uniform 缓冲对象 UBO</h2>
+<p>这一节最重要的内容是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Uniform Buffer Object，简称 UBO</span><br></pre></td></tr></table></figure>
+<p>它的目标是解决一个非常实际的问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">多个 shader 需要同一组 uniform 数据时，能不能只设置一次？</span><br></pre></td></tr></table></figure>
+<p>以前我们可能会这样写：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">shaderRed.<span class="built_in">use</span>();</span><br><span class="line">shaderRed.<span class="built_in">setMat4</span>(<span class="string">&quot;projection&quot;</span>, projection);</span><br><span class="line">shaderRed.<span class="built_in">setMat4</span>(<span class="string">&quot;view&quot;</span>, view);</span><br><span class="line"></span><br><span class="line">shaderGreen.<span class="built_in">use</span>();</span><br><span class="line">shaderGreen.<span class="built_in">setMat4</span>(<span class="string">&quot;projection&quot;</span>, projection);</span><br><span class="line">shaderGreen.<span class="built_in">setMat4</span>(<span class="string">&quot;view&quot;</span>, view);</span><br><span class="line"></span><br><span class="line">shaderBlue.<span class="built_in">use</span>();</span><br><span class="line">shaderBlue.<span class="built_in">setMat4</span>(<span class="string">&quot;projection&quot;</span>, projection);</span><br><span class="line">shaderBlue.<span class="built_in">setMat4</span>(<span class="string">&quot;view&quot;</span>, view);</span><br></pre></td></tr></table></figure>
+<p>这很啰嗦。</p>
+<p><code>projection</code> 和 <code>view</code> 明明是公共数据，却要对每个 shader 重复设置。</p>
+<p>UBO 的思路是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">把一组 uniform 放进一个 GPU Buffer 中</span><br><span class="line">多个 shader 通过同一个绑定点读取这块 Buffer</span><br></pre></td></tr></table></figure>
+<p>它和上一节“高级数据”的联系非常紧密。</p>
+<p>上一节我们说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Buffer 只是 GPU 侧的一块内存</span><br></pre></td></tr></table></figure>
+<p>这一节则进一步看到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Uniform 也可以放进 Buffer</span><br><span class="line">这个 Buffer 绑定到 GL_UNIFORM_BUFFER</span><br><span class="line">shader 通过 uniform block 读取它</span><br></pre></td></tr></table></figure>
+<h2 id="七、在-GLSL-中声明-Uniform-Block">七、在 GLSL 中声明 Uniform Block</h2>
+<p>普通 uniform 是这样声明的：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> projection;</span><br><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> view;</span><br><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> model;</span><br></pre></td></tr></table></figure>
+<p>使用 UBO 时，我们会把一组共享 uniform 放进一个 Uniform Block：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">std140</span>) <span class="keyword">uniform</span> Matrices</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">mat4</span> projection;</span><br><span class="line">    <span class="type">mat4</span> view;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> model;</span><br></pre></td></tr></table></figure>
+<p>这里做了一个很重要的设计：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">projection 和 view 放进 UBO</span><br><span class="line">model 仍然作为普通 uniform</span><br></pre></td></tr></table></figure>
+<p>为什么？</p>
+<p>因为它们的变化频率不同。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">projection：通常窗口大小或 FOV 改变时才变</span><br><span class="line">view：每帧相机移动时变化，但对同一帧的很多物体是共享的</span><br><span class="line">model：每个物体都不一样</span><br></pre></td></tr></table></figure>
+<p>所以适合放进 UBO 的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">多个 shader 共享</span><br><span class="line">多个物体共享</span><br><span class="line">变化频率较低或按帧统一更新的数据</span><br></pre></td></tr></table></figure>
+<p>而每个物体不同的数据，仍然适合保留为普通 uniform。</p>
+<h2 id="八、std140-是什么">八、std140 是什么</h2>
+<p>Uniform Block 最容易让人卡住的地方是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">std140</span>) <span class="keyword">uniform</span> Matrices</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">mat4</span> projection;</span><br><span class="line">    <span class="type">mat4</span> view;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>std140</code> 是一种 Uniform Block 内存布局规则。</p>
+<p>为什么需要它？</p>
+<p>因为 C++ 侧更新 UBO，本质上是在往一块字节内存里写数据：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferSubData</span>(GL_UNIFORM_BUFFER, offset, size, data);</span><br></pre></td></tr></table></figure>
+<p>GLSL 侧读取的是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">mat4</span> projection;</span><br><span class="line"><span class="type">mat4</span> view;</span><br></pre></td></tr></table></figure>
+<p>双方必须对下面这件事达成一致：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">projection 从第几个字节开始？</span><br><span class="line">view 从第几个字节开始？</span><br><span class="line">每个变量占多少字节？</span><br><span class="line">中间有没有 padding？</span><br></pre></td></tr></table></figure>
+<p><code>std140</code> 就是在规定这些对齐和填充规则。</p>
+<p>最常用的直觉是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">float / int / bool 按 4 字节为基本单位</span><br><span class="line">vec2 通常按 8 字节对齐</span><br><span class="line">vec3 和 vec4 通常按 16 字节对齐</span><br><span class="line">数组元素通常按 vec4 的 16 字节步长对齐</span><br><span class="line">mat4 可以看成 4 个 vec4</span><br></pre></td></tr></table></figure>
+<p>这意味着：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vec3 虽然只有 3 个 float，</span><br><span class="line">但在 std140 中经常要按 vec4 的对齐方式考虑。</span><br></pre></td></tr></table></figure>
+<p>也就是 C++ 侧如果手动组织 UBO 数据，不能简单地把结构体成员紧密排列后就直接上传。<br>
+尤其是遇到 <code>vec3</code>、数组、结构体嵌套时，要格外注意 padding。</p>
+<p>但当前教程的例子很友好：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">std140</span>) <span class="keyword">uniform</span> Matrices</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">mat4</span> projection;</span><br><span class="line">    <span class="type">mat4</span> view;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>两个 <code>mat4</code> 连续存放，GLM 的 <code>glm::mat4</code> 大小也能很好对应 GLSL 中的 <code>mat4</code>。</p>
+<p>所以可以这样更新：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBufferSubData</span>(</span><br><span class="line">    GL_UNIFORM_BUFFER,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    <span class="built_in">sizeof</span>(glm::mat4),</span><br><span class="line">    glm::<span class="built_in">value_ptr</span>(projection)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBufferSubData</span>(</span><br><span class="line">    GL_UNIFORM_BUFFER,</span><br><span class="line">    <span class="built_in">sizeof</span>(glm::mat4),</span><br><span class="line">    <span class="built_in">sizeof</span>(glm::mat4),</span><br><span class="line">    glm::<span class="built_in">value_ptr</span>(view)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<h2 id="九、UBO-的三个角色">九、UBO 的三个角色</h2>
+<p>UBO 的连接过程一开始看起来有点绕。<br>
+可以把它拆成三个角色：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Shader 里的 Uniform Block</span><br><span class="line">OpenGL 里的 Uniform Buffer Object</span><br><span class="line">中间的 Binding Point</span><br></pre></td></tr></table></figure>
+<p>它们之间的关系是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Uniform Block  -&gt;  Binding Point  &lt;-  Uniform Buffer Object</span><br></pre></td></tr></table></figure>
+<p>或者更像插座：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">shader 的 Matrices 块插到 0 号插座</span><br><span class="line">uboMatrices 也插到 0 号插座</span><br><span class="line">于是 shader 就能读到这个 UBO</span><br></pre></td></tr></table></figure>
+<p>这就是 binding point 的作用。</p>
+<p>它不是 Buffer，也不是 shader 变量。<br>
+它更像 OpenGL 上下文里的一组连接槽位。</p>
+<h2 id="十、UBO-的使用流程">十、UBO 的使用流程</h2>
+<p>完整流程可以分成四步。</p>
+<h3 id="1-在-shader-里声明-Uniform-Block">1. 在 shader 里声明 Uniform Block</h3>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">std140</span>) <span class="keyword">uniform</span> Matrices</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">mat4</span> projection;</span><br><span class="line">    <span class="type">mat4</span> view;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> model;</span><br></pre></td></tr></table></figure>
+<p>如果有多个 shader 都想共享这组数据，它们都要声明同名、同布局的 Uniform Block。</p>
+<h3 id="2-创建并分配-UBO">2. 创建并分配 UBO</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">int</span> uboMatrices;</span><br><span class="line"><span class="built_in">glGenBuffers</span>(<span class="number">1</span>, &amp;uboMatrices);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_UNIFORM_BUFFER, uboMatrices);</span><br><span class="line"><span class="built_in">glBufferData</span>(</span><br><span class="line">    GL_UNIFORM_BUFFER,</span><br><span class="line">    <span class="number">2</span> * <span class="built_in">sizeof</span>(glm::mat4),</span><br><span class="line">    <span class="literal">NULL</span>,</span><br><span class="line">    GL_STATIC_DRAW</span><br><span class="line">);</span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_UNIFORM_BUFFER, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>这里使用的是我们上一节刚学过的思路：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">先分配一块 GPU 缓冲空间</span><br><span class="line">暂时不填数据</span><br><span class="line">之后用 glBufferSubData 更新其中一部分</span><br></pre></td></tr></table></figure>
+<h3 id="3-把-UBO-绑定到-binding-point">3. 把 UBO 绑定到 binding point</h3>
+<p>比如绑定到 <code>0</code> 号绑定点：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindBufferRange</span>(</span><br><span class="line">    GL_UNIFORM_BUFFER,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    uboMatrices,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    <span class="number">2</span> * <span class="built_in">sizeof</span>(glm::mat4)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>也可以用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindBufferBase</span>(GL_UNIFORM_BUFFER, <span class="number">0</span>, uboMatrices);</span><br></pre></td></tr></table></figure>
+<p>二者区别可以先简单理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">glBindBufferBase：把整个 Buffer 绑定到某个绑定点</span><br><span class="line">glBindBufferRange：把 Buffer 的某一段范围绑定到某个绑定点</span><br></pre></td></tr></table></figure>
+<p>当前例子绑定整个 UBO，用哪个都可以。</p>
+<h3 id="4-把-shader-的-Uniform-Block-绑定到同一个-binding-point">4. 把 shader 的 Uniform Block 绑定到同一个 binding point</h3>
+<p>每个 shader 程序都需要设置：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">int</span> blockIndex = <span class="built_in">glGetUniformBlockIndex</span>(shader.ID, <span class="string">&quot;Matrices&quot;</span>);</span><br><span class="line"><span class="built_in">glUniformBlockBinding</span>(shader.ID, blockIndex, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>如果有四个 shader，就需要分别绑定：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">int</span> redIndex = <span class="built_in">glGetUniformBlockIndex</span>(shaderRed.ID, <span class="string">&quot;Matrices&quot;</span>);</span><br><span class="line"><span class="type">unsigned</span> <span class="type">int</span> greenIndex = <span class="built_in">glGetUniformBlockIndex</span>(shaderGreen.ID, <span class="string">&quot;Matrices&quot;</span>);</span><br><span class="line"><span class="type">unsigned</span> <span class="type">int</span> blueIndex = <span class="built_in">glGetUniformBlockIndex</span>(shaderBlue.ID, <span class="string">&quot;Matrices&quot;</span>);</span><br><span class="line"><span class="type">unsigned</span> <span class="type">int</span> yellowIndex = <span class="built_in">glGetUniformBlockIndex</span>(shaderYellow.ID, <span class="string">&quot;Matrices&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glUniformBlockBinding</span>(shaderRed.ID, redIndex, <span class="number">0</span>);</span><br><span class="line"><span class="built_in">glUniformBlockBinding</span>(shaderGreen.ID, greenIndex, <span class="number">0</span>);</span><br><span class="line"><span class="built_in">glUniformBlockBinding</span>(shaderBlue.ID, blueIndex, <span class="number">0</span>);</span><br><span class="line"><span class="built_in">glUniformBlockBinding</span>(shaderYellow.ID, yellowIndex, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>这样四个 shader 的 <code>Matrices</code> 块都连接到了 0 号绑定点。<br>
+而 0 号绑定点又连接到了 <code>uboMatrices</code>。</p>
+<p>于是它们共享同一份 <code>projection</code> 和 <code>view</code> 数据。</p>
+<p>OpenGL 4.2 之后，也可以在 shader 里直接写 binding：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">std140</span>, <span class="keyword">binding</span> = <span class="number">0</span>) <span class="keyword">uniform</span> Matrices</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">mat4</span> projection;</span><br><span class="line">    <span class="type">mat4</span> view;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这样可以少写一部分 C++ 侧绑定代码。<br>
+但为了理解 UBO 的工作机制，当前阶段先掌握 <code>glGetUniformBlockIndex</code> 和 <code>glUniformBlockBinding</code> 会更扎实。</p>
+<h2 id="十一、更新-UBO-数据">十一、更新 UBO 数据</h2>
+<p>UBO 创建和绑定好之后，就可以往里面写数据了。</p>
+<p>比如 projection 只需要初始化一次：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 projection = glm::<span class="built_in">perspective</span>(</span><br><span class="line">    glm::<span class="built_in">radians</span>(<span class="number">45.0f</span>),</span><br><span class="line">    (<span class="type">float</span>)SCR_WIDTH / (<span class="type">float</span>)SCR_HEIGHT,</span><br><span class="line">    <span class="number">0.1f</span>,</span><br><span class="line">    <span class="number">100.0f</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_UNIFORM_BUFFER, uboMatrices);</span><br><span class="line"><span class="built_in">glBufferSubData</span>(</span><br><span class="line">    GL_UNIFORM_BUFFER,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    <span class="built_in">sizeof</span>(glm::mat4),</span><br><span class="line">    glm::<span class="built_in">value_ptr</span>(projection)</span><br><span class="line">);</span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_UNIFORM_BUFFER, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>view 矩阵通常每帧更新：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">glm::mat4 view = camera.<span class="built_in">GetViewMatrix</span>();</span><br><span class="line"></span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_UNIFORM_BUFFER, uboMatrices);</span><br><span class="line"><span class="built_in">glBufferSubData</span>(</span><br><span class="line">    GL_UNIFORM_BUFFER,</span><br><span class="line">    <span class="built_in">sizeof</span>(glm::mat4),</span><br><span class="line">    <span class="built_in">sizeof</span>(glm::mat4),</span><br><span class="line">    glm::<span class="built_in">value_ptr</span>(view)</span><br><span class="line">);</span><br><span class="line"><span class="built_in">glBindBuffer</span>(GL_UNIFORM_BUFFER, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>注意这里的 offset：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">projection offset = 0</span><br><span class="line">view offset = sizeof(glm::mat4)</span><br></pre></td></tr></table></figure>
+<p>因为 Uniform Block 的布局是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">| projection mat4 | view mat4 |</span><br></pre></td></tr></table></figure>
+<p>这也再次说明了上一节“高级数据”的重要性：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UBO 更新本质上就是对 Buffer 的局部更新。</span><br></pre></td></tr></table></figure>
+<h2 id="十二、UBO-和普通-uniform-怎么配合">十二、UBO 和普通 uniform 怎么配合</h2>
+<p>UBO 不是要取代所有 uniform。</p>
+<p>更合理的分工是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UBO：多个 shader 共享、多个物体共享的数据</span><br><span class="line">普通 uniform：某个 shader 特有、某个物体特有的数据</span><br></pre></td></tr></table></figure>
+<p>例如四个立方体共享同一个投影矩阵和观察矩阵：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">layout</span> (<span class="keyword">std140</span>) <span class="keyword">uniform</span> Matrices</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">mat4</span> projection;</span><br><span class="line">    <span class="type">mat4</span> view;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>但每个立方体的位置不同，所以 <code>model</code> 仍然单独设置：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uniform</span> <span class="type">mat4</span> model;</span><br></pre></td></tr></table></figure>
+<p>C++ 中绘制时仍然会写：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">shaderRed.<span class="built_in">use</span>();</span><br><span class="line">shaderRed.<span class="built_in">setMat4</span>(<span class="string">&quot;model&quot;</span>, modelRed);</span><br><span class="line"><span class="built_in">glDrawArrays</span>(GL_TRIANGLES, <span class="number">0</span>, <span class="number">36</span>);</span><br><span class="line"></span><br><span class="line">shaderGreen.<span class="built_in">use</span>();</span><br><span class="line">shaderGreen.<span class="built_in">setMat4</span>(<span class="string">&quot;model&quot;</span>, modelGreen);</span><br><span class="line"><span class="built_in">glDrawArrays</span>(GL_TRIANGLES, <span class="number">0</span>, <span class="number">36</span>);</span><br></pre></td></tr></table></figure>
+<p>也就是说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UBO 负责公共数据</span><br><span class="line">普通 uniform 负责个体数据</span><br></pre></td></tr></table></figure>
+<p>这种思路在真实渲染器里非常常见。</p>
+<p>比如之后可以把这些数据放进 UBO：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">相机矩阵</span><br><span class="line">相机位置</span><br><span class="line">时间</span><br><span class="line">雾效参数</span><br><span class="line">全局光照参数</span><br><span class="line">屏幕尺寸</span><br><span class="line">阴影相关矩阵</span><br></pre></td></tr></table></figure>
+<p>而这些数据仍然适合单独设置：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">当前物体的 model 矩阵</span><br><span class="line">当前材质的纹理</span><br><span class="line">当前 draw call 的特殊开关</span><br></pre></td></tr></table></figure>
+<h2 id="十三、这一节和前后章节的关系">十三、这一节和前后章节的关系</h2>
+<p>高级 GLSL 不是孤立的一节。</p>
+<p>它和前面几节的关系很紧：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">高级数据：</span><br><span class="line">理解 Buffer 是 GPU 内存，知道 glBufferSubData 可以更新局部数据。</span><br><span class="line"></span><br><span class="line">高级 GLSL：</span><br><span class="line">Uniform 也可以放进 Buffer，通过 GL_UNIFORM_BUFFER 共享给多个 shader。</span><br></pre></td></tr></table></figure>
+<p>它也会和后面章节继续发生关系。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">几何着色器：</span><br><span class="line">接口块会帮助我们组织阶段之间的输入输出。</span><br><span class="line"></span><br><span class="line">实例化：</span><br><span class="line">会继续强调如何高效传递大量 per-instance 数据。</span><br><span class="line"></span><br><span class="line">高级光照：</span><br><span class="line">多个 shader、多个光源、多个矩阵共享时，UBO 的价值会更明显。</span><br></pre></td></tr></table></figure>
+<p>所以这节看起来“不炫”，但很像是给后面复杂渲染系统铺管线。</p>
+<h2 id="十四、容易踩的坑">十四、容易踩的坑</h2>
+<p>第一个坑：以为 UBO 绑定一次就所有 shader 都自动知道。</p>
+<p>不是的。</p>
+<p>UBO 绑定到 binding point：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glBindBufferRange</span>(GL_UNIFORM_BUFFER, <span class="number">0</span>, uboMatrices, <span class="number">0</span>, size);</span><br></pre></td></tr></table></figure>
+<p>shader 的 Uniform Block 也要绑定到同一个 binding point：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glUniformBlockBinding</span>(shader.ID, blockIndex, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>这两端都连上，数据才通。</p>
+<p>第二个坑：忘记每个 shader 都要绑定 Uniform Block。</p>
+<p>如果四个 shader 都有 <code>Matrices</code>，那么每个 shader 的 <code>Matrices</code> block 都要绑定到同一个 binding point。</p>
+<p>第三个坑：std140 padding 算错。</p>
+<p>尤其是：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">vec3</span></span><br><span class="line">数组</span><br><span class="line">结构体</span><br></pre></td></tr></table></figure>
+<p>这些类型在 <code>std140</code> 中经常有额外对齐和填充。<br>
+如果 C++ 侧结构体没有对齐好，shader 读到的数据就会错位。</p>
+<p>第四个坑：把变化频率很高、每个物体不同的数据也塞进共享 UBO。</p>
+<p>例如 <code>model</code> 矩阵每个物体都不同。<br>
+如果强行放进共享 UBO，反而会让更新逻辑变复杂。</p>
+<p>第五个坑：手动写 <code>gl_FragDepth</code> 却忘了性能影响。</p>
+<p>写 <code>gl_FragDepth</code> 可能影响提前深度测试。<br>
+如果只是普通渲染，不要轻易手动改深度。</p>
+<p>第六个坑：开启面剔除后还期望 <code>gl_FrontFacing</code> 处理被剔除的背面。</p>
+<p>被面剔除丢掉的三角形不会产生片段。<br>
+所以片段着色器也就没有机会判断它们。</p>
+<h2 id="十五、这一节可以做的实验">十五、这一节可以做的实验</h2>
+<p>这一节很适合做一个小而清晰的工程实验。</p>
+<p>建议新建项目：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">22_advanced_glsl</span><br></pre></td></tr></table></figure>
+<p>实验目标：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">绘制 4 个立方体</span><br><span class="line">使用 4 个不同片段着色器输出不同颜色</span><br><span class="line">4 个 shader 共享同一个 UBO 中的 projection 和 view</span><br><span class="line">每个立方体仍然单独设置自己的 model 矩阵</span><br></pre></td></tr></table></figure>
+<p>这样可以观察到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">画面上有 4 个不同颜色的立方体</span><br><span class="line">它们使用不同 shader</span><br><span class="line">但公共相机矩阵只更新到一个 UBO 中</span><br></pre></td></tr></table></figure>
+<p>这个实验不是为了画面多复杂，而是为了验证：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">多个 shader 可以通过 binding point 共享同一份 uniform 数据。</span><br></pre></td></tr></table></figure>
+<p>如果想继续扩展，可以再加两个小实验。</p>
+<p>实验一：使用 <code>gl_FragCoord</code> 做左右分屏。</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">gl_FragCoord</span>.x &lt; screenWidth * <span class="number">0.5</span>)</span><br><span class="line">    FragColor = <span class="type">vec4</span>(<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>);</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    FragColor = <span class="type">vec4</span>(<span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>实验二：关闭面剔除，用 <code>gl_FrontFacing</code> 给立方体内外不同颜色。</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">gl_FrontFacing</span>)</span><br><span class="line">    FragColor = <span class="type">vec4</span>(<span class="number">1.0</span>, <span class="number">0.8</span>, <span class="number">0.2</span>, <span class="number">1.0</span>);</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    FragColor = <span class="type">vec4</span>(<span class="number">0.2</span>, <span class="number">0.4</span>, <span class="number">1.0</span>, <span class="number">1.0</span>);</span><br></pre></td></tr></table></figure>
+<p>这两个实验能把“内建变量”也真正跑起来。</p>
+<h2 id="十六、本节小结">十六、本节小结</h2>
+<p>高级 GLSL 这一节可以压缩成三句话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">内建变量让 shader 能访问或影响渲染管线中的特殊信息。</span><br><span class="line">接口块让 shader 阶段之间的数据传递更整洁。</span><br><span class="line">UBO 让多个 shader 可以共享同一组 uniform 数据。</span><br></pre></td></tr></table></figure>
+<p>几个关键点：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">gl_Position：顶点着色器输出裁剪空间位置</span><br><span class="line">gl_PointSize：控制点图元大小</span><br><span class="line">gl_VertexID：当前顶点编号</span><br><span class="line">gl_FragCoord：当前片段窗口坐标和深度</span><br><span class="line">gl_FrontFacing：当前片段是否来自正面</span><br><span class="line">gl_FragDepth：手动写入片段深度，但可能影响 Early-Z</span><br></pre></td></tr></table></figure>
+<p>接口块的核心是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把多个 out / in 变量打包成一个结构化接口。</span><br></pre></td></tr></table></figure>
+<p>UBO 的核心是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Uniform Block 连接到 Binding Point</span><br><span class="line">Uniform Buffer Object 也连接到同一个 Binding Point</span><br><span class="line">多个 shader 就能共享同一份 Buffer 数据</span><br></pre></td></tr></table></figure>
+<p>最重要的工程直觉是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">公共数据放 UBO</span><br><span class="line">个体数据留普通 uniform</span><br><span class="line">复杂输入输出用接口块整理</span><br></pre></td></tr></table></figure>
+<p>这一节掌握以后，之后面对更复杂的 shader 管线时，就不会只停留在“一个 shader 一个变量慢慢 set”的阶段了。</p>
+<p>一句话收束：</p>
+<p><strong>高级 GLSL 让我们从“会写 shader”进阶到“会组织 shader 与程序之间的数据关系”。</strong></p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/05/13/graphics-notes/opengl-12-advanced-data/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 12 篇</span>
+                    <strong class="series-nav-title">如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、这一节解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81GLSL-%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">二、GLSL 的内建变量</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">三、顶点着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-Position"><span class="post-toc-list-text">1. gl_Position</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-PointSize"><span class="post-toc-list-text">2. gl_PointSize</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-VertexID"><span class="post-toc-list-text">3. gl_VertexID</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E7%89%87%E6%AE%B5%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">四、片段着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-FragCoord"><span class="post-toc-list-text">1. gl_FragCoord</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-FrontFacing"><span class="post-toc-list-text">2. gl_FrontFacing</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-FragDepth"><span class="post-toc-list-text">3. gl_FragDepth</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E6%8E%A5%E5%8F%A3%E5%9D%97-Interface-Block"><span class="post-toc-list-text">五、接口块 Interface Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81Uniform-%E7%BC%93%E5%86%B2%E5%AF%B9%E8%B1%A1-UBO"><span class="post-toc-list-text">六、Uniform 缓冲对象 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E5%9C%A8-GLSL-%E4%B8%AD%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">七、在 GLSL 中声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81std140-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">八、std140 是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81UBO-%E7%9A%84%E4%B8%89%E4%B8%AA%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">九、UBO 的三个角色</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81UBO-%E7%9A%84%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十、UBO 的使用流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%9C%A8-shader-%E9%87%8C%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">1. 在 shader 里声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%88%9B%E5%BB%BA%E5%B9%B6%E5%88%86%E9%85%8D-UBO"><span class="post-toc-list-text">2. 创建并分配 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8A%8A-UBO-%E7%BB%91%E5%AE%9A%E5%88%B0-binding-point"><span class="post-toc-list-text">3. 把 UBO 绑定到 binding point</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%8A%8A-shader-%E7%9A%84-Uniform-Block-%E7%BB%91%E5%AE%9A%E5%88%B0%E5%90%8C%E4%B8%80%E4%B8%AA-binding-point"><span class="post-toc-list-text">4. 把 shader 的 Uniform Block 绑定到同一个 binding point</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%9B%B4%E6%96%B0-UBO-%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">十一、更新 UBO 数据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81UBO-%E5%92%8C%E6%99%AE%E9%80%9A-uniform-%E6%80%8E%E4%B9%88%E9%85%8D%E5%90%88"><span class="post-toc-list-text">十二、UBO 和普通 uniform 怎么配合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%92%8C%E5%89%8D%E5%90%8E%E7%AB%A0%E8%8A%82%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">十三、这一节和前后章节的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">十四、容易踩的坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">十五、这一节可以做的实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十六、本节小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
