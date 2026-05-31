@@ -1,0 +1,369 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>属性复制主线：GetLifetimeReplicatedProps、RepNotify、条件复制与状态一致性 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">属性复制主线：GetLifetimeReplicatedProps、RepNotify、条件复制与状态一致性</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.03.05
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Networking</span>
+            
+            <span style="color: var(--accent);">#Replication</span>
+            
+            <span style="color: var(--accent);">#RepNotify</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 网络同步源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
+            <div class="series-meta">
+                <span>第 2 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 25%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-network-sync/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AF%B4%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">先说结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E5%AE%8C%E6%95%B4%E8%B7%AF%E5%BE%84%EF%BC%9A%E4%BB%8E%E5%AE%9A%E4%B9%89%E5%88%B0%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%94%9F%E6%95%88"><span class="post-toc-list-text">一条完整路径：从定义到客户端生效</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%A3%B0%E6%98%8E%E5%A4%8D%E5%88%B6%E6%84%8F%E5%9B%BE"><span class="post-toc-list-text">第 1 步：声明复制意图</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E5%A4%8D%E5%88%B6%E5%89%8D%E7%AD%9B%E9%80%89"><span class="post-toc-list-text">第 2 步：复制前筛选</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E5%B7%AE%E5%BC%82%E5%BA%8F%E5%88%97%E5%8C%96"><span class="post-toc-list-text">第 3 步：差异序列化</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-4-%E6%AD%A5%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%BA%94%E7%94%A8%E4%B8%8E%E9%80%9A%E7%9F%A5"><span class="post-toc-list-text">第 4 步：客户端应用与通知</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#REPNOTIFY-%E8%AF%A5%E6%80%8E%E4%B9%88%E9%80%89%EF%BC%9AOnChanged-%E8%BF%98%E6%98%AF-Always"><span class="post-toc-list-text">REPNOTIFY 该怎么选：OnChanged 还是 Always</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%AE%9E%E9%99%85%E6%8E%92%E9%9A%9C%E6%AD%A5%E9%AA%A4%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（实际排障步骤）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%A4%E4%B8%AA%E9%A1%B9%E7%9B%AE%E9%87%8C%E6%9C%80%E5%B8%B8%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">两个项目里最常踩的坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9A%E6%8A%8A%E7%8A%B6%E6%80%81%E5%90%8C%E6%AD%A5%E5%92%8C%E4%BA%8B%E4%BB%B6%E5%B9%BF%E6%92%AD%E6%B7%B7%E6%88%90%E4%B8%80%E4%BB%B6%E4%BA%8B"><span class="post-toc-list-text">坑 1：把状态同步和事件广播混成一件事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%8A%8A-OnRep-%E5%BD%93%E4%B8%9A%E5%8A%A1%E4%B8%BB%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">坑 2：把 OnRep 当业务主入口</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%99%E5%90%8E%E9%9D%A2%E6%96%87%E7%AB%A0%E7%95%99%E4%B8%AA%E9%92%A9%E5%AD%90"><span class="post-toc-list-text">给后面文章留个钩子</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 网络同步源码拆解（5.5）<br>
+本文主题：把“声明一个 Replicated 变量之后到底发生了什么”完整走一遍</p>
+</blockquote>
+<h2 id="先说结论">先说结论</h2>
+<p>多人项目里，属性复制问题最容易被低估。<br>
+因为它看起来像“加一个宏就行”，实际上它是四层机制叠起来的结果：</p>
+<ol>
+<li>声明层：你想同步什么</li>
+<li>规则层：这一帧允许发给谁</li>
+<li>序列化层：本帧到底写了哪些差异</li>
+<li>应用层：客户端怎么落地、怎么触发回调</li>
+</ol>
+<p>只要有一层没想明白，就会出现经典症状：</p>
+<ul>
+<li>服务器值明明改了，客户端不变</li>
+<li>客户端偶发变，下一帧又回去</li>
+<li><code>OnRep</code> 时有时无，看起来像随机</li>
+</ul>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;服务器修改属性&quot;] --&gt; B[&quot;AActor::PreReplication&quot;]</span><br><span class="line">    B --&gt; C[&quot;GetLifetimeReplicatedProps/条件筛选&quot;]</span><br><span class="line">    C --&gt; D[&quot;FObjectReplicator + FRepLayout 差异序列化&quot;]</span><br><span class="line">    D --&gt; E[&quot;UActorChannel 发送属性数据&quot;]</span><br><span class="line">    E --&gt; F[&quot;客户端 ReceiveProperties 应用&quot;]</span><br><span class="line">    F --&gt; G[&quot;OnRep 回调驱动表现更新&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>AActor::GetLifetimeReplicatedProps</code>：声明复制属性与条件。</li>
+<li><code>DOREPLIFETIME_*</code> 宏：定义复制策略（条件、通知）。</li>
+<li><code>AActor::PreReplication</code>：复制前动态筛选。</li>
+<li><code>FObjectReplicator::ReplicateProperties</code>：本帧属性打包入口。</li>
+<li><code>FRepLayout::ReplicateProperties</code>：差异序列化核心。</li>
+<li><code>FRepLayout::ReceiveProperties</code>：客户端接收应用。</li>
+</ul>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\ActorReplication.cpp:532</code><br>
+<code>AActor::GetLifetimeReplicatedProps(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Actor.cpp:1611</code><br>
+<code>AActor::PreReplication(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\RepLayout.cpp:6047</code><br>
+<code>FRepLayout::InitFromClass(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\RepLayout.cpp:6186</code><br>
+<code>Object-&gt;GetLifetimeReplicatedProps(LifetimeProps);</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\DataReplication.cpp:1827</code><br>
+<code>FObjectReplicator::ReplicateProperties(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\RepLayout.cpp:1940</code><br>
+<code>FRepLayout::ReplicateProperties(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\RepLayout.cpp:3757</code><br>
+<code>FRepLayout::ReceiveProperties(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Public\Net\UnrealNetwork.h:288</code><br>
+<code>DOREPLIFETIME_CONDITION_NOTIFY(...)</code></li>
+</ul>
+<h2 id="一条完整路径：从定义到客户端生效">一条完整路径：从定义到客户端生效</h2>
+<h3 id="第-1-步：声明复制意图">第 1 步：声明复制意图</h3>
+<p>你在类里写 <code>UPROPERTY(Replicated)</code> 或 <code>ReplicatedUsing</code>，本质是在声明“这不是本地字段，而是网络状态的一部分”。</p>
+<p>然后在 <code>GetLifetimeReplicatedProps</code> 注册到生命周期列表里。<br>
+这一步漏了，后面都不会发生。</p>
+<h3 id="第-2-步：复制前筛选">第 2 步：复制前筛选</h3>
+<p><code>PreReplication</code> 是非常关键但经常被忽略的点。<br>
+很多团队会在这里做“临时过滤”，比如：</p>
+<ul>
+<li>某类状态只在战斗中同步</li>
+<li>某些冗余字段在静止时跳过</li>
+</ul>
+<p>这没问题，但前提是你自己要有“可观测性”。<br>
+否则几周后你自己都忘了这里有个动态开关。</p>
+<h3 id="第-3-步：差异序列化">第 3 步：差异序列化</h3>
+<p><code>FObjectReplicator + FRepLayout</code> 会比较状态差异并写包。<br>
+注意关键词是“差异”：</p>
+<ul>
+<li>没变化，不发</li>
+<li>条件不满足，不发</li>
+<li>本帧没进复制通道，也不发</li>
+</ul>
+<p>这解释了一个高频误解：</p>
+<blockquote>
+<p>“我每帧都写这个值，为什么客户端有时候不触发 OnRep？”</p>
+</blockquote>
+<p>如果写的是同值，系统可能不会形成可发送差异。</p>
+<h3 id="第-4-步：客户端应用与通知">第 4 步：客户端应用与通知</h3>
+<p>客户端 <code>ReceiveProperties</code> 成功后，才进入 <code>OnRep</code>。<br>
+<code>OnRep</code> 的职责是“收到之后怎么展示”，而不是“决定是否应该同步”。</p>
+<h2 id="REPNOTIFY-该怎么选：OnChanged-还是-Always">REPNOTIFY 该怎么选：OnChanged 还是 Always</h2>
+<p><code>UnrealNetwork.h</code> 里有很明确的语义：</p>
+<ul>
+<li><code>REPNOTIFY_OnChanged</code>：默认选项，值变了再回调</li>
+<li><code>REPNOTIFY_Always</code>：每次收到都回调</li>
+</ul>
+<p>我的经验是：</p>
+<ol>
+<li>默认先 <code>OnChanged</code></li>
+<li>只有明确需要“重复通知语义”的地方才 <code>Always</code></li>
+<li>一旦用 <code>Always</code>，<code>OnRep</code> 里必须避免重逻辑</li>
+</ol>
+<p>常见反例：</p>
+<ul>
+<li>在 <code>OnRep</code> 里全量重建 UI</li>
+<li>在 <code>OnRep</code> 里再次写网络状态</li>
+<li>在 <code>OnRep</code> 里触发不幂等副作用</li>
+</ul>
+<h2 id="我会怎么跟源码（实际排障步骤）">我会怎么跟源码（实际排障步骤）</h2>
+<p>如果你遇到“属性不同步”，我建议按下面顺序排：</p>
+<ol>
+<li>看 <code>GetLifetimeReplicatedProps</code>：变量是否真的注册。</li>
+<li>看 <code>PreReplication</code>：有没有被你动态过滤掉。</li>
+<li>看 <code>FObjectReplicator::ReplicateProperties</code>：本帧有没有写出差异。</li>
+<li>看 <code>FRepLayout::ReceiveProperties</code>：客户端有没有正确应用。</li>
+<li>看 <code>OnRep</code>：表现是否被别的逻辑覆盖。</li>
+</ol>
+<p>这个顺序的价值在于：每一步都能回答“到底是没发、没到、还是到了但被覆盖”。</p>
+<h2 id="两个项目里最常踩的坑">两个项目里最常踩的坑</h2>
+<h3 id="坑-1：把状态同步和事件广播混成一件事">坑 1：把状态同步和事件广播混成一件事</h3>
+<p>例如血量变化：</p>
+<ul>
+<li>“当前血量是多少”是状态</li>
+<li>“播放一次受击闪红”是事件</li>
+</ul>
+<p>如果你试图用一个变量同时表达两者，迟早出问题。</p>
+<h3 id="坑-2：把-OnRep-当业务主入口">坑 2：把 OnRep 当业务主入口</h3>
+<p>OnRep 的触发时机取决于复制系统，不应该承载“必须执行”的权威业务。<br>
+业务关键逻辑要在服务器状态写入侧收口。</p>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li><code>Health</code> 使用 <code>RepNotify</code>。</li>
+<li>服务器在短时间内多次写入同一个值（例如都写 <code>80</code>）。</li>
+<li>客户端 UI 绑定在 <code>OnRep_Health</code>。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>客户端偶发不刷新，团队误判为“OnRep 不稳定”。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>复制系统按差异发送；重复写同值不会形成新差异，也就不会触发新的通知语义。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>把“状态变化”与“表现事件”拆开：</p>
+<ul>
+<li>状态走属性复制</li>
+<li>需要每次触发的表现走独立事件通道（RPC 或事件字段）</li>
+</ul>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;属性不同步/回调异常&quot;] --&gt; B&#123;&quot;已注册 GetLifetimeReplicatedProps 吗&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;补 DOREPLIFETIME 注册&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;PreReplication 是否动态过滤&quot;&#125;</span><br><span class="line">    D --&gt;|是| E[&quot;检查条件与开关时机&quot;]</span><br><span class="line">    D --&gt;|否| F&#123;&quot;本帧是否形成有效差异&quot;&#125;</span><br><span class="line">    F --&gt;|否| G[&quot;检查重复写同值/条件未命中&quot;]</span><br><span class="line">    F --&gt;|是| H&#123;&quot;客户端 ReceiveProperties 是否成功&quot;&#125;</span><br><span class="line">    H --&gt;|否| I[&quot;检查通道与序列化路径&quot;]</span><br><span class="line">    H --&gt;|是| J[&quot;排查 OnRep 内表现层覆盖&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="给后面文章留个钩子">给后面文章留个钩子</h2>
+<p>这一篇解决的是“属性如何稳定到达”。<br>
+下一篇我们会进入 RPC：请求方向、可靠性、安全边界，以及为什么“能调通”并不代表“可上线”。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-network-sync/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/01/15/ue-network-sync-notes/ue-network-sync-01-authority-ownership-and-replication-loop/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 1 篇</span>
+                    <strong class="series-nav-title">网络同步全景与权威模型：服务器权威、Ownership、连接与复制主循环</strong>
+                </a>
+                
+
+                
+                <a href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AF%B4%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">先说结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E5%AE%8C%E6%95%B4%E8%B7%AF%E5%BE%84%EF%BC%9A%E4%BB%8E%E5%AE%9A%E4%B9%89%E5%88%B0%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%94%9F%E6%95%88"><span class="post-toc-list-text">一条完整路径：从定义到客户端生效</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%A3%B0%E6%98%8E%E5%A4%8D%E5%88%B6%E6%84%8F%E5%9B%BE"><span class="post-toc-list-text">第 1 步：声明复制意图</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E5%A4%8D%E5%88%B6%E5%89%8D%E7%AD%9B%E9%80%89"><span class="post-toc-list-text">第 2 步：复制前筛选</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E5%B7%AE%E5%BC%82%E5%BA%8F%E5%88%97%E5%8C%96"><span class="post-toc-list-text">第 3 步：差异序列化</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC-4-%E6%AD%A5%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%BA%94%E7%94%A8%E4%B8%8E%E9%80%9A%E7%9F%A5"><span class="post-toc-list-text">第 4 步：客户端应用与通知</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#REPNOTIFY-%E8%AF%A5%E6%80%8E%E4%B9%88%E9%80%89%EF%BC%9AOnChanged-%E8%BF%98%E6%98%AF-Always"><span class="post-toc-list-text">REPNOTIFY 该怎么选：OnChanged 还是 Always</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%AE%9E%E9%99%85%E6%8E%92%E9%9A%9C%E6%AD%A5%E9%AA%A4%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（实际排障步骤）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%A4%E4%B8%AA%E9%A1%B9%E7%9B%AE%E9%87%8C%E6%9C%80%E5%B8%B8%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">两个项目里最常踩的坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9A%E6%8A%8A%E7%8A%B6%E6%80%81%E5%90%8C%E6%AD%A5%E5%92%8C%E4%BA%8B%E4%BB%B6%E5%B9%BF%E6%92%AD%E6%B7%B7%E6%88%90%E4%B8%80%E4%BB%B6%E4%BA%8B"><span class="post-toc-list-text">坑 1：把状态同步和事件广播混成一件事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%8A%8A-OnRep-%E5%BD%93%E4%B8%9A%E5%8A%A1%E4%B8%BB%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">坑 2：把 OnRep 当业务主入口</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%99%E5%90%8E%E9%9D%A2%E6%96%87%E7%AB%A0%E7%95%99%E4%B8%AA%E9%92%A9%E5%AD%90"><span class="post-toc-list-text">给后面文章留个钩子</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

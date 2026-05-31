@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE4 Gameplay Ability System 学习专栏 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/columns" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回专栏
+    </a>
+</div>
+
+<article class="post-container module column-shell">
+    
+    <header class="column-hero">
+        <div class="column-hero-top">
+            <div>
+                <p class="columns-kicker">系列内容</p>
+                <h1 class="columns-title">UE4 Gameplay Ability System 学习专栏</h1>
+            </div>
+            <span class="column-badge is-complete">已完结</span>
+        </div>
+
+        <p class="columns-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
+
+        <div class="column-overview-meta">
+            <span>当前阶段：2022.05 - 2022.10 学习整理</span>
+            <span>已发布 6 / 6</span>
+        </div>
+
+        <div class="column-progress large" aria-hidden="true">
+            <span style="width: 100%"></span>
+        </div>
+    </header>
+
+    
+    <section class="column-section">
+        <h2 class="column-section-title">这一栏想解决什么</h2>
+        <ul class="column-goals">
+            
+            <li>建立 GAS 的整体心智模型，明确 ASC、GE、GA、Tag、Attribute 之间的职责边界</li>
+            
+            <li>形成多人项目可复用的实现路径，覆盖输入、技能、冷却、目标选择与网络预测</li>
+            
+            <li>沉淀调试、优化与排障 checklist，降低后期维护成本</li>
+            
+        </ul>
+    </section>
+    
+
+    
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">系列大纲</h2>
+            <p class="column-section-note">后续文章会沿着这条路线持续补齐。</p>
+        </div>
+
+        <div class="column-outline">
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">1</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">从认知到落地：GAS 是什么、能做什么、该怎么起步</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">先统一 GAS 的问题域，再完成插件启用、模块依赖和 InitGlobalData 的最小可运行配置。</p>
+                    
+                    <a class="column-outline-link" href="/2022/05/08/ue-gas-notes/ue-gas-01-overview-sample-and-project-setup/">从认知到落地：GAS 是什么、能做什么、该怎么起步 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">2</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">读通能力系统的核心数据层，掌握复制模式、标签驱动与属性生命周期。</p>
+                    
+                    <a class="column-outline-link" href="/2022/06/12/ue-gas-notes/ue-gas-02-asc-tags-attributes-and-attributeset/">GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">3</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">数值系统核心：GameplayEffect、Modifier、MMC 与 ExecCalc</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">建立可维护的数值建模方式，理清可预测链路与不可预测链路的职责分工。</p>
+                    
+                    <a class="column-outline-link" href="/2022/07/17/ue-gas-notes/ue-gas-03-gameplayeffect-modeling-and-execution/">数值系统核心：GameplayEffect、Modifier、MMC 与 ExecCalc -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">4</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">技能运行时主线：GameplayAbility、输入绑定、AbilityTask 与批处理</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">把技能从授予到激活再到结束的全流程串起来，并落到多人网络下的 RPC 优化实践。</p>
+                    
+                    <a class="column-outline-link" href="/2022/08/14/ue-gas-notes/ue-gas-04-gameplayability-input-task-and-batching/">技能运行时主线：GameplayAbility、输入绑定、AbilityTask 与批处理 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">5</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">表现与网络体验：GameplayCue、Prediction、Targeting</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">解决“看起来对不对”的问题，平衡表现质量、网络带宽与预测一致性。</p>
+                    
+                    <a class="column-outline-link" href="/2022/09/18/ue-gas-notes/ue-gas-05-gameplaycue-prediction-and-targeting/">表现与网络体验：GameplayCue、Prediction、Targeting -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">6</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">上线前闭环：调试、优化、排障与版本演进</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">将常见问题、性能策略与版本差异汇总为可执行的上线前检查清单。</p>
+                    
+                    <a class="column-outline-link" href="/2022/10/23/ue-gas-notes/ue-gas-06-debug-optimization-troubleshooting-and-changelog/">上线前闭环：调试、优化、排障与版本演进 -></a>
+                    
+                </div>
+            </article>
+            
+        </div>
+    </section>
+    
+
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">已发布文章</h2>
+            <p class="column-section-note">按专栏顺序排列，适合从上往下连续阅读。</p>
+        </div>
+
+        
+        <div class="archive-list column-post-list">
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 1 篇</span>
+                <div class="column-post-main">
+                    <a href="/2022/05/08/ue-gas-notes/ue-gas-01-overview-sample-and-project-setup/">从认知到落地：GAS 是什么、能做什么、该怎么起步</a>
+                    <span class="post-meta">2022.05.08</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 2 篇</span>
+                <div class="column-post-main">
+                    <a href="/2022/06/12/ue-gas-notes/ue-gas-02-asc-tags-attributes-and-attributeset/">GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet</a>
+                    <span class="post-meta">2022.06.12</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 3 篇</span>
+                <div class="column-post-main">
+                    <a href="/2022/07/17/ue-gas-notes/ue-gas-03-gameplayeffect-modeling-and-execution/">数值系统核心：GameplayEffect、Modifier、MMC 与 ExecCalc</a>
+                    <span class="post-meta">2022.07.17</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 4 篇</span>
+                <div class="column-post-main">
+                    <a href="/2022/08/14/ue-gas-notes/ue-gas-04-gameplayability-input-task-and-batching/">技能运行时主线：GameplayAbility、输入绑定、AbilityTask 与批处理</a>
+                    <span class="post-meta">2022.08.14</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 5 篇</span>
+                <div class="column-post-main">
+                    <a href="/2022/09/18/ue-gas-notes/ue-gas-05-gameplaycue-prediction-and-targeting/">表现与网络体验：GameplayCue、Prediction、Targeting</a>
+                    <span class="post-meta">2022.09.18</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 6 篇</span>
+                <div class="column-post-main">
+                    <a href="/2022/10/23/ue-gas-notes/ue-gas-06-debug-optimization-troubleshooting-and-changelog/">上线前闭环：调试、优化、排障与版本演进</a>
+                    <span class="post-meta">2022.10.23</span>
+                </div>
+            </div>
+            
+        </div>
+        
+    </section>
+    
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

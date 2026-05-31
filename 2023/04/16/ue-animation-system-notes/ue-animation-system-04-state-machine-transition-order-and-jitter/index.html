@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.04.16
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Animation System</span>
+            
+            <span style="color: var(--accent);">#State Machine</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 动画系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
+            <div class="series-meta">
+                <span>第 4 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 50%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-animation-system/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%AF%8F%E5%B8%A7%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F%EF%BC%9A%E5%92%8C%E5%9B%BE%E9%9D%A2%E7%9B%B4%E8%A7%89%E5%93%AA%E9%87%8C%E4%B8%8D%E4%B8%80%E6%A0%B7"><span class="post-toc-list-text">每帧执行顺序：和图面直觉哪里不一样</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Update-%E4%BC%9A%E2%80%9C%E8%BF%9E%E7%BB%AD%E5%B0%9D%E8%AF%95%E5%A4%9A%E6%AC%A1%E8%BF%87%E6%B8%A1%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E4%B8%80%E6%AC%A1"><span class="post-toc-list-text">1) Update 会“连续尝试多次过渡”，不是一次</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-FindValidTransition-%E6%94%AF%E6%8C%81%E9%80%92%E5%BD%92%E6%8E%A2%E7%B4%A2%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">2) FindValidTransition 支持递归探索路径</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Transition-%E4%BA%8B%E4%BB%B6%E9%98%9F%E5%88%97%E6%9C%89%E8%BF%87%E6%9C%9F%E4%B8%8E%E6%B6%88%E8%B4%B9%E8%AF%AD%E4%B9%89"><span class="post-toc-list-text">3) Transition 事件队列有过期与消费语义</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Evaluate-%E9%98%B6%E6%AE%B5%E6%89%8D%E7%9C%9F%E6%AD%A3%E5%81%9A%E8%BF%87%E6%B8%A1%E6%B7%B7%E5%90%88"><span class="post-toc-list-text">4) Evaluate 阶段才真正做过渡混合</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%87%E6%8D%A2%E6%8A%96%E5%8A%A8%E7%9A%84%E5%9B%9B%E7%B1%BB%E6%A0%B9%E5%9B%A0%EF%BC%88%E6%BA%90%E7%A0%81%E8%A7%86%E8%A7%92%EF%BC%89"><span class="post-toc-list-text">切换抖动的四类根因（源码视角）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%8D%E6%8A%96%E7%AD%96%E7%95%A5%EF%BC%9A%E4%B8%8D%E6%94%B9%E5%BC%95%E6%93%8E%E4%B9%9F%E8%83%BD%E7%AB%8B%E5%88%BB%E8%A7%81%E6%95%88"><span class="post-toc-list-text">反抖策略：不改引擎也能立刻见效</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 动画系统源码拆解（5.5）<br>
+本文主题：还原状态机每帧更新与过渡评估顺序，定位“来回切状态”问题（源码长文版）</p>
+</blockquote>
+<h2 id="核心问题">核心问题</h2>
+<p>状态机线上故障 80% 不是“不会切”，而是“切得不稳定”：<br>
+同一角色在两个状态间高频往返，表现为脚步抖、上半身抽动、Notify 重复触发。</p>
+<p>要解决这个问题，必须把每帧真实评估顺序搞清楚，而不是只看图上的箭头。</p>
+<p>核心源码锚点：</p>
+<ul>
+<li><code>FAnimNode_StateMachine::Update_AnyThread</code>：<code>Runtime/Engine/Private/Animation/AnimNode_StateMachine.cpp:379</code></li>
+<li><code>FindValidTransition</code>：<code>:710</code></li>
+<li><code>UpdateTransitionStates</code>：<code>:854</code></li>
+<li><code>Evaluate_AnyThread</code>：<code>:910</code></li>
+<li><code>EvaluateTransitionStandardBlend</code>：<code>:1000</code></li>
+<li><code>EvaluateTransitionCustomBlend</code>：<code>:1077</code></li>
+<li>转换请求队列 <code>QueuedTransitionEvents</code> 清理/消费：<code>:395</code>、<code>:1491</code></li>
+<li><code>MaxTransitionsPerFrame</code> 默认值：<code>Runtime/Engine/Classes/Animation/AnimNode_StateMachine.h:133</code>（默认构造 <code>:228</code> 为 3）</li>
+<li><code>MaxTransitionsRequests</code>：同文件 <code>:138</code>（默认 32）</li>
+</ul>
+<h2 id="主线图">主线图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;当前 State 持续更新&quot;] --&gt; B[&quot;Update_AnyThread&quot;]</span><br><span class="line">    B --&gt; C[&quot;清理过期 Transition Event&quot;]</span><br><span class="line">    C --&gt; D[&quot;FindValidTransition: 按规则找可过渡路径&quot;]</span><br><span class="line">    D --&gt; E&#123;&quot;命中过渡?&quot;&#125;</span><br><span class="line">    E --&gt;|否| F[&quot;保持当前 State&quot;]</span><br><span class="line">    E --&gt;|是| G[&quot;生成 ActiveTransitionEntry&quot;]</span><br><span class="line">    G --&gt; H[&quot;UpdateTransitionStates&quot;]</span><br><span class="line">    H --&gt; I[&quot;Evaluate_AnyThread: 过渡混合求值&quot;]</span><br><span class="line">    I --&gt; J[&quot;进入下一 State 或继续过渡&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="每帧执行顺序：和图面直觉哪里不一样">每帧执行顺序：和图面直觉哪里不一样</h2>
+<h3 id="1-Update-会“连续尝试多次过渡”，不是一次">1) Update 会“连续尝试多次过渡”，不是一次</h3>
+<p><code>Update_AnyThread</code> 中有一个关键循环：在同一帧内，状态机可能跨越多个状态，直到达到 <code>MaxTransitionsPerFrame</code> 上限。<br>
+这就是为什么你会看到“我明明只想 A-&gt;B，却在同帧瞬间 B-&gt;C”。</p>
+<h3 id="2-FindValidTransition-支持递归探索路径">2) <code>FindValidTransition</code> 支持递归探索路径</h3>
+<p><code>FindValidTransition</code> 不只是检查“当前状态直接边”，它会沿潜在路径递归找合法过渡。<br>
+好处是更灵活，风险是：如果规则设计不稳定，你的抖动会被放大而不是被抑制。</p>
+<h3 id="3-Transition-事件队列有过期与消费语义">3) Transition 事件队列有过期与消费语义</h3>
+<p><code>QueuedTransitionEvents</code> 每帧会清理过期请求并消费已处理请求。<br>
+如果你把业务事件设计成“每帧都重复塞请求”，会造成规则层看起来“总在被打断”。</p>
+<h3 id="4-Evaluate-阶段才真正做过渡混合">4) Evaluate 阶段才真正做过渡混合</h3>
+<p><code>Evaluate_AnyThread</code> 根据 <code>ActiveTransitionArray</code> 做标准或自定义混合。<br>
+因此一个常见误判是：</p>
+<ul>
+<li>Update 看到状态切了。</li>
+<li>视觉却还在旧状态。</li>
+</ul>
+<p>这其实是正常的过渡窗行为，而不是“切换失败”。</p>
+<h2 id="切换抖动的四类根因（源码视角）">切换抖动的四类根因（源码视角）</h2>
+<ol>
+<li>输入边界抖动：规则阈值在临界点反复翻转。</li>
+<li>过渡窗冲突：新规则在旧过渡尚未收敛前再次触发。</li>
+<li>事件洪泛：重复 Transition Request 让队列持续被刷新。</li>
+<li>多跳过渡：同帧多次跳转使视觉稳定性下降。</li>
+</ol>
+<h2 id="反抖策略：不改引擎也能立刻见效">反抖策略：不改引擎也能立刻见效</h2>
+<ol>
+<li>给关键规则加滞回（enter/exit 阈值分离）。</li>
+<li>给过渡加最小驻留时间（state dwell time）。</li>
+<li>对事件请求做去重与冷却，避免每帧重发。</li>
+<li>审视 <code>MaxTransitionsPerFrame</code> 是否过高，必要时降低。</li>
+<li>用调试日志把“规则值变化”与“状态变化”同帧打印。</li>
+</ol>
+<h2 id="最小验证步骤">最小验证步骤</h2>
+<ol>
+<li>构造 <code>Idle &lt;-&gt; Move</code> 双向切换，阈值都设为同一个临界值（故意制造抖动）。</li>
+<li>每帧记录：输入速度、规则真假、当前状态、<code>ActiveTransitionArray</code> 数量。</li>
+<li>打断点观察 <code>FindValidTransition(:710)</code> 是否在同帧命中多次。</li>
+<li>在规则上加入滞回区间后复测，比较每秒状态切换次数。</li>
+<li>将 <code>MaxTransitionsPerFrame</code> 调低做对照，观察是否缓解多跳抖动。</li>
+<li>输出结论：抖动来自“规则设计”还是“过渡混合参数”。</li>
+</ol>
+<p>预期结果：你能把“看起来像动画问题”的抖动，精确还原为可量化的状态机时序问题。</p>
+<h2 id="小结">小结</h2>
+<p>状态机真正的复杂度不在节点数量，而在“同帧多次决策 + 过渡混合 + 事件队列”的组合。<br>
+当你沿 <code>Update_AnyThread -&gt; FindValidTransition -&gt; Evaluate_AnyThread</code> 这条链看问题，切换抖动会从玄学变成可验证的系统行为。<br>
+下一篇进入 Blend 体系，继续把 Evaluate 侧最核心的权重传播链讲透。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-animation-system/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/04/02/ue-animation-system-notes/ue-animation-system-03-animblueprint-compiled-runtime-structure/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">AnimBlueprint 编译产物：图节点如何变成运行时结构</strong>
+                </a>
+                
+
+                
+                <a href="/2023/05/07/ue-animation-system-notes/ue-animation-system-05-blend-system-weight-propagation/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">Blend 体系内核：Sequence Player、BlendSpace、Layered Blend 的权重传播</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%AF%8F%E5%B8%A7%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F%EF%BC%9A%E5%92%8C%E5%9B%BE%E9%9D%A2%E7%9B%B4%E8%A7%89%E5%93%AA%E9%87%8C%E4%B8%8D%E4%B8%80%E6%A0%B7"><span class="post-toc-list-text">每帧执行顺序：和图面直觉哪里不一样</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Update-%E4%BC%9A%E2%80%9C%E8%BF%9E%E7%BB%AD%E5%B0%9D%E8%AF%95%E5%A4%9A%E6%AC%A1%E8%BF%87%E6%B8%A1%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E4%B8%80%E6%AC%A1"><span class="post-toc-list-text">1) Update 会“连续尝试多次过渡”，不是一次</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-FindValidTransition-%E6%94%AF%E6%8C%81%E9%80%92%E5%BD%92%E6%8E%A2%E7%B4%A2%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">2) FindValidTransition 支持递归探索路径</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Transition-%E4%BA%8B%E4%BB%B6%E9%98%9F%E5%88%97%E6%9C%89%E8%BF%87%E6%9C%9F%E4%B8%8E%E6%B6%88%E8%B4%B9%E8%AF%AD%E4%B9%89"><span class="post-toc-list-text">3) Transition 事件队列有过期与消费语义</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Evaluate-%E9%98%B6%E6%AE%B5%E6%89%8D%E7%9C%9F%E6%AD%A3%E5%81%9A%E8%BF%87%E6%B8%A1%E6%B7%B7%E5%90%88"><span class="post-toc-list-text">4) Evaluate 阶段才真正做过渡混合</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%87%E6%8D%A2%E6%8A%96%E5%8A%A8%E7%9A%84%E5%9B%9B%E7%B1%BB%E6%A0%B9%E5%9B%A0%EF%BC%88%E6%BA%90%E7%A0%81%E8%A7%86%E8%A7%92%EF%BC%89"><span class="post-toc-list-text">切换抖动的四类根因（源码视角）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%8D%E6%8A%96%E7%AD%96%E7%95%A5%EF%BC%9A%E4%B8%8D%E6%94%B9%E5%BC%95%E6%93%8E%E4%B9%9F%E8%83%BD%E7%AB%8B%E5%88%BB%E8%A7%81%E6%95%88"><span class="post-toc-list-text">反抖策略：不改引擎也能立刻见效</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

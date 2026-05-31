@@ -1,0 +1,341 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.06.18
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#性能优化</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Animation System</span>
+            
+            <span style="color: var(--accent);">#稳定性</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 动画系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
+            <div class="series-meta">
+                <span>第 8 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-animation-system/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E9%97%AD%E7%8E%AF%EF%BC%9A%E4%BB%8E%E2%80%9C%E8%83%BD%E5%AE%9A%E4%BD%8D%E4%B8%80%E6%AC%A1%E2%80%9D%E5%88%B0%E2%80%9C%E9%95%BF%E6%9C%9F%E4%B8%8D%E5%A4%8D%E5%8F%91%E2%80%9D"><span class="post-toc-list-text">工程闭环：从“能定位一次”到“长期不复发”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%B9%B6%E8%A1%8C%E4%B8%8D%E6%98%AF%E9%BB%98%E8%AE%A4%E6%AD%A3%E7%A1%AE%EF%BC%8C%E8%A6%81%E9%AA%8C%E8%AF%81%E2%80%9C%E6%AD%A3%E7%A1%AE%E6%80%A7%E4%BC%98%E5%85%88%E2%80%9D"><span class="post-toc-list-text">1) 并行不是默认正确，要验证“正确性优先”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-URO-%E6%98%AF%E6%80%A7%E8%83%BD%E5%88%A9%E5%99%A8%EF%BC%8C%E4%B9%9F%E6%98%AF%E8%A7%86%E8%A7%89%E7%A8%B3%E5%AE%9A%E6%80%A7%E9%A3%8E%E9%99%A9%E7%82%B9"><span class="post-toc-list-text">2) URO 是性能利器，也是视觉稳定性风险点</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E9%A2%84%E7%AE%97%E7%B3%BB%E7%BB%9F%EF%BC%88AnimationBudgetAllocator%EF%BC%89%E6%98%AF%E2%80%9C%E7%B3%BB%E7%BB%9F%E7%BA%A7%E8%B0%83%E5%BA%A6%E2%80%9D"><span class="post-toc-list-text">3) 预算系统（AnimationBudgetAllocator）是“系统级调度”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%BB%BA%E7%AB%8B%E5%9B%BA%E5%AE%9A%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%8C%E9%81%BF%E5%85%8D%E6%9D%A5%E5%9B%9E%E8%B7%B3%E5%B1%82"><span class="post-toc-list-text">4) 建立固定排查顺序，避免来回跳层</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%87%E5%87%86%E5%8C%96-Checklist%EF%BC%88%E5%BB%BA%E8%AE%AE%E8%B4%B4%E5%88%B0%E9%A1%B9%E7%9B%AE-Wiki%EF%BC%89"><span class="post-toc-list-text">标准化 Checklist（建议贴到项目 Wiki）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8E-Motion-Matching-%E4%B8%93%E6%A0%8F%E7%9A%84%E8%BE%B9%E7%95%8C%E4%B8%8E%E8%A1%94%E6%8E%A5"><span class="post-toc-list-text">与 Motion Matching 专栏的边界与衔接</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 动画系统源码拆解（5.5）<br>
+本文主题：把“能跑”变成“可上线”，形成可复用的性能与稳定性排查闭环（源码长文版）</p>
+</blockquote>
+<h2 id="核心问题">核心问题</h2>
+<p>动画系统最贵的问题不是某个单点 bug，而是同类问题反复出现、每次都靠经验救火。<br>
+这篇把前 7 篇收束成一套可执行闭环：</p>
+<ol>
+<li>并行策略如何开。</li>
+<li>跳帧与插帧如何控。</li>
+<li>预算系统如何接。</li>
+<li>排查与回归如何标准化。</li>
+</ol>
+<p>核心源码锚点（主线组件）：</p>
+<ul>
+<li>并行开关：<code>SkeletalMeshComponent.cpp:62-65</code>（<code>a.ParallelAnimEvaluation</code> 等）</li>
+<li><code>DispatchParallelEvaluationTasks</code>：<code>:2775</code></li>
+<li><code>ParallelAnimationEvaluation</code>：<code>:4346</code></li>
+<li><code>CompleteParallelAnimationEvaluation</code>：<code>:4439</code></li>
+<li>URO 相关分支：<code>:2609</code>、<code>:2626</code>、<code>:2628</code>、<code>:2925</code>、<code>:3969</code></li>
+<li><code>bEnableUpdateRateOptimizations</code>：<code>:428</code></li>
+</ul>
+<p>核心源码锚点（URO 数据结构）：</p>
+<ul>
+<li><code>FAnimUpdateRateParameters</code>：<code>Runtime/Engine/Classes/Engine/EngineTypes.h:2388</code></li>
+<li><code>ShouldInterpolateSkippedFrames</code>：<code>:2551</code></li>
+<li><code>GetInterpolationAlpha</code>：<code>:2527</code></li>
+<li><code>GetRootMotionInterp</code>：<code>:2530</code></li>
+</ul>
+<p>核心源码锚点（预算系统插件）：</p>
+<ul>
+<li><code>a.Budget.Enabled</code>：<code>Plugins/Runtime/AnimationBudgetAllocator/.../AnimationBudgetAllocatorCVars.cpp:10</code></li>
+<li><code>a.Budget.BudgetMs</code>：<code>:91</code></li>
+<li><code>a.Budget.InterpolationMaxRate</code>：<code>:167</code></li>
+<li><code>FAnimationBudgetAllocator::Update</code>：<code>.../AnimationBudgetAllocator.cpp:691</code></li>
+<li><code>RegisterComponent</code>：<code>:933</code></li>
+<li><code>SetEnabled</code>：<code>:1060</code></li>
+<li><code>USkeletalMeshComponentBudgeted::SetComponentSignificance</code>：<code>.../SkeletalMeshComponentBudgeted.cpp:79</code></li>
+<li><code>USkeletalMeshComponentBudgeted::TickComponent</code>：<code>:91</code></li>
+</ul>
+<h2 id="主线图">主线图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;线上现象: 错/卡/抖&quot;] --&gt; B[&quot;输入稳定性检查&quot;]</span><br><span class="line">    B --&gt; C[&quot;Update 决策检查&quot;]</span><br><span class="line">    C --&gt; D[&quot;Evaluate 开销与并行分支检查&quot;]</span><br><span class="line">    D --&gt; E[&quot;URO 跳帧/插帧与 RootMotion 一致性&quot;]</span><br><span class="line">    E --&gt; F[&quot;预算分配与重要性策略&quot;]</span><br><span class="line">    F --&gt; G[&quot;修复 + 回归基线更新&quot;]</span><br><span class="line">    G --&gt; H[&quot;跨专栏: Motion Matching 深入&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="工程闭环：从“能定位一次”到“长期不复发”">工程闭环：从“能定位一次”到“长期不复发”</h2>
+<h3 id="1-并行不是默认正确，要验证“正确性优先”">1) 并行不是默认正确，要验证“正确性优先”</h3>
+<p><code>a.ParallelAnimEvaluation</code>、<code>a.ParallelAnimUpdate</code> 只决定执行路径，不保证业务逻辑线程安全。<br>
+闭环第一条：</p>
+<ul>
+<li>先验证并行开关前后行为一致。</li>
+<li>再比较性能收益。</li>
+</ul>
+<p>任何“并行更快但偶发错态”的结果都不能上线。</p>
+<h3 id="2-URO-是性能利器，也是视觉稳定性风险点">2) URO 是性能利器，也是视觉稳定性风险点</h3>
+<p><code>FAnimUpdateRateParameters</code> 控制跳帧与插帧。<br>
+如果只盯 FPS，不看动画连续性，很容易出现：</p>
+<ul>
+<li>低频角色抖动。</li>
+<li>Root Motion 插值失真。</li>
+</ul>
+<p>所以 URO 调参必须绑定视觉回归场景，而不是只看总帧时。</p>
+<h3 id="3-预算系统（AnimationBudgetAllocator）是“系统级调度”">3) 预算系统（AnimationBudgetAllocator）是“系统级调度”</h3>
+<p>启用 <code>a.Budget.Enabled</code> 后，预算分配器会根据重要性、预算上限动态决定组件更新策略。<br>
+关键点：</p>
+<ul>
+<li>预算不是单纯关动画，而是调度“谁该完整更新、谁可降级”。</li>
+<li><code>SetComponentSignificance</code> 设计得好，性能和观感可以同时保。</li>
+</ul>
+<h3 id="4-建立固定排查顺序，避免来回跳层">4) 建立固定排查顺序，避免来回跳层</h3>
+<p>推荐固定顺序：</p>
+<ol>
+<li>输入层（速度、朝向、状态）是否稳定。</li>
+<li>Update 层（状态机、Montage、层切换）是否振荡。</li>
+<li>Evaluate 层（混合复杂度、并行任务）是否超预算。</li>
+<li>后处理与位移层（IK/RootMotion/Movement）是否一致。</li>
+</ol>
+<p>顺序固定以后，团队排障效率会比“各人凭经验”稳定得多。</p>
+<h2 id="标准化-Checklist（建议贴到项目-Wiki）">标准化 Checklist（建议贴到项目 Wiki）</h2>
+<ol>
+<li>功能正确性：并行开关前后行为一致。</li>
+<li>时序正确性：Notify 与玩法事件对齐。</li>
+<li>位移正确性：动画位移与胶囊运动一致。</li>
+<li>性能稳定性：关键场景下 <code>stat anim</code> 峰值可控。</li>
+<li>回归稳定性：同场景重放 30 次无随机抖动。</li>
+<li>预算稳定性：超预算时降级行为可预期且可接受。</li>
+</ol>
+<h2 id="最小验证步骤">最小验证步骤</h2>
+<ol>
+<li>固定 4 个基线场景：直线跑、急停、急转、技能打断。</li>
+<li>每个场景记录：<code>stat anim</code>、状态机关键状态、Montage 状态、RootMotion 输出。</li>
+<li>做三组并行对照：<br>
+<code>a.ParallelAnimEvaluation</code>、<code>a.ParallelAnimUpdate</code>、<code>bEnableUpdateRateOptimizations</code>。</li>
+<li>启用预算系统后逐步收紧 <code>a.Budget.BudgetMs</code>，观察降级顺序与视觉影响。</li>
+<li>把所有修复项绑定回归用例并自动化记录结果趋势。</li>
+<li>每月更新一次动画基线，防止性能/稳定性缓慢退化。</li>
+</ol>
+<p>预期结果：动画问题会从“专家救火”转成“流程可复制”。</p>
+<h2 id="与-Motion-Matching-专栏的边界与衔接">与 Motion Matching 专栏的边界与衔接</h2>
+<p>本专栏到这里为止只解决“通用动画管线的正确性与工程化”。<br>
+当你已经能稳定回答：</p>
+<ul>
+<li>这帧在哪个阶段错？</li>
+<li>为什么错？</li>
+<li>如何稳定复现？</li>
+</ul>
+<p>再进入 Motion Matching（查询式选姿）才有最高收益。<br>
+也就是说，推荐学习路径是：</p>
+<ol>
+<li>先把本专栏 1-8 篇打通。</li>
+<li>再把同样的排查方法迁移到 MM 查询、特征构建、候选筛选链路。</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>动画系统真正的交付标准，不是“看起来能动”，而是“高压场景下可解释、可调、可回归”。<br>
+并行、URO、预算分配、回归基线四件事结合起来，才是 UE5 动画工程的完整闭环。<br>
+到这一步，你已经具备进入下一阶段（Motion Matching 深水区）的稳固地基。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-animation-system/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/06/04/ue-animation-system-notes/ue-animation-system-07-layered-animblueprint-architecture/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">动画蓝图分层架构：Linked Anim Layer、Sub Anim Instance、Post Process 的组合策略</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E9%97%AD%E7%8E%AF%EF%BC%9A%E4%BB%8E%E2%80%9C%E8%83%BD%E5%AE%9A%E4%BD%8D%E4%B8%80%E6%AC%A1%E2%80%9D%E5%88%B0%E2%80%9C%E9%95%BF%E6%9C%9F%E4%B8%8D%E5%A4%8D%E5%8F%91%E2%80%9D"><span class="post-toc-list-text">工程闭环：从“能定位一次”到“长期不复发”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%B9%B6%E8%A1%8C%E4%B8%8D%E6%98%AF%E9%BB%98%E8%AE%A4%E6%AD%A3%E7%A1%AE%EF%BC%8C%E8%A6%81%E9%AA%8C%E8%AF%81%E2%80%9C%E6%AD%A3%E7%A1%AE%E6%80%A7%E4%BC%98%E5%85%88%E2%80%9D"><span class="post-toc-list-text">1) 并行不是默认正确，要验证“正确性优先”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-URO-%E6%98%AF%E6%80%A7%E8%83%BD%E5%88%A9%E5%99%A8%EF%BC%8C%E4%B9%9F%E6%98%AF%E8%A7%86%E8%A7%89%E7%A8%B3%E5%AE%9A%E6%80%A7%E9%A3%8E%E9%99%A9%E7%82%B9"><span class="post-toc-list-text">2) URO 是性能利器，也是视觉稳定性风险点</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E9%A2%84%E7%AE%97%E7%B3%BB%E7%BB%9F%EF%BC%88AnimationBudgetAllocator%EF%BC%89%E6%98%AF%E2%80%9C%E7%B3%BB%E7%BB%9F%E7%BA%A7%E8%B0%83%E5%BA%A6%E2%80%9D"><span class="post-toc-list-text">3) 预算系统（AnimationBudgetAllocator）是“系统级调度”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%BB%BA%E7%AB%8B%E5%9B%BA%E5%AE%9A%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%8C%E9%81%BF%E5%85%8D%E6%9D%A5%E5%9B%9E%E8%B7%B3%E5%B1%82"><span class="post-toc-list-text">4) 建立固定排查顺序，避免来回跳层</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%87%E5%87%86%E5%8C%96-Checklist%EF%BC%88%E5%BB%BA%E8%AE%AE%E8%B4%B4%E5%88%B0%E9%A1%B9%E7%9B%AE-Wiki%EF%BC%89"><span class="post-toc-list-text">标准化 Checklist（建议贴到项目 Wiki）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8E-Motion-Matching-%E4%B8%93%E6%A0%8F%E7%9A%84%E8%BE%B9%E7%95%8C%E4%B8%8E%E8%A1%94%E6%8E%A5"><span class="post-toc-list-text">与 Motion Matching 专栏的边界与衔接</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

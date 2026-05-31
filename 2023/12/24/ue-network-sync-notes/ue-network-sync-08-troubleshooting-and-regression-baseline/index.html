@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.12.24
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#性能优化</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Networking</span>
+            
+            <span style="color: var(--accent);">#调试工具</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 网络同步源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
+            <div class="series-meta">
+                <span>第 8 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-network-sync/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E6%98%AF%E5%85%A8%E4%B8%93%E6%A0%8F%E7%9A%84%E6%94%B6%E6%9D%9F"><span class="post-toc-list-text">这篇是全专栏的收束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%85%88%E5%9B%BA%E5%AE%9A%E5%A4%8D%E7%8E%B0%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">第一步：先固定复现条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E8%AF%81%E6%8D%AE%E6%9C%80%E5%B0%8F%E9%9B%86%EF%BC%88%E5%BF%85%E9%A1%BB%E9%BD%90%EF%BC%89"><span class="post-toc-list-text">第二步：证据最小集（必须齐）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E5%85%88%E5%BD%92%E5%9B%A0%E5%86%8D%E4%BF%AE%E5%A4%8D"><span class="post-toc-list-text">第三步：先归因再修复</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E6%9C%80%E5%B0%8F%E6%94%B9%E5%8A%A8%E5%8E%9F%E5%88%99"><span class="post-toc-list-text">第四步：最小改动原则</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%94%E6%AD%A5%EF%BC%9A%E5%9B%9E%E5%BD%92%E5%9F%BA%E7%BA%BF%E8%A6%81%E6%95%B0%E5%AD%97%E5%8C%96"><span class="post-toc-list-text">第五步：回归基线要数字化</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E9%97%AD%E7%8E%AF%E8%B0%83%E8%AF%95%E8%B7%AF%E5%BE%84%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（闭环调试路径）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E7%BA%BF%E5%89%8D%E7%BD%91%E7%BB%9C%E5%9B%9E%E5%BD%92%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%88%B0-CI%EF%BC%89"><span class="post-toc-list-text">上线前网络回归清单（建议直接落到 CI）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">写在最后</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 网络同步源码拆解（5.5）<br>
+本文主题：把“会修 bug”升级成“能持续避免同类 bug”</p>
+</blockquote>
+<h2 id="这篇是全专栏的收束">这篇是全专栏的收束</h2>
+<p>前 7 篇讲的是机制和策略。<br>
+最后这一篇只做一件事：把这些知识变成长期可执行的工程闭环。</p>
+<p>我们要避免的不是某一个 bug，而是“同类 bug 反复发生”。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;线上异常现象&quot;] --&gt; B[&quot;固定网络模拟条件复现&quot;]</span><br><span class="line">    B --&gt; C[&quot;采集日志与指标&quot;]</span><br><span class="line">    C --&gt; D[&quot;Trace/Insights 定位瓶颈&quot;]</span><br><span class="line">    D --&gt; E[&quot;最小修复并二次验证&quot;]</span><br><span class="line">    E --&gt; F[&quot;沉淀回归基线与检查清单&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>PktLag / PktLoss / PktJitter</code>：构造延迟、丢包、抖动环境。</li>
+<li><code>p.NetShowCorrections</code>：可视化纠偏频率与幅度。</li>
+<li>NetTrace 入口：抓网络包时间线与对象热点。</li>
+<li><code>stat net</code>：快速观察实时负载。</li>
+<li>关键业务日志：请求、权威落地、客户端应用三点闭环。</li>
+</ul>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Classes\Engine\NetDriver.h:513</code><br>
+<code>PktLag</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Classes\Engine\NetDriver.h:465</code><br>
+<code>PktLoss</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Classes\Engine\NetDriver.h:559</code><br>
+<code>PktJitter</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\NetDriver.cpp:4761</code><br>
+<code>PktLoss</code> 命令解析</li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\NetDriver.cpp:4781</code><br>
+<code>PktLag</code> 命令解析</li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\NetDriver.cpp:4821</code><br>
+<code>PktJitter</code> 命令解析</li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:394</code><br>
+<code>p.NetShowCorrections</code> 注册</li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\UnrealEngine.cpp:2303</code><br>
+<code>NetTrace</code> 命令行参数解析</li>
+</ul>
+<h2 id="第一步：先固定复现条件">第一步：先固定复现条件</h2>
+<p>没有固定复现，后面全部是玄学。<br>
+建议团队常驻三档网络配置（写进测试文档）：</p>
+<ol>
+<li>基线档：低延迟、无丢包</li>
+<li>常态档：中延迟、小抖动</li>
+<li>压力档：高延迟 + 抖动 + 少量丢包</li>
+</ol>
+<p>每次排障记录必须带上“使用哪一档”。</p>
+<h2 id="第二步：证据最小集（必须齐）">第二步：证据最小集（必须齐）</h2>
+<p>我建议每次问题单都附三类证据：</p>
+<ol>
+<li>现象证据：录屏/时间戳</li>
+<li>链路证据：请求 -&gt; 判定 -&gt; 应用三点日志</li>
+<li>资源证据：<code>stat net</code> + Trace 截图</li>
+</ol>
+<p>缺任意一类，复盘质量都会下降。</p>
+<h2 id="第三步：先归因再修复">第三步：先归因再修复</h2>
+<p>很多“修复失败”不是改错代码，而是归错层级。<br>
+归因至少分三层：</p>
+<ol>
+<li>复制治理层（候选过大、优先级失真、频率配置失衡）</li>
+<li>预测纠偏层（模型不一致、重放缺失、平滑失配）</li>
+<li>业务表现层（预反馈覆盖权威结果、状态渲染时机错位）</li>
+</ol>
+<p>先定层，再改代码，成功率会高很多。</p>
+<h2 id="第四步：最小改动原则">第四步：最小改动原则</h2>
+<p>排障期最容易犯的错是“大改重构”。<br>
+建议固定原则：</p>
+<ol>
+<li>一次只改一个假设对应的最小代码面</li>
+<li>改完立刻在同一网络档位复验</li>
+<li>通过后再扩展到其他档位</li>
+</ol>
+<p>这样才能知道“到底是哪个改动起了作用”。</p>
+<h2 id="第五步：回归基线要数字化">第五步：回归基线要数字化</h2>
+<p>没有数字化基线，团队会很快回到“感觉良好”的状态。<br>
+我建议至少维护三组核心指标：</p>
+<ol>
+<li>一致性指标
+<ul>
+<li>状态不一致发生率</li>
+<li>关键状态收敛时间</li>
+</ul>
+</li>
+<li>纠偏指标
+<ul>
+<li>单位时间纠偏次数</li>
+<li>单次纠偏位移/速度幅度</li>
+</ul>
+</li>
+<li>带宽指标
+<ul>
+<li>峰值带宽</li>
+<li>峰值持续时间</li>
+</ul>
+</li>
+</ol>
+<p>每次版本必须与上一版基线对比。</p>
+<h2 id="我会怎么跟源码（闭环调试路径）">我会怎么跟源码（闭环调试路径）</h2>
+<ol>
+<li>在 <code>NetDriver</code> 参数解析路径确认模拟参数已生效。</li>
+<li>在请求入口打时间戳日志。</li>
+<li>在服务器权威写入点打时间戳日志。</li>
+<li>在客户端应用点打时间戳日志。</li>
+<li>用 Trace 对齐三点时间线，判断瓶颈在发送、接收还是应用。</li>
+</ol>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>设置 <code>PktLag=120</code>、<code>PktJitter=20</code>、<code>PktLoss=2</code>。</li>
+<li>运行“移动 + 战斗 + 交互”混合场景 5 分钟。</li>
+<li>采集 <code>stat net</code>、纠偏可视化和三点日志。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>偶发技能状态晚到、局部回弹、个别对象更新饥饿。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>低价值对象复制突刺挤占预算，同时预测平滑窗口偏短，叠加造成体验波动。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>先治理复制峰值（可见性/优先级/频率/休眠），再调整预测平滑参数；<br>
+同档位复验通过后再扩展到其他档位。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;发现网络异常&quot;] --&gt; B&#123;&quot;能稳定复现吗&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;先固定模拟参数模板&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;三点日志和指标齐吗&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;补齐请求/判定/应用证据&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;问题属于哪一层&quot;&#125;</span><br><span class="line">    F --&gt;|复制治理层| G[&quot;调 Relevancy/Priority/Frequency/Dormancy&quot;]</span><br><span class="line">    F --&gt;|预测纠偏层| H[&quot;查模型一致性/ACK/重放/平滑&quot;]</span><br><span class="line">    F --&gt;|业务表现层| I[&quot;校正预反馈与权威反馈时机&quot;]</span><br><span class="line">    G --&gt; J[&quot;同条件复验并记录基线&quot;]</span><br><span class="line">    H --&gt; J</span><br><span class="line">    I --&gt; J</span><br></pre></td></tr></table></figure>
+<h2 id="上线前网络回归清单（建议直接落到-CI）">上线前网络回归清单（建议直接落到 CI）</h2>
+<ol>
+<li>三档网络条件必须全跑。</li>
+<li>每档必须覆盖移动/战斗/交互三类核心循环。</li>
+<li>每次改动必须产出三点日志与指标快照。</li>
+<li>指标超过阈值自动告警（不靠人工“看感觉”）。</li>
+<li>关键玩法改动必须附最小复现实验脚本。</li>
+</ol>
+<h2 id="写在最后">写在最后</h2>
+<p>到这里，这个专栏真正想建立的不是“某一套技巧”，而是“同一套工作方式”。</p>
+<p>当团队把网络问题当作可观测、可归因、可回归的工程对象，<br>
+多人同步才会从“靠经验救火”变成“持续稳定迭代”。</p>
+<p>这就是我理解的源码阅读价值：不是为了记住函数名，而是为了让项目少走弯路。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-network-sync/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/11/05/ue-network-sync-notes/ue-network-sync-07-combat-and-interaction-sync/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E6%98%AF%E5%85%A8%E4%B8%93%E6%A0%8F%E7%9A%84%E6%94%B6%E6%9D%9F"><span class="post-toc-list-text">这篇是全专栏的收束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%85%88%E5%9B%BA%E5%AE%9A%E5%A4%8D%E7%8E%B0%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">第一步：先固定复现条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E8%AF%81%E6%8D%AE%E6%9C%80%E5%B0%8F%E9%9B%86%EF%BC%88%E5%BF%85%E9%A1%BB%E9%BD%90%EF%BC%89"><span class="post-toc-list-text">第二步：证据最小集（必须齐）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E5%85%88%E5%BD%92%E5%9B%A0%E5%86%8D%E4%BF%AE%E5%A4%8D"><span class="post-toc-list-text">第三步：先归因再修复</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E6%9C%80%E5%B0%8F%E6%94%B9%E5%8A%A8%E5%8E%9F%E5%88%99"><span class="post-toc-list-text">第四步：最小改动原则</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%94%E6%AD%A5%EF%BC%9A%E5%9B%9E%E5%BD%92%E5%9F%BA%E7%BA%BF%E8%A6%81%E6%95%B0%E5%AD%97%E5%8C%96"><span class="post-toc-list-text">第五步：回归基线要数字化</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E9%97%AD%E7%8E%AF%E8%B0%83%E8%AF%95%E8%B7%AF%E5%BE%84%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（闭环调试路径）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E7%BA%BF%E5%89%8D%E7%BD%91%E7%BB%9C%E5%9B%9E%E5%BD%92%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%88%B0-CI%EF%BC%89"><span class="post-toc-list-text">上线前网络回归清单（建议直接落到 CI）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">写在最后</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

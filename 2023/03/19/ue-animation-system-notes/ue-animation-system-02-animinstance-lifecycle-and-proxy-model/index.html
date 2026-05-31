@@ -1,0 +1,313 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AnimInstance 生命周期与 Proxy 模型：Initialize / Update / Evaluate 与多线程边界 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">AnimInstance 生命周期与 Proxy 模型：Initialize / Update / Evaluate 与多线程边界</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.03.19
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Animation System</span>
+            
+            <span style="color: var(--accent);">#AnimInstance</span>
+            
+            <span style="color: var(--accent);">#FAnimInstanceProxy</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 动画系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
+            <div class="series-meta">
+                <span>第 2 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 25%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-animation-system/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%8E%E7%BA%BF%E7%A8%8B%E8%BE%B9%E7%95%8C%EF%BC%9A%E9%80%90%E6%AE%B5%E6%8B%86"><span class="post-toc-list-text">生命周期与线程边界：逐段拆</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Initialize%EF%BC%9A%E5%AF%B9%E8%B1%A1%E8%AF%AD%E4%B9%89%E5%BB%BA%E7%AB%8B-%E8%BF%90%E8%A1%8C%E6%97%B6%E7%BB%93%E6%9E%84%E5%B0%B1%E7%BB%AA"><span class="post-toc-list-text">1) Initialize：对象语义建立 + 运行时结构就绪</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Update%EF%BC%9A%E6%8E%A8%E8%BF%9B%E2%80%9C%E7%8A%B6%E6%80%81%E4%B8%8E%E6%97%B6%E9%97%B4%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E7%9B%B4%E6%8E%A5%E7%AE%97%E6%9C%80%E7%BB%88-Pose"><span class="post-toc-list-text">2) Update：推进“状态与时间”，不是直接算最终 Pose</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Evaluate%EF%BC%9A%E5%8F%AA%E8%AF%BB%E5%B7%B2%E5%87%86%E5%A4%87%E5%A5%BD%E7%9A%84%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%EF%BC%8C%E7%94%9F%E6%88%90%E5%A7%BF%E6%80%81"><span class="post-toc-list-text">3) Evaluate：只读已准备好的运行时数据，生成姿态</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Notify-%E4%B8%8E-RootMotion%EF%BC%9A%E5%89%AF%E4%BD%9C%E7%94%A8%E5%9B%9E%E5%88%B0-GameThread"><span class="post-toc-list-text">4) Notify 与 RootMotion：副作用回到 GameThread</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E4%B8%8A%E7%9A%84%E6%95%B0%E6%8D%AE%E5%A5%91%E7%BA%A6%EF%BC%88%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%9B%A2%E9%98%9F%E8%A7%84%E8%8C%83%EF%BC%89"><span class="post-toc-list-text">工程上的数据契约（建议直接落团队规范）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E9%94%99%E8%AF%AF%E4%B8%8E%E5%8F%8D%E4%BE%8B"><span class="post-toc-list-text">常见错误与反例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%99%E8%AF%AF-1%EF%BC%9AThreadSafeUpdate-%E9%87%8C%E7%9B%B4%E6%8E%A5%E8%AE%BF%E9%97%AE-Controller-Actor-%E5%A4%8D%E6%9D%82%E8%A1%8C%E4%B8%BA"><span class="post-toc-list-text">错误 1：ThreadSafeUpdate 里直接访问 Controller&#x2F;Actor 复杂行为</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%99%E8%AF%AF-2%EF%BC%9AEventGraph-%E5%90%8C%E6%97%B6%E6%89%BF%E6%8B%85%E9%87%87%E6%A0%B7%E5%92%8C%E6%8E%A8%E5%AF%BC"><span class="post-toc-list-text">错误 2：EventGraph 同时承担采样和推导</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%99%E8%AF%AF-3%EF%BC%9A%E6%8A%8A-Notify-%E5%BD%93%E4%BD%9C%E4%B8%A5%E6%A0%BC%E5%AE%9E%E6%97%B6%E6%97%B6%E9%92%9F"><span class="post-toc-list-text">错误 3：把 Notify 当作严格实时时钟</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 动画系统源码拆解（5.5）<br>
+本文主题：拆清 AnimInstance 与 Proxy 的职责分工，以及线程安全边界（源码长文版）</p>
+</blockquote>
+<h2 id="核心问题">核心问题</h2>
+<p>UE5 动画并行化后，最容易导致“偶发错态、偶发崩溃、偶发抖动”的根因，不是节点本身，而是线程边界被打破。<br>
+这篇只回答一个问题：<strong>什么数据该放在 <code>UAnimInstance</code>，什么数据该进入 <code>FAnimInstanceProxy</code>，以及每帧在哪个阶段读写它们。</strong></p>
+<p>核心源码锚点：</p>
+<ul>
+<li><code>UAnimInstance::InitializeAnimation</code>：<code>Runtime/Engine/Private/Animation/AnimInstance.cpp:263</code></li>
+<li><code>UAnimInstance::NativeInitializeAnimation</code>：<code>:906</code></li>
+<li><code>UAnimInstance::NativeUpdateAnimation</code>：<code>:910</code></li>
+<li><code>UAnimInstance::NativeThreadSafeUpdateAnimation</code>：<code>:914</code></li>
+<li><code>UAnimInstance::TriggerAnimNotifies</code>：<code>:1548</code></li>
+<li><code>UAnimInstance::ConsumeExtractedRootMotion</code>：<code>:3855</code></li>
+<li><code>FAnimInstanceProxy::Initialize</code>：<code>Runtime/Engine/Private/Animation/AnimInstanceProxy.cpp:164</code></li>
+<li><code>FAnimInstanceProxy::RecalcRequiredBones</code>：<code>:1172</code></li>
+<li><code>FAnimInstanceProxy::UpdateAnimation</code>：<code>:1220</code></li>
+<li><code>FAnimInstanceProxy::EvaluateAnimation</code>：<code>:1395</code></li>
+<li>Proxy 内调用 <code>NativeThreadSafeUpdateAnimation</code>：<code>:1320</code></li>
+</ul>
+<h2 id="主线图">主线图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;GameThread: UAnimInstance 采样输入&quot;] --&gt; B[&quot;Proxy 同步: 可并行数据镜像&quot;]</span><br><span class="line">    B --&gt; C[&quot;Update: StateMachine/AssetPlayer/Montage 推进&quot;]</span><br><span class="line">    C --&gt; D[&quot;WorkerThread: Evaluate Graph&quot;]</span><br><span class="line">    D --&gt; E[&quot;输出 Pose/Curve/Attributes&quot;]</span><br><span class="line">    E --&gt; F[&quot;GameThread: Notify 分发 / RootMotion 消费&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="生命周期与线程边界：逐段拆">生命周期与线程边界：逐段拆</h2>
+<h3 id="1-Initialize：对象语义建立-运行时结构就绪">1) Initialize：对象语义建立 + 运行时结构就绪</h3>
+<p><code>InitializeAnimation</code> 会做两类事情：</p>
+<ol>
+<li>UObject 语义：绑定 Mesh、Skeleton、初始变量、蓝图初始化事件。</li>
+<li>运行时语义：Proxy 初始化、节点实例内存准备、RequiredBones 等缓存准备。</li>
+</ol>
+<p>这一步是“拓扑就绪”。如果初始化时角色资源不一致（Skeleton 不匹配、Linked Layer 类错配），后续很多错误会在 Evaluate 才暴露。</p>
+<h3 id="2-Update：推进“状态与时间”，不是直接算最终-Pose">2) Update：推进“状态与时间”，不是直接算最终 Pose</h3>
+<p><code>NativeUpdateAnimation</code> 典型在 GameThread 执行，你会在这里采样：</p>
+<ul>
+<li>速度、加速度、落地状态。</li>
+<li>武器/技能状态。</li>
+<li>GameplayTag 或行为树状态快照。</li>
+</ul>
+<p><code>FAnimInstanceProxy::UpdateAnimation</code> 进一步把这些数据推进到可评估状态，期间会尝试调用 <code>NativeThreadSafeUpdateAnimation</code>（<code>:1320</code>）。这里是你把“可纯函数化”的逻辑迁移到线程安全更新的关键点。</p>
+<h3 id="3-Evaluate：只读已准备好的运行时数据，生成姿态">3) Evaluate：只读已准备好的运行时数据，生成姿态</h3>
+<p><code>FAnimInstanceProxy::EvaluateAnimation</code> 进入真正图求值。最重要的工程约束是：</p>
+<ul>
+<li>Evaluate 尽量不要读取不稳定 UObject 状态。</li>
+<li>依赖的数据应在 Update 前准备好，并以 Proxy 可安全访问的形式存在。</li>
+</ul>
+<p>当团队把“采样”和“求值”混写在同一个蓝图函数里时，随机抖动几乎必现。</p>
+<h3 id="4-Notify-与-RootMotion：副作用回到-GameThread">4) Notify 与 RootMotion：副作用回到 GameThread</h3>
+<p><code>TriggerAnimNotifies</code>（<code>:1548</code>）和 <code>ConsumeExtractedRootMotion</code>（<code>:3855</code>）体现了一个常被忽略的事实：</p>
+<ul>
+<li>动画求值是数学过程。</li>
+<li>事件触发与移动回写是游戏逻辑副作用。</li>
+</ul>
+<p>这两者必须在时序上被稳定串起来。否则会出现“画面对了，逻辑慢一拍”或“逻辑触发了，画面还没到位”。</p>
+<h2 id="工程上的数据契约（建议直接落团队规范）">工程上的数据契约（建议直接落团队规范）</h2>
+<ol>
+<li><code>UAnimInstance</code> 只做输入采样和高层流程控制，不做重计算。</li>
+<li>可线程化计算放 <code>NativeThreadSafeUpdateAnimation</code>，只依赖确定性输入。</li>
+<li>Proxy 中存放每帧求值必要的数据快照，避免跨线程临时读 UObject。</li>
+<li>Notify 处理逻辑保持幂等，避免同帧重复触发副作用。</li>
+<li>Root Motion 只保留一条“权威消费路径”，避免角色移动层重复叠加。</li>
+</ol>
+<h2 id="常见错误与反例">常见错误与反例</h2>
+<h3 id="错误-1：ThreadSafeUpdate-里直接访问-Controller-Actor-复杂行为">错误 1：ThreadSafeUpdate 里直接访问 Controller/Actor 复杂行为</h3>
+<p>短期看“能跑”，压力场景下容易出现竞态或不可复现异常。</p>
+<h3 id="错误-2：EventGraph-同时承担采样和推导">错误 2：EventGraph 同时承担采样和推导</h3>
+<p>导致你无法回答“这个值是采样值还是推导值，发生在 GT 还是 Worker”。</p>
+<h3 id="错误-3：把-Notify-当作严格实时时钟">错误 3：把 Notify 当作严格实时时钟</h3>
+<p>Notify 是时间线事件，不是网络权威时钟，服务端玩法触发仍需权威路径兜底。</p>
+<h2 id="最小验证步骤">最小验证步骤</h2>
+<ol>
+<li>在自定义 AnimInstance 里打印以下函数的线程 ID 与帧号：<br>
+<code>NativeUpdateAnimation</code>、<code>NativeThreadSafeUpdateAnimation</code>、<code>TriggerAnimNotifies</code>。</li>
+<li>把速度/加速度等输入分成两组：<br>
+<code>采样变量（GT写）</code> 与 <code>求值变量（Evaluate只读）</code>。</li>
+<li>人为在 ThreadSafe 路径访问一个明显不安全对象，观察编译警告或运行异常，形成反例记忆。</li>
+<li>对比两套实现：<br>
+<code>全在 EventGraph 计算</code> vs <code>GT采样 + ThreadSafe 计算</code>，记录主线程耗时与稳定性。</li>
+<li>用 <code>a.ParallelAnimUpdate 0/1</code> 重放同一场景，确认逻辑是否仍完全一致。</li>
+</ol>
+<p>预期结果：你会得到一条可重复的“线程安全基线”，后续再扩动画功能时不再靠运气。</p>
+<h2 id="小结">小结</h2>
+<p>Proxy 不是“多余抽象”，它是 UE5 动画并行化的基础契约。<br>
+把 <code>UAnimInstance</code> 当作“输入与生命周期外壳”，把 <code>FAnimInstanceProxy</code> 当作“可并行运行时视图”，很多顽固问题会自动消失。<br>
+下一篇我们继续往下，拆 AnimBlueprint 编译产物：图节点到底如何落成运行时内存布局。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-animation-system/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/03/05/ue-animation-system-notes/ue-animation-system-01-overview-tick-to-final-pose/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 1 篇</span>
+                    <strong class="series-nav-title">总览与执行主线：从 USkeletalMeshComponent Tick 到最终 Pose 输出</strong>
+                </a>
+                
+
+                
+                <a href="/2023/04/02/ue-animation-system-notes/ue-animation-system-03-animblueprint-compiled-runtime-structure/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">AnimBlueprint 编译产物：图节点如何变成运行时结构</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%8E%E7%BA%BF%E7%A8%8B%E8%BE%B9%E7%95%8C%EF%BC%9A%E9%80%90%E6%AE%B5%E6%8B%86"><span class="post-toc-list-text">生命周期与线程边界：逐段拆</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Initialize%EF%BC%9A%E5%AF%B9%E8%B1%A1%E8%AF%AD%E4%B9%89%E5%BB%BA%E7%AB%8B-%E8%BF%90%E8%A1%8C%E6%97%B6%E7%BB%93%E6%9E%84%E5%B0%B1%E7%BB%AA"><span class="post-toc-list-text">1) Initialize：对象语义建立 + 运行时结构就绪</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Update%EF%BC%9A%E6%8E%A8%E8%BF%9B%E2%80%9C%E7%8A%B6%E6%80%81%E4%B8%8E%E6%97%B6%E9%97%B4%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E7%9B%B4%E6%8E%A5%E7%AE%97%E6%9C%80%E7%BB%88-Pose"><span class="post-toc-list-text">2) Update：推进“状态与时间”，不是直接算最终 Pose</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Evaluate%EF%BC%9A%E5%8F%AA%E8%AF%BB%E5%B7%B2%E5%87%86%E5%A4%87%E5%A5%BD%E7%9A%84%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%EF%BC%8C%E7%94%9F%E6%88%90%E5%A7%BF%E6%80%81"><span class="post-toc-list-text">3) Evaluate：只读已准备好的运行时数据，生成姿态</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Notify-%E4%B8%8E-RootMotion%EF%BC%9A%E5%89%AF%E4%BD%9C%E7%94%A8%E5%9B%9E%E5%88%B0-GameThread"><span class="post-toc-list-text">4) Notify 与 RootMotion：副作用回到 GameThread</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E4%B8%8A%E7%9A%84%E6%95%B0%E6%8D%AE%E5%A5%91%E7%BA%A6%EF%BC%88%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%9B%A2%E9%98%9F%E8%A7%84%E8%8C%83%EF%BC%89"><span class="post-toc-list-text">工程上的数据契约（建议直接落团队规范）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E9%94%99%E8%AF%AF%E4%B8%8E%E5%8F%8D%E4%BE%8B"><span class="post-toc-list-text">常见错误与反例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%99%E8%AF%AF-1%EF%BC%9AThreadSafeUpdate-%E9%87%8C%E7%9B%B4%E6%8E%A5%E8%AE%BF%E9%97%AE-Controller-Actor-%E5%A4%8D%E6%9D%82%E8%A1%8C%E4%B8%BA"><span class="post-toc-list-text">错误 1：ThreadSafeUpdate 里直接访问 Controller&#x2F;Actor 复杂行为</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%99%E8%AF%AF-2%EF%BC%9AEventGraph-%E5%90%8C%E6%97%B6%E6%89%BF%E6%8B%85%E9%87%87%E6%A0%B7%E5%92%8C%E6%8E%A8%E5%AF%BC"><span class="post-toc-list-text">错误 2：EventGraph 同时承担采样和推导</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%99%E8%AF%AF-3%EF%BC%9A%E6%8A%8A-Notify-%E5%BD%93%E4%BD%9C%E4%B8%A5%E6%A0%BC%E5%AE%9E%E6%97%B6%E6%97%B6%E9%92%9F"><span class="post-toc-list-text">错误 3：把 Notify 当作严格实时时钟</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

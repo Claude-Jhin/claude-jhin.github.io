@@ -1,0 +1,311 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice 分配、并发与虚拟化：为什么有些声音听不见 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Voice 分配、并发与虚拟化：为什么有些声音听不见</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.12.20
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Concurrency</span>
+            
+            <span style="color: var(--accent);">#Voice</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 音频系统原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 3 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：UE5.7 Audio Mixer 主线</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 38%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-audio-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E5%B9%B6%E5%8F%91%E7%B3%BB%E7%BB%9F%E5%85%B3%E5%BF%83%E7%9A%84%E6%98%AF%E2%80%9C%E5%8F%AF%E5%90%AC%E4%BB%B7%E5%80%BC%E2%80%9D"><span class="post-toc-list-text">先给结论：并发系统关心的是“可听价值”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B9%B6%E5%8F%91%E5%86%B3%E7%AD%96%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E2%80%9C%E8%A7%A6%E5%8F%91%E2%80%9D%E5%88%B0%E2%80%9C%E5%8F%AF%E5%90%AC%E2%80%9D"><span class="post-toc-list-text">并发决策主线：从“触发”到“可听”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%85%A5%E7%BB%84%EF%BC%9A%E8%AF%B7%E6%B1%82%E8%BF%9B%E5%85%A5%E5%B9%B6%E5%8F%91%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="post-toc-list-text">1) 入组：请求进入并发上下文</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E8%AF%84%E4%BC%B0%EF%BC%9A%E8%B0%81%E6%9B%B4%E5%80%BC%E5%BE%97%E5%8D%A0%E7%94%A8-Voice"><span class="post-toc-list-text">2) 评估：谁更值得占用 Voice</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%A4%84%E7%90%86%EF%BC%9A%E6%B7%98%E6%B1%B0%E3%80%81%E8%99%9A%E6%8B%9F%E5%8C%96%E6%88%96%E4%BF%9D%E7%95%99"><span class="post-toc-list-text">3) 处理：淘汰、虚拟化或保留</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E6%8E%92%E9%9A%9C%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（排障顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 音频系统原理与源码拆解（UE5.7）<br>
+本文主题：并发与虚拟化不是“声音没播”，而是“声音被策略性调度”</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>“明明触发了，为什么没听到？”<br>
+这是音频系统里最容易吵起来的问题，因为玩法同学、策划、程序、音频设计都会各有判断。</p>
+<p>我自己的经验是：别先争“是不是播了”，先看“它有没有拿到可听 Voice 配额”。<br>
+只要进入并发与虚拟化路径，现象就会和直觉不完全一致。</p>
+<h2 id="本文问题">本文问题</h2>
+<p>为什么日志里看起来触发了播放，但耳朵里听不到？<br>
+绝大多数情况不是函数没调用，而是并发规则和 Voice 预算把它“策略性处理”了。</p>
+<h2 id="先给结论：并发系统关心的是“可听价值”">先给结论：并发系统关心的是“可听价值”</h2>
+<p>并发模块的目标不是“尽量让所有请求都发声”，而是“在预算内保留最有价值的声音”。<br>
+所以从引擎视角看，听不见不一定是失败，可能是正确策略。</p>
+<p>把这个前提先接受，排障会容易很多。</p>
+<h2 id="本文讨论范围">本文讨论范围</h2>
+<p>这篇只看运行时并发决策：</p>
+<ul>
+<li>新请求进入并发系统</li>
+<li>并发组规则与优先级评估</li>
+<li>Voice steal / 虚拟化 / 剔除路径</li>
+</ul>
+<p>不展开：</p>
+<ul>
+<li>SoundWave 缓存命中问题（第 4 篇）</li>
+<li>3D 参数链问题（第 6 篇）</li>
+</ul>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;新播放请求&quot;] --&gt; B[&quot;FSoundConcurrencyManager::CreateNewActiveSound&quot;]</span><br><span class="line">    B --&gt; C[&quot;并发组计数/规则评估&quot;]</span><br><span class="line">    C --&gt; D[&quot;优先级排序与可听名额分配&quot;]</span><br><span class="line">    D --&gt; E&#123;&quot;超出预算?&quot;&#125;</span><br><span class="line">    E --&gt;|是| F[&quot;StopDueToVoiceStealing 或虚拟化&quot;]</span><br><span class="line">    E --&gt;|否| G[&quot;进入 StartSources 可听路径&quot;]</span><br><span class="line">    F --&gt; H[&quot;RemoveActiveSound/待恢复&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="并发决策主线：从“触发”到“可听”">并发决策主线：从“触发”到“可听”</h2>
+<h3 id="1-入组：请求进入并发上下文">1) 入组：请求进入并发上下文</h3>
+<p><code>CreateNewActiveSound</code> 并不是无条件创建，它会先看并发组当前状态。<br>
+这一层决定了“有没有资格竞争可听名额”。</p>
+<h3 id="2-评估：谁更值得占用-Voice">2) 评估：谁更值得占用 Voice</h3>
+<p><code>UpdateSoundsToCull</code> 会结合规则和优先级持续更新候选集合。<br>
+你在项目里感受到的“有些声音总被压掉”，大多在这一步形成。</p>
+<h3 id="3-处理：淘汰、虚拟化或保留">3) 处理：淘汰、虚拟化或保留</h3>
+<p>当预算不足时，系统会触发 voice stealing 或其他降级路径。<br>
+保留下来的声音继续进入 <code>StartSources</code>，被淘汰的实例进入停止/回收流程。</p>
+<h2 id="关键类型">关键类型</h2>
+<ul>
+<li><code>FSoundConcurrencyManager</code>：并发策略执行器。它决定的不是“是否触发”，而是“是否值得听见”。</li>
+<li><code>CreateNewActiveSound</code>：新请求进入并发系统的第一关，会受到分组上限、优先级等规则影响。</li>
+<li><code>UpdateSoundsToCull</code>：持续剔除或降级不该占配额的实例。</li>
+<li><code>StopDueToVoiceStealing</code>：当高优先级请求到来时，低优先级实例会被迫让位。</li>
+<li><code>RemoveActiveSound</code>：并发决策结束后回到生命周期回收流程。</li>
+</ul>
+<p>我常用的定位链路：</p>
+<p><code>FSoundConcurrencyManager::CreateNewActiveSound -&gt; FSoundConcurrencyManager::UpdateSoundsToCull -&gt; FSoundConcurrencyManager::StopDueToVoiceStealing -&gt; FAudioDevice::AddSoundToStop</code></p>
+<h2 id="我会怎么跟源码（排障顺序）">我会怎么跟源码（排障顺序）</h2>
+<ol>
+<li>先看请求是否进入 <code>FSoundConcurrencyManager</code>。</li>
+<li>再看并发组计数是否超上限。</li>
+<li>然后看优先级排序结果是否符合预期。</li>
+<li>最后确认被裁声音是否走了 <code>StopDueToVoiceStealing</code>。</li>
+</ol>
+<p>实战里我会额外记录两组数据：</p>
+<ul>
+<li>当前瞬时触发数</li>
+<li>当前可听 Voice 数</li>
+</ul>
+<p>只要这两个数长期倒挂，听感“随机丢声”就是必然现象。</p>
+<h2 id="常见误区">常见误区</h2>
+<ol>
+<li>
+<p>误区：并发只影响“同一个资源”。<br>
+实际：并发组通常是语义组，多个资源会互相竞争。</p>
+</li>
+<li>
+<p>误区：优先级只在创建时算一次。<br>
+实际：运行时会持续更新，结果可能动态变化。</p>
+</li>
+<li>
+<p>误区：丢声就去提高全局 Voice 上限。<br>
+实际：盲目加上限会把 CPU 和混音负载抬高，先优化并发语义更稳。</p>
+</li>
+</ol>
+<h2 id="本篇结论">本篇结论</h2>
+<p>“听不见”最少要先分两类：</p>
+<ol>
+<li>策略性裁掉：并发规则按设计生效，但设计意图和实际体验不一致。</li>
+<li>预算性覆盖：Voice 配额不足，高优先级声音抢占低优先级。</li>
+</ol>
+<p>如果这两类不先拆开，后面再怎么调资源、调音量，都会在错误方向上花时间。<br>
+先把并发语义讲清楚，才谈得上“声音设计”。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-audio-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/12/13/ue-audio-source-notes/ue-audio-source-02-playsound-to-activesound-lifecycle/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">从 PlaySound 到 ActiveSound：播放请求生命周期</strong>
+                </a>
+                
+
+                
+                <a href="/2026/01/03/ue-audio-source-notes/ue-audio-source-04-soundwave-decoding-and-stream-caching/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">SoundWave 解码与 Stream Caching：内存与延迟本质</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E5%B9%B6%E5%8F%91%E7%B3%BB%E7%BB%9F%E5%85%B3%E5%BF%83%E7%9A%84%E6%98%AF%E2%80%9C%E5%8F%AF%E5%90%AC%E4%BB%B7%E5%80%BC%E2%80%9D"><span class="post-toc-list-text">先给结论：并发系统关心的是“可听价值”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B9%B6%E5%8F%91%E5%86%B3%E7%AD%96%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E2%80%9C%E8%A7%A6%E5%8F%91%E2%80%9D%E5%88%B0%E2%80%9C%E5%8F%AF%E5%90%AC%E2%80%9D"><span class="post-toc-list-text">并发决策主线：从“触发”到“可听”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%85%A5%E7%BB%84%EF%BC%9A%E8%AF%B7%E6%B1%82%E8%BF%9B%E5%85%A5%E5%B9%B6%E5%8F%91%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="post-toc-list-text">1) 入组：请求进入并发上下文</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E8%AF%84%E4%BC%B0%EF%BC%9A%E8%B0%81%E6%9B%B4%E5%80%BC%E5%BE%97%E5%8D%A0%E7%94%A8-Voice"><span class="post-toc-list-text">2) 评估：谁更值得占用 Voice</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%A4%84%E7%90%86%EF%BC%9A%E6%B7%98%E6%B1%B0%E3%80%81%E8%99%9A%E6%8B%9F%E5%8C%96%E6%88%96%E4%BF%9D%E7%95%99"><span class="post-toc-list-text">3) 处理：淘汰、虚拟化或保留</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E6%8E%92%E9%9A%9C%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（排障顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

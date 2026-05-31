@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>表现与网络体验：GameplayCue、Prediction、Targeting - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">表现与网络体验：GameplayCue、Prediction、Targeting</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.09.18
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#Prediction</span>
+            
+            <span style="color: var(--accent);">#Gameplay Ability System</span>
+            
+            <span style="color: var(--accent);">#GAS</span>
+            
+            <span style="color: var(--accent);">#GameplayCue</span>
+            
+            <span style="color: var(--accent);">#Targeting</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE4 Gameplay Ability System 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：2022.05 - 2022.10 学习整理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 83%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gas/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GameplayCue%EF%BC%9A%E6%8A%8A%E2%80%9C%E7%8E%A9%E6%B3%95%E7%BB%93%E6%9E%9C%E2%80%9D%E7%BF%BB%E8%AF%91%E6%88%90%E2%80%9C%E5%8F%AF%E8%A7%81%E5%8F%8D%E9%A6%88%E2%80%9D"><span class="post-toc-list-text">GameplayCue：把“玩法结果”翻译成“可见反馈”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E5%9C%B0-GC-%E4%B8%8E%E5%A4%8D%E5%88%B6-GC-%E7%9A%84%E5%8F%96%E8%88%8D"><span class="post-toc-list-text">本地 GC 与复制 GC 的取舍</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A2%84%E6%B5%8B%E7%B3%BB%E7%BB%9F%EF%BC%9A%E5%AE%83%E8%A7%A3%E5%86%B3%E2%80%9C%E6%89%8B%E6%84%9F%E2%80%9D%EF%BC%8C%E4%B8%8D%E4%BF%9D%E8%AF%81%E2%80%9C%E4%B8%87%E7%89%A9%E5%8F%AF%E9%A2%84%E6%B5%8B%E2%80%9D"><span class="post-toc-list-text">预测系统：它解决“手感”，不保证“万物可预测”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Prediction-Key-%E4%B8%8E%E7%AA%97%E5%8F%A3"><span class="post-toc-list-text">Prediction Key 与窗口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Targeting%EF%BC%9A%E7%9B%AE%E6%A0%87%E6%95%B0%E6%8D%AE%E4%B8%8D%E6%98%AF%E2%80%9C%E7%82%B9%E4%B8%80%E4%B8%8B%E5%B0%B1%E5%AE%8C%E4%BA%8B%E2%80%9D"><span class="post-toc-list-text">Targeting：目标数据不是“点一下就完事”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E5%90%88%E6%A1%88%E4%BE%8B%E7%9C%8B%E2%80%9C%E8%A1%A8%E7%8E%B0-%E5%90%8C%E6%AD%A5%E2%80%9D"><span class="post-toc-list-text">结合案例看“表现 + 同步”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%9A%84%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">一条可执行的策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE4 Gameplay Ability System 学习专栏（基于 2022.05 - 2022.10 学习笔记）<br>
+本文主题：解决“技能看起来对不对”的核心问题，建立表现与同步的一致性策略</p>
+</blockquote>
+<h2 id="GameplayCue：把“玩法结果”翻译成“可见反馈”">GameplayCue：把“玩法结果”翻译成“可见反馈”</h2>
+<p><code>GameplayCue</code>（GC）负责粒子、音效、镜头等表现层反馈。<br>
+核心原则很简单：让玩法逻辑和表现逻辑解耦。</p>
+<p>常见两类 GC：</p>
+<ol>
+<li><code>GameplayCueNotify_Static</code>：一次性执行，适合瞬时冲击。</li>
+<li><code>GameplayCueNotify_Actor</code>：有生命周期，适合持续特效。</li>
+</ol>
+<p>如果使用 <code>GameplayCueNotify_Actor</code>，建议确认移除路径完整，避免出现加上去就永远不掉的残留效果。</p>
+<h2 id="本地-GC-与复制-GC-的取舍">本地 GC 与复制 GC 的取舍</h2>
+<p>每个 GC 事件本质都可能带来网络开销。<br>
+对于高频命中特效，优先考虑本地 GC：</p>
+<ol>
+<li>子弹撞击、近战命中火花、纯视觉轨迹，适合本地执行。</li>
+<li>明确影响玩法理解的持续状态，优先走复制链路。</li>
+</ol>
+<p>一个硬性约束是：本地 <code>Add</code> 的 GC 应该本地 <code>Remove</code>，不要混用通道。</p>
+<h2 id="预测系统：它解决“手感”，不保证“万物可预测”">预测系统：它解决“手感”，不保证“万物可预测”</h2>
+<p>GAS 预测是为了减少输入延迟感，不是为了完全替代服务端权威。<br>
+实践里必须接受这个现实：</p>
+<ol>
+<li>可预测：技能激活、部分 GE 应用、Tag/Cue 变化、Montage、移动。</li>
+<li>不可预测：GE 移除、周期 GE。</li>
+</ol>
+<p>因此冷却和 DOT 相关逻辑，经常会出现“本地感觉快、服务器实际慢”的错位。<br>
+这不是实现 bug，而是机制边界。</p>
+<h2 id="Prediction-Key-与窗口">Prediction Key 与窗口</h2>
+<p>预测链路靠 <code>Prediction Key</code> 关联客户端预测与服务端确认。<br>
+一个很关键的细节是：默认预测窗口很短，常常只覆盖激活原子阶段。</p>
+<p>如果你在延迟回调里还要继续预测，需要显式创建新的预测窗口，常见做法是配合 <code>WaitNetSync</code>。<br>
+但这会引入服务器等待客户端的时序风险，使用时要注意防滥用。</p>
+<h2 id="Targeting：目标数据不是“点一下就完事”">Targeting：目标数据不是“点一下就完事”</h2>
+<p><code>TargetData</code> 是跨客户端/服务器传输目标信息的标准载体。<br>
+<code>TargetActor</code> 则是生成这份数据的执行者，负责：</p>
+<ol>
+<li>目标采样与过滤。</li>
+<li>确认/取消交互。</li>
+<li>可视化标线（Reticle）生命周期。</li>
+</ol>
+<p>工程上最常见的取舍：</p>
+<ol>
+<li>立即型目标（瞬时射线）追求性能，弱交互。</li>
+<li>非立即型目标（带确认）交互更完整，但链路更重。</li>
+</ol>
+<h2 id="结合案例看“表现-同步”">结合案例看“表现 + 同步”</h2>
+<p>这一阶段我最有感触的几个实战模式：</p>
+<ol>
+<li><code>Stun</code>：标签驱动取消与阻断能力，移动组件配合限速或禁动。</li>
+<li><code>Sprint</code> / <code>ADS</code>：移动组件预测 + GA 状态切换，手感优先。</li>
+<li><code>Lifesteal</code> / <code>Crit</code>：在服务端结算中统一处理，避免预测抖动。</li>
+<li>随机数：客户端和服务端要有同源种子，否则表现和结果会分叉。</li>
+</ol>
+<h2 id="一条可执行的策略">一条可执行的策略</h2>
+<p>如果你的项目正在做多人动作技能，我建议优先落这条顺序：</p>
+<ol>
+<li>先确认哪些反馈必须可靠，哪些可本地近似。</li>
+<li>再按反馈等级设计 GC 通道，而不是统一全复制。</li>
+<li>对所有预测能力建立“失败回滚可观察”机制。</li>
+<li>在 Targeting 侧先解决防作弊与一致性，再追求高级交互。</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>“看起来对”这件事，本质上是同步策略、表现策略和设计预期共同作用的结果。<br>
+下一篇作为收束，整理调试、优化、排障与版本差异，形成上线前 checklist。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gas/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2022/08/14/ue-gas-notes/ue-gas-04-gameplayability-input-task-and-batching/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">技能运行时主线：GameplayAbility、输入绑定、AbilityTask 与批处理</strong>
+                </a>
+                
+
+                
+                <a href="/2022/10/23/ue-gas-notes/ue-gas-06-debug-optimization-troubleshooting-and-changelog/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">上线前闭环：调试、优化、排障与版本演进</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GameplayCue%EF%BC%9A%E6%8A%8A%E2%80%9C%E7%8E%A9%E6%B3%95%E7%BB%93%E6%9E%9C%E2%80%9D%E7%BF%BB%E8%AF%91%E6%88%90%E2%80%9C%E5%8F%AF%E8%A7%81%E5%8F%8D%E9%A6%88%E2%80%9D"><span class="post-toc-list-text">GameplayCue：把“玩法结果”翻译成“可见反馈”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E5%9C%B0-GC-%E4%B8%8E%E5%A4%8D%E5%88%B6-GC-%E7%9A%84%E5%8F%96%E8%88%8D"><span class="post-toc-list-text">本地 GC 与复制 GC 的取舍</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A2%84%E6%B5%8B%E7%B3%BB%E7%BB%9F%EF%BC%9A%E5%AE%83%E8%A7%A3%E5%86%B3%E2%80%9C%E6%89%8B%E6%84%9F%E2%80%9D%EF%BC%8C%E4%B8%8D%E4%BF%9D%E8%AF%81%E2%80%9C%E4%B8%87%E7%89%A9%E5%8F%AF%E9%A2%84%E6%B5%8B%E2%80%9D"><span class="post-toc-list-text">预测系统：它解决“手感”，不保证“万物可预测”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Prediction-Key-%E4%B8%8E%E7%AA%97%E5%8F%A3"><span class="post-toc-list-text">Prediction Key 与窗口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Targeting%EF%BC%9A%E7%9B%AE%E6%A0%87%E6%95%B0%E6%8D%AE%E4%B8%8D%E6%98%AF%E2%80%9C%E7%82%B9%E4%B8%80%E4%B8%8B%E5%B0%B1%E5%AE%8C%E4%BA%8B%E2%80%9D"><span class="post-toc-list-text">Targeting：目标数据不是“点一下就完事”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E5%90%88%E6%A1%88%E4%BE%8B%E7%9C%8B%E2%80%9C%E8%A1%A8%E7%8E%B0-%E5%90%8C%E6%AD%A5%E2%80%9D"><span class="post-toc-list-text">结合案例看“表现 + 同步”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%9D%A1%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%9A%84%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">一条可执行的策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

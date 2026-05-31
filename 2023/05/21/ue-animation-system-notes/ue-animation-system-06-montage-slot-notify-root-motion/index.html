@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Montage / Slot / Notify / Root Motion：技能动画如何进入主动画流 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Montage / Slot / Notify / Root Motion：技能动画如何进入主动画流</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.05.21
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Animation System</span>
+            
+            <span style="color: var(--accent);">#Montage</span>
+            
+            <span style="color: var(--accent);">#Root Motion</span>
+            
+            <span style="color: var(--accent);">#Notify</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 动画系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
+            <div class="series-meta">
+                <span>第 6 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 75%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-animation-system/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E6%8B%86%E8%A7%A3%EF%BC%9A%E5%9B%9B%E6%9D%A1%E9%93%BE%E6%80%8E%E4%B9%88%E4%BA%92%E7%9B%B8%E7%BA%A6%E6%9D%9F"><span class="post-toc-list-text">深入拆解：四条链怎么互相约束</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Montage-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%9A%E6%9D%83%E9%87%8D%E6%8E%A8%E8%BF%9B%E5%92%8C%E6%97%B6%E9%97%B4%E6%8E%A8%E8%BF%9B%E6%98%AF%E4%B8%A4%E4%BB%B6%E4%BA%8B"><span class="post-toc-list-text">1) Montage 生命周期：权重推进和时间推进是两件事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Slot-%E8%8A%82%E7%82%B9%E5%86%B3%E5%AE%9A%E2%80%9C%E6%8F%92%E5%85%A5%E4%BD%8D%E7%BD%AE%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8D%95%E7%BA%AF%E5%BC%80%E5%85%B3"><span class="post-toc-list-text">2) Slot 节点决定“插入位置”，不是单纯开关</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Notify%EF%BC%9A%E7%94%BB%E9%9D%A2%E6%97%B6%E9%97%B4%E7%BA%BF%E4%BA%8B%E4%BB%B6%EF%BC%8C%E4%B8%8D%E6%98%AF%E6%9D%83%E5%A8%81%E7%8E%A9%E6%B3%95%E6%97%B6%E9%92%9F"><span class="post-toc-list-text">3) Notify：画面时间线事件，不是权威玩法时钟</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Root-Motion%EF%BC%9A%E5%8A%A8%E7%94%BB%E4%BD%8D%E7%A7%BB%E5%BF%85%E9%A1%BB%E5%9B%9E%E5%86%99%E5%88%B0%E7%A7%BB%E5%8A%A8%E7%B3%BB%E7%BB%9F"><span class="post-toc-list-text">4) Root Motion：动画位移必须回写到移动系统</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E4%B8%8E%E5%BF%AB%E9%80%9F%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">常见故障与快速定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 动画系统源码拆解（5.5）<br>
+本文主题：技能驱动动画在运行时如何与主动画图协同并回写角色运动（源码长文版）</p>
+</blockquote>
+<h2 id="核心问题">核心问题</h2>
+<p>Montage 系统难点不在“播出来”，而在“播出来以后不破坏主动画流一致性”。<br>
+常见线上事故：</p>
+<ol>
+<li>上半身技能把下半身也污染。</li>
+<li>Notify 触发时间漂移，玩法事件与画面错拍。</li>
+<li>Root Motion 与 CharacterMovement 叠加不一致，出现滑步或瞬移。</li>
+</ol>
+<p>这篇要打通四条链：Montage 生命周期、Slot 混合、Notify 事件、Root Motion 回写。</p>
+<p>核心源码锚点：</p>
+<ul>
+<li><code>UAnimInstance::Montage_Play</code>：<code>Runtime/Engine/Private/Animation/AnimInstance.cpp:2375</code></li>
+<li><code>UAnimInstance::Montage_Stop</code>：<code>:2431</code></li>
+<li><code>UAnimInstance::Montage_UpdateWeight</code>：<code>:1874</code></li>
+<li><code>UAnimInstance::Montage_Advance</code>：<code>:1894</code></li>
+<li><code>UAnimInstance::QueueMontageBlendingOutEvent</code>：<code>:2040</code></li>
+<li><code>UAnimInstance::QueueMontageEndedEvent</code>：<code>:2076</code></li>
+<li><code>FAnimNode_Slot::Update_AnyThread</code>：<code>Runtime/AnimGraphRuntime/Private/AnimNodes/AnimNode_Slot.cpp:37</code></li>
+<li><code>FAnimNode_Slot::Evaluate_AnyThread</code>：<code>:82</code></li>
+<li><code>UAnimMontage::HasRootMotion</code>：<code>Runtime/Engine/Private/Animation/AnimMontage.cpp:893</code></li>
+<li><code>UAnimMontage::ExtractRootMotionFromTrackRange</code>：<code>:915</code></li>
+<li><code>UCharacterMovementComponent::TickCharacterPose</code>：<code>Runtime/Engine/Private/Components/CharacterMovementComponent.cpp:11694</code></li>
+<li><code>UCharacterMovementComponent::PerformMovement</code>：<code>:2640</code></li>
+<li><code>UCharacterMovementComponent::ApplyRootMotionToVelocity</code>：<code>:4366</code></li>
+<li><code>CharacterMesh-&gt;ConsumeRootMotion()</code> 调用点：<code>:11721</code></li>
+</ul>
+<h2 id="主线图">主线图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;技能输入/Gameplay 触发&quot;] --&gt; B[&quot;AnimInstance::Montage_Play&quot;]</span><br><span class="line">    B --&gt; C[&quot;Montage_UpdateWeight + Montage_Advance&quot;]</span><br><span class="line">    C --&gt; D[&quot;Slot 节点混入主 AnimGraph&quot;]</span><br><span class="line">    C --&gt; E[&quot;Notify 进入队列并在 GT 分发&quot;]</span><br><span class="line">    C --&gt; F[&quot;ExtractRootMotionFromTrackRange 提取位移&quot;]</span><br><span class="line">    F --&gt; G[&quot;CharacterMovement ConsumeRootMotion&quot;]</span><br><span class="line">    G --&gt; H[&quot;ApplyRootMotionToVelocity&quot;]</span><br><span class="line">    D --&gt; I[&quot;最终 Pose 输出&quot;]</span><br><span class="line">    E --&gt; I</span><br></pre></td></tr></table></figure>
+<h2 id="深入拆解：四条链怎么互相约束">深入拆解：四条链怎么互相约束</h2>
+<h3 id="1-Montage-生命周期：权重推进和时间推进是两件事">1) Montage 生命周期：权重推进和时间推进是两件事</h3>
+<p><code>Montage_UpdateWeight</code> 与 <code>Montage_Advance</code> 分别负责权重变化与播放位置推进。<br>
+这意味着“看起来在播”不等于“权重已进入有效覆盖区间”。</p>
+<p>工程上要同时看：</p>
+<ul>
+<li>Montage Position 是否前进。</li>
+<li>Slot Weight 是否真正影响最终姿态。</li>
+</ul>
+<h3 id="2-Slot-节点决定“插入位置”，不是单纯开关">2) Slot 节点决定“插入位置”，不是单纯开关</h3>
+<p><code>FAnimNode_Slot::Update_AnyThread</code> / <code>Evaluate_AnyThread</code> 决定 Montage 在图中的混合语义。<br>
+同一个 Montage 放在不同 Slot 位置，结果完全不同：</p>
+<ul>
+<li>靠前：更像覆盖基础动作。</li>
+<li>靠后：更像叠加细节层。</li>
+</ul>
+<p>所以“Montage 破坏 locomotion”常常是 Slot 拓扑问题，不是 Montage 资源问题。</p>
+<h3 id="3-Notify：画面时间线事件，不是权威玩法时钟">3) Notify：画面时间线事件，不是权威玩法时钟</h3>
+<p><code>QueueMontageBlendingOutEvent</code>、<code>QueueMontageEndedEvent</code> 体现了 Notify/Event 的排队语义。<br>
+正确姿势是：</p>
+<ul>
+<li>把 Notify 当作动画时间线信号。</li>
+<li>高权威玩法仍由服务端逻辑确认。</li>
+</ul>
+<p>否则网络延迟下就会出现“客户端已经砍中，服务端还没认”的错位体验。</p>
+<h3 id="4-Root-Motion：动画位移必须回写到移动系统">4) Root Motion：动画位移必须回写到移动系统</h3>
+<p><code>UAnimMontage::ExtractRootMotionFromTrackRange</code> 提取的是动画位移增量；<br>
+真正生效要经过 <code>CharacterMovement</code>：</p>
+<ul>
+<li><code>TickCharacterPose</code> 中 <code>ConsumeRootMotion()</code> 获取增量。</li>
+<li><code>PerformMovement</code> 和 <code>ApplyRootMotionToVelocity</code> 将其合并进最终速度/位移。</li>
+</ul>
+<p>只看 AnimInstance 而不看 Movement，是 Root Motion 排障最常见盲区。</p>
+<h2 id="常见故障与快速定位">常见故障与快速定位</h2>
+<ol>
+<li>技能播了但肢体错层：优先查 Slot 在图中的位置和 LayeredBlend 骨链。</li>
+<li>Notify 早/晚一拍：查 Montage Position 与队列分发时序。</li>
+<li>滑步或冲刺过头：查是否重复消费 Root Motion，或与 RMS（RootMotionSource）叠加冲突。</li>
+<li>中断后残留姿态：查 Montage Stop/BlendOut 路径与状态机回收时机。</li>
+</ol>
+<h2 id="最小验证步骤">最小验证步骤</h2>
+<ol>
+<li>做一个只影响脊柱以上的攻击 Montage，Slot 放在可控位置。</li>
+<li>在 <code>Montage_Advance</code> 与 <code>Slot::Evaluate_AnyThread</code> 打断点，确认时间推进与姿态覆盖同帧一致。</li>
+<li>关键 Notify 打印：帧号、Montage Position、业务事件触发时间。</li>
+<li>开/关 Root Motion 对照测试：<br>
+观察胶囊位移、角色位移、动画位移是否三者一致。</li>
+<li>在 <code>CharacterMovement::ApplyRootMotionToVelocity</code> 观察最终速度变化，排查重复叠加。</li>
+<li>做一次中断场景（受击/翻滚）回归，确认 BlendOut 后状态干净回收。</li>
+</ol>
+<p>预期结果：你会得到一条“技能动画接入主流”的稳定模板，避免动画与玩法脱节。</p>
+<h2 id="小结">小结</h2>
+<p>Montage 不是孤立系统，它同时触达 Pose、事件与移动。<br>
+只要把 Slot 插入位置、Notify 语义、Root Motion 消费路径三者统一管理，技能动画就能稳定扩展而不反复返工。<br>
+下一篇我们上升到架构层：Linked Layer、Sub Anim Instance、Post Process 的分层设计与源码执行路径。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-animation-system/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/05/07/ue-animation-system-notes/ue-animation-system-05-blend-system-weight-propagation/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">Blend 体系内核：Sequence Player、BlendSpace、Layered Blend 的权重传播</strong>
+                </a>
+                
+
+                
+                <a href="/2023/06/04/ue-animation-system-notes/ue-animation-system-07-layered-animblueprint-architecture/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">动画蓝图分层架构：Linked Anim Layer、Sub Anim Instance、Post Process 的组合策略</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E6%8B%86%E8%A7%A3%EF%BC%9A%E5%9B%9B%E6%9D%A1%E9%93%BE%E6%80%8E%E4%B9%88%E4%BA%92%E7%9B%B8%E7%BA%A6%E6%9D%9F"><span class="post-toc-list-text">深入拆解：四条链怎么互相约束</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Montage-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%9A%E6%9D%83%E9%87%8D%E6%8E%A8%E8%BF%9B%E5%92%8C%E6%97%B6%E9%97%B4%E6%8E%A8%E8%BF%9B%E6%98%AF%E4%B8%A4%E4%BB%B6%E4%BA%8B"><span class="post-toc-list-text">1) Montage 生命周期：权重推进和时间推进是两件事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Slot-%E8%8A%82%E7%82%B9%E5%86%B3%E5%AE%9A%E2%80%9C%E6%8F%92%E5%85%A5%E4%BD%8D%E7%BD%AE%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8D%95%E7%BA%AF%E5%BC%80%E5%85%B3"><span class="post-toc-list-text">2) Slot 节点决定“插入位置”，不是单纯开关</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Notify%EF%BC%9A%E7%94%BB%E9%9D%A2%E6%97%B6%E9%97%B4%E7%BA%BF%E4%BA%8B%E4%BB%B6%EF%BC%8C%E4%B8%8D%E6%98%AF%E6%9D%83%E5%A8%81%E7%8E%A9%E6%B3%95%E6%97%B6%E9%92%9F"><span class="post-toc-list-text">3) Notify：画面时间线事件，不是权威玩法时钟</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Root-Motion%EF%BC%9A%E5%8A%A8%E7%94%BB%E4%BD%8D%E7%A7%BB%E5%BF%85%E9%A1%BB%E5%9B%9E%E5%86%99%E5%88%B0%E7%A7%BB%E5%8A%A8%E7%B3%BB%E7%BB%9F"><span class="post-toc-list-text">4) Root Motion：动画位移必须回写到移动系统</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E4%B8%8E%E5%BF%AB%E9%80%9F%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">常见故障与快速定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

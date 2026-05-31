@@ -1,0 +1,372 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CharacterMovement 一帧执行骨架：TickComponent、PerformMovement、StartNewPhysics - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">CharacterMovement 一帧执行骨架：TickComponent、PerformMovement、StartNewPhysics</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.06.26
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Character Movement</span>
+            
+            <span style="color: var(--accent);">#TickComponent</span>
+            
+            <span style="color: var(--accent);">#StartNewPhysics</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 移动系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.4/5.5 的 CharacterMovementComponent 主线，从输入向量积累、每帧移动执行、Walking/Falling 分支到 MOVE_Custom 与网络同步，形成一条可落地的问题定位路径。</p>
+            <div class="series-meta">
+                <span>第 2 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：5.4/5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 33%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-movement/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9A%E8%BF%99%E4%B8%80%E5%B8%A7%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">深入一层：这一帧到底是怎么跑起来的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%BA%90%E7%A0%81%E8%90%BD%E7%82%B9%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">关键源码落点（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#TickComponent-%E7%9A%84%E5%87%A0%E4%B8%AA%E5%85%B3%E9%94%AE%E5%89%8D%E7%BD%AE%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">TickComponent 的几个关键前置判断</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#PerformMovement-%E5%B9%B6%E4%B8%8D%E5%8F%AA%E6%98%AF%E2%80%9C%E8%B0%83%E7%94%A8-Phys%E2%80%9D"><span class="post-toc-list-text">PerformMovement 并不只是“调用 Phys”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#StartNewPhysics-%E7%9A%84%E8%BE%B9%E7%95%8C%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">StartNewPhysics 的边界条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%92%E8%89%B2%E8%BA%AB%E4%BB%BD%EF%BC%88Role%EF%BC%89%E5%AF%B9%E4%B8%BB%E9%93%BE%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="post-toc-list-text">角色身份（Role）对主链的影响</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%AF%8A%E6%96%AD%E9%A1%BA%E5%BA%8F%EF%BC%9A%E5%85%88%E5%A4%A7%E5%88%86%E6%94%AF%EF%BC%8C%E5%90%8E%E5%B0%8F%E5%88%86%E6%94%AF"><span class="post-toc-list-text">诊断顺序：先大分支，后小分支</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E2%80%9C%E7%9C%8B%E8%B5%B7%E6%9D%A5%E5%83%8F%E5%8F%82%E6%95%B0%E9%97%AE%E9%A2%98%EF%BC%8C%E5%AE%9E%E9%99%85%E6%98%AF%E9%AA%A8%E6%9E%B6%E9%97%AE%E9%A2%98%E2%80%9D%E7%9A%84-case"><span class="post-toc-list-text">常见“看起来像参数问题，实际是骨架问题”的 case</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-1%EF%BC%9A%E6%94%B9%E4%BA%86%E5%BE%88%E5%A4%9A-MaxWalkSpeed-%E4%BD%86%E8%A7%92%E8%89%B2%E8%BF%98%E6%98%AF%E4%B8%8D%E5%8A%A8"><span class="post-toc-list-text">case 1：改了很多 MaxWalkSpeed 但角色还是不动</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-2%EF%BC%9A%E8%81%94%E6%9C%BA%E4%B8%8B%E5%81%B6%E5%8F%91%E2%80%9C%E7%9E%AC%E5%81%9C%E2%80%9D"><span class="post-toc-list-text">case 2：联机下偶发“瞬停”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-3%EF%BC%9A%E8%87%AA%E5%AE%9A%E4%B9%89%E7%BB%84%E4%BB%B6%E8%A6%86%E5%86%99%E5%90%8E%E5%BD%BB%E5%BA%95%E5%A4%B1%E6%95%88"><span class="post-toc-list-text">case 3：自定义组件覆写后彻底失效</span></a></li></ol></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 移动系统源码拆解（5.4/5.5）<br>
+本文主题：把 CMC 每帧移动执行链整理成可定位问题的主骨架</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>这一篇不聊参数，先只看“骨架”。<br>
+因为我自己排移动问题时，第一件事永远不是调数值，而是确认主链有没有跑通：<br>
+<code>TickComponent -&gt; PerformMovement -&gt; StartNewPhysics</code>。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;UCharacterMovementComponent::TickComponent&quot;] --&gt; B[&quot;ConsumeInput / 基础状态更新&quot;]</span><br><span class="line">    B --&gt; C[&quot;PerformMovement&quot;]</span><br><span class="line">    C --&gt; D[&quot;StartNewPhysics&quot;]</span><br><span class="line">    D --&gt; E&#123;&quot;MovementMode&quot;&#125;</span><br><span class="line">    E --&gt;|Walking| F[&quot;PhysWalking&quot;]</span><br><span class="line">    E --&gt;|Falling| G[&quot;PhysFalling&quot;]</span><br><span class="line">    E --&gt;|Custom| H[&quot;PhysCustom&quot;]</span><br><span class="line">    F --&gt; I[&quot;SafeMoveUpdatedComponent / SlideAlongSurface&quot;]</span><br><span class="line">    G --&gt; I</span><br><span class="line">    H --&gt; I</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>UCharacterMovementComponent::TickComponent</code>：一帧移动更新总入口。</li>
+<li><code>UCharacterMovementComponent::PerformMovement</code>：处理根运动、状态前后更新并驱动物理解算。</li>
+<li><code>UCharacterMovementComponent::StartNewPhysics</code>：按 <code>MovementMode</code> 分发到 <code>PhysWalking/PhysFalling/PhysCustom</code>。</li>
+<li><code>UCharacterMovementComponent::SafeMoveUpdatedComponent</code>：执行实际位移与碰撞响应。</li>
+<li><code>UCharacterMovementComponent::SlideAlongSurface</code>：处理撞墙后的切向滑动。</li>
+</ul>
+<h2 id="我会怎么跟源码">我会怎么跟源码</h2>
+<p>这段最省时间的方法，就是在同一个文件里顺着调用链往下走：</p>
+<ol>
+<li>打开 <code>Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp</code>。</li>
+<li>搜索 <code>UCharacterMovementComponent::TickComponent(</code>，定位一帧入口。</li>
+<li>在同文件搜索 <code>PerformMovement(</code> 与 <code>StartNewPhysics(</code>，确认主链调用顺序。</li>
+<li>再搜索 <code>PhysWalking(</code>、<code>PhysFalling(</code>、<code>PhysCustom(</code>，验证不同模式的分发落点。</li>
+<li>断点建议：<code>TickComponent -&gt; PerformMovement -&gt; StartNewPhysics</code> 连续断点，先看“链路通不通”，再看具体分支。</li>
+</ol>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>自定义 <code>UCharacterMovementComponent</code> 并重写 <code>TickComponent</code>。</li>
+<li>只写自定义逻辑，不调用 <code>Super::TickComponent(...)</code>。</li>
+<li>运行后观察角色输入与位移。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>输入事件正常触发，但角色完全不移动或状态机卡死在旧状态。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>跳过 <code>Super::TickComponent</code> 后，<code>PerformMovement -&gt; StartNewPhysics</code> 主链没有被执行，整帧移动物理更新被短路。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>保留 <code>Super::TickComponent</code>，把自定义逻辑放在调用前后明确的位置；若要替换分支，优先覆写 <code>Phys*</code> 或 <code>OnMovementUpdated</code> 而不是截断总入口。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;角色不动/模式异常&quot;] --&gt; B&#123;&quot;TickComponent 是否执行&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;检查组件启用状态与 Tick 开关&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;是否调用 Super::TickComponent&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;恢复 Super 调用，避免主链短路&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;PerformMovement 是否命中&quot;&#125;</span><br><span class="line">    F --&gt;|否| G[&quot;检查早退条件与根运动分支&quot;]</span><br><span class="line">    F --&gt;|是| H&#123;&quot;StartNewPhysics 是否命中&quot;&#125;</span><br><span class="line">    H --&gt;|否| I[&quot;检查移动组件更新前置逻辑&quot;]</span><br><span class="line">    H --&gt;|是| J&#123;&quot;目标 Phys 分支是否命中&quot;&#125;</span><br><span class="line">    J --&gt;|否| K[&quot;检查 MovementMode 切换条件&quot;]</span><br><span class="line">    J --&gt;|是| L[&quot;主骨架正常，进入分支级排障&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="收尾">收尾</h2>
+<p>移动系统调优之前，先确认主骨架是活的。<br>
+这条链一旦断了，后面再细的参数都不会真正生效。</p>
+<hr>
+<h2 id="深入一层：这一帧到底是怎么跑起来的">深入一层：这一帧到底是怎么跑起来的</h2>
+<p>如果只记一句话：<br>
+<code>TickComponent</code> 不是“直接做物理”，它是一个调度入口，先判断角色身份和网络场景，再决定走哪条执行路径。</p>
+<p>在 <code>UE_5.5</code> 的 <code>CharacterMovementComponent.cpp</code> 中可以看到三个常见分流：</p>
+<ol>
+<li>本地可控角色：<code>ControlledCharacterMove</code></li>
+<li>服务端代管远端客户端：<code>ServerAutonomousProxyTick</code></li>
+<li>模拟代理：<code>SimulatedTick</code> + 网络平滑</li>
+</ol>
+<p>也就是说，你看见“角色不动”，第一反应不该是 <code>PhysWalking</code>，而是先确认你到底进了哪条大分支。</p>
+<hr>
+<h2 id="关键源码落点（UE-5-5）">关键源码落点（UE_5.5）</h2>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp:1576</code><br>
+<code>UCharacterMovementComponent::TickComponent</code></li>
+<li><code>...:1683</code><br>
+<code>ControlledCharacterMove(InputVector, DeltaTime)</code></li>
+<li><code>...:6226</code><br>
+<code>UCharacterMovementComponent::ControlledCharacterMove</code></li>
+<li><code>...:2640</code><br>
+<code>UCharacterMovementComponent::PerformMovement</code></li>
+<li><code>...:3388</code><br>
+<code>UCharacterMovementComponent::StartNewPhysics</code></li>
+</ul>
+<p><code>StartNewPhysics</code> 的 switch 是整个骨架最关键的一段：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span> (MovementMode)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">case</span> MOVE_Walking: <span class="built_in">PhysWalking</span>(...)</span><br><span class="line">  <span class="keyword">case</span> MOVE_Falling: <span class="built_in">PhysFalling</span>(...)</span><br><span class="line">  <span class="keyword">case</span> MOVE_Custom:  <span class="built_in">PhysCustom</span>(...)</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以“当前 <code>MovementMode</code> 是什么”永远是你断点时第一件要确认的事。</p>
+<hr>
+<h2 id="TickComponent-的几个关键前置判断"><code>TickComponent</code> 的几个关键前置判断</h2>
+<p><code>TickComponent</code> 开头有几道门槛，经常直接决定你后面能不能进物理：</p>
+<ol>
+<li><code>HasValidData()</code></li>
+<li><code>ShouldSkipUpdate(DeltaTime)</code></li>
+<li><code>UpdatedComponent-&gt;IsSimulatingPhysics()</code></li>
+<li><code>CharacterOwner-&gt;CheckStillInWorld()</code></li>
+</ol>
+<p>你只要命中任意一个早退条件，后面 <code>PerformMovement</code> 就不会跑。<br>
+这也是为什么很多“偶现不动”其实是数据有效性问题，不是移动参数问题。</p>
+<hr>
+<h2 id="PerformMovement-并不只是“调用-Phys”"><code>PerformMovement</code> 并不只是“调用 Phys”</h2>
+<p>很多人把 <code>PerformMovement</code> 理解成“简单转发到 <code>StartNewPhysics</code>”。<br>
+实际上它做了不少关键工作，顺序很重要：</p>
+<ol>
+<li>处理 root motion 和外力状态。</li>
+<li><code>ClearJumpInput</code>（清当前跳跃输入，为下一帧事件留空间）。</li>
+<li>调用 <code>StartNewPhysics</code> 进入具体模式。</li>
+<li><code>UpdateCharacterStateAfterMovement</code>。</li>
+<li>处理旋转与 root motion 旋转补偿。</li>
+</ol>
+<p>这几步意味着：<br>
+你如果在 <code>PhysWalking</code> 里看见“输入状态不对/旋转不对”，根因可能在 <code>PerformMovement</code> 前半段，不一定在 walking 逻辑本身。</p>
+<hr>
+<h2 id="StartNewPhysics-的边界条件"><code>StartNewPhysics</code> 的边界条件</h2>
+<p><code>StartNewPhysics</code> 还有两个很关键的防护：</p>
+<ul>
+<li><code>deltaTime &lt; MIN_TICK_TIME</code></li>
+<li><code>Iterations &gt;= MaxSimulationIterations</code></li>
+</ul>
+<p>这两个判断会在高抖动帧、超大 <code>DeltaTime</code>、复杂碰撞场景下影响结果。<br>
+如果你遇到“低帧率下手感和高帧率不一致”，这个入口一定要看。</p>
+<hr>
+<h2 id="角色身份（Role）对主链的影响">角色身份（Role）对主链的影响</h2>
+<p>很多“本地正常、联机异常”的移动 bug，实质是角色身份分支没想清楚。</p>
+<p>你可以按下面这个心智模型看：</p>
+<ol>
+<li><code>ROLE_Authority</code>：服务器权威模拟。</li>
+<li><code>ROLE_AutonomousProxy</code>：客户端本地预测 + 上报。</li>
+<li><code>ROLE_SimulatedProxy</code>：主要吃复制与平滑，不跑完整本地控制逻辑。</li>
+</ol>
+<p>对应到源码里，<code>ControlledCharacterMove</code> 的分支（<code>...:6240</code> 之后）很直白：</p>
+<ul>
+<li>Authority -&gt; <code>PerformMovement</code></li>
+<li>AutonomousProxy + Client -&gt; <code>ReplicateMoveToServer</code></li>
+</ul>
+<p>这就是为什么你在客户端看起来“动了”，但服务器可能不同意，然后回拉。</p>
+<hr>
+<h2 id="诊断顺序：先大分支，后小分支">诊断顺序：先大分支，后小分支</h2>
+<p>我建议调试顺序固定成这样：</p>
+<ol>
+<li><code>TickComponent</code> 是否执行。</li>
+<li>角色身份分支是否正确。</li>
+<li><code>PerformMovement</code> 是否进入。</li>
+<li><code>StartNewPhysics</code> 是否进入且 <code>MovementMode</code> 是否符合预期。</li>
+<li>对应 <code>Phys*</code> 分支是否稳定命中。</li>
+</ol>
+<p>好处是你不会一上来就陷在某个 <code>PhysWalking</code> 细节里，结果其实主链根本没跑到。</p>
+<hr>
+<h2 id="常见“看起来像参数问题，实际是骨架问题”的-case">常见“看起来像参数问题，实际是骨架问题”的 case</h2>
+<h3 id="case-1：改了很多-MaxWalkSpeed-但角色还是不动">case 1：改了很多 <code>MaxWalkSpeed</code> 但角色还是不动</h3>
+<p>通常不是速度参数问题，而是：</p>
+<ul>
+<li><code>ShouldSkipUpdate</code> 命中</li>
+<li><code>UpdatedComponent</code> 在模拟物理</li>
+<li><code>MovementMode</code> 已经被切到 <code>MOVE_None</code></li>
+</ul>
+<h3 id="case-2：联机下偶发“瞬停”">case 2：联机下偶发“瞬停”</h3>
+<p>常见是客户端进了 <code>ReplicateMoveToServer</code>，但本地 <code>SavedMove</code> 或后续 correction 逻辑触发，导致你视觉上像“突然断帧”。</p>
+<h3 id="case-3：自定义组件覆写后彻底失效">case 3：自定义组件覆写后彻底失效</h3>
+<p>最常见就是覆写 <code>TickComponent</code> 忘了 <code>Super::TickComponent</code>，这会直接掐掉骨架主链。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-movement/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2022/06/05/ue-movement-notes/ue-movement-01-input-to-movement-request/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 1 篇</span>
+                    <strong class="series-nav-title">输入如何变成移动请求：从 Enhanced Input 到 AddMovementInput</strong>
+                </a>
+                
+
+                
+                <a href="/2022/07/24/ue-movement-notes/ue-movement-03-walking-and-feel/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">地面移动与手感来源：PhysWalking 的速度解算与参数作用点</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9A%E8%BF%99%E4%B8%80%E5%B8%A7%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">深入一层：这一帧到底是怎么跑起来的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%BA%90%E7%A0%81%E8%90%BD%E7%82%B9%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">关键源码落点（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#TickComponent-%E7%9A%84%E5%87%A0%E4%B8%AA%E5%85%B3%E9%94%AE%E5%89%8D%E7%BD%AE%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">TickComponent 的几个关键前置判断</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#PerformMovement-%E5%B9%B6%E4%B8%8D%E5%8F%AA%E6%98%AF%E2%80%9C%E8%B0%83%E7%94%A8-Phys%E2%80%9D"><span class="post-toc-list-text">PerformMovement 并不只是“调用 Phys”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#StartNewPhysics-%E7%9A%84%E8%BE%B9%E7%95%8C%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">StartNewPhysics 的边界条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%92%E8%89%B2%E8%BA%AB%E4%BB%BD%EF%BC%88Role%EF%BC%89%E5%AF%B9%E4%B8%BB%E9%93%BE%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="post-toc-list-text">角色身份（Role）对主链的影响</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%AF%8A%E6%96%AD%E9%A1%BA%E5%BA%8F%EF%BC%9A%E5%85%88%E5%A4%A7%E5%88%86%E6%94%AF%EF%BC%8C%E5%90%8E%E5%B0%8F%E5%88%86%E6%94%AF"><span class="post-toc-list-text">诊断顺序：先大分支，后小分支</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E2%80%9C%E7%9C%8B%E8%B5%B7%E6%9D%A5%E5%83%8F%E5%8F%82%E6%95%B0%E9%97%AE%E9%A2%98%EF%BC%8C%E5%AE%9E%E9%99%85%E6%98%AF%E9%AA%A8%E6%9E%B6%E9%97%AE%E9%A2%98%E2%80%9D%E7%9A%84-case"><span class="post-toc-list-text">常见“看起来像参数问题，实际是骨架问题”的 case</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-1%EF%BC%9A%E6%94%B9%E4%BA%86%E5%BE%88%E5%A4%9A-MaxWalkSpeed-%E4%BD%86%E8%A7%92%E8%89%B2%E8%BF%98%E6%98%AF%E4%B8%8D%E5%8A%A8"><span class="post-toc-list-text">case 1：改了很多 MaxWalkSpeed 但角色还是不动</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-2%EF%BC%9A%E8%81%94%E6%9C%BA%E4%B8%8B%E5%81%B6%E5%8F%91%E2%80%9C%E7%9E%AC%E5%81%9C%E2%80%9D"><span class="post-toc-list-text">case 2：联机下偶发“瞬停”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-3%EF%BC%9A%E8%87%AA%E5%AE%9A%E4%B9%89%E7%BB%84%E4%BB%B6%E8%A6%86%E5%86%99%E5%90%8E%E5%BD%BB%E5%BA%95%E5%A4%B1%E6%95%88"><span class="post-toc-list-text">case 3：自定义组件覆写后彻底失效</span></a></li></ol></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

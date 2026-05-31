@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE5 音频系统原理与源码拆解 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/columns" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回专栏
+    </a>
+</div>
+
+<article class="post-container module column-shell">
+    
+    <header class="column-hero">
+        <div class="column-hero-top">
+            <div>
+                <p class="columns-kicker">系列内容</p>
+                <h1 class="columns-title">UE5 音频系统原理与源码拆解</h1>
+            </div>
+            <span class="column-badge is-complete">已完结</span>
+        </div>
+
+        <p class="columns-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+
+        <div class="column-overview-meta">
+            <span>当前阶段：UE5.7 Audio Mixer 主线</span>
+            <span>已发布 8 / 8</span>
+        </div>
+
+        <div class="column-progress large" aria-hidden="true">
+            <span style="width: 100%"></span>
+        </div>
+    </header>
+
+    
+    <section class="column-section">
+        <h2 class="column-section-title">这一栏想解决什么</h2>
+        <ul class="column-goals">
+            
+            <li>建立从 GameThread 播放请求到 AudioRenderThread 输出的端到端认知</li>
+            
+            <li>读通 FAudioDevice、FActiveSound、FMixerDevice、FMixerSubmix 的关键调用链</li>
+            
+            <li>形成面向性能与稳定性的音频排障 checklist</li>
+            
+        </ul>
+    </section>
+    
+
+    
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">系列大纲</h2>
+            <p class="column-section-note">后续文章会沿着这条路线持续补齐。</p>
+        </div>
+
+        <div class="column-outline">
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">1</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">UE5.7 音频架构总览（线程与模块边界）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">建立 Audio 系统全景图，明确 Engine、AudioMixer、AudioExtensions 的职责与线程边界。</p>
+                    
+                    <a class="column-outline-link" href="/2025/12/06/ue-audio-source-notes/ue-audio-source-01-overview-threads-modules/">UE5.7 音频架构总览：线程与模块边界 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">2</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">从 PlaySound 到 ActiveSound（播放请求生命周期）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">追踪播放请求从入口函数到 ActiveSound 创建、更新、停止和回收的完整状态流转。</p>
+                    
+                    <a class="column-outline-link" href="/2025/12/13/ue-audio-source-notes/ue-audio-source-02-playsound-to-activesound-lifecycle/">从 PlaySound 到 ActiveSound：播放请求生命周期 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">3</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Voice 分配、并发与虚拟化（为什么有些声音听不见）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">拆解并发组决策、优先级排序、Voice Steal 与虚拟化策略如何共同决定可听结果。</p>
+                    
+                    <a class="column-outline-link" href="/2025/12/20/ue-audio-source-notes/ue-audio-source-03-voice-concurrency-virtualization/">Voice 分配、并发与虚拟化：为什么有些声音听不见 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">4</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">SoundWave 解码与 Stream Caching（内存与延迟本质）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">说明压缩数据如何被请求、缓存、解码并连续供给播放，解释首包延迟与内存占用的本质权衡。</p>
+                    
+                    <a class="column-outline-link" href="/2026/01/03/ue-audio-source-notes/ue-audio-source-04-soundwave-decoding-and-stream-caching/">SoundWave 解码与 Stream Caching：内存与延迟本质 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">5</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Audio Mixer 渲染主线（Source -> Submix -> Endpoint）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">还原一帧音频渲染的核心路径，解释 Source 混合、Submix 图处理与最终硬件输出的时序关系。</p>
+                    
+                    <a class="column-outline-link" href="/2026/01/10/ue-audio-source-notes/ue-audio-source-05-audio-mixer-rendering-mainline/">Audio Mixer 渲染主线：Source -> Submix -> Endpoint -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">6</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">空间化、衰减、遮挡的执行时机（3D 声音为何“像真的”）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">聚焦 ActiveSound 参数更新阶段，说明 3D 声学参数如何计算并进入最终混音。</p>
+                    
+                    <a class="column-outline-link" href="/2026/01/24/ue-audio-source-notes/ue-audio-source-06-spatialization-attenuation-occlusion-timing/">空间化、衰减、遮挡的执行时机：3D 声音为何“像真的” -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">7</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Submix Effect 与 Audio Bus（DSP 路由与总线思维）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">讲清效果链与总线路由的执行位置，建立可扩展的分组混音与侧链设计思路。</p>
+                    
+                    <a class="column-outline-link" href="/2026/02/07/ue-audio-source-notes/ue-audio-source-07-submix-effects-and-audio-bus-routing/">Submix Effect 与 Audio Bus：DSP 路由与总线思维 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">8</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Quartz 与音频调试体系（样本级时序与性能定位）</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">连接量化时序与调试工具，形成“时序正确 + 性能可控”的工程化收束方法。</p>
+                    
+                    <a class="column-outline-link" href="/2026/02/21/ue-audio-source-notes/ue-audio-source-08-quartz-and-audio-debugging-system/">Quartz 与音频调试体系：样本级时序与性能定位 -></a>
+                    
+                </div>
+            </article>
+            
+        </div>
+    </section>
+    
+
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">已发布文章</h2>
+            <p class="column-section-note">按专栏顺序排列，适合从上往下连续阅读。</p>
+        </div>
+
+        
+        <div class="archive-list column-post-list">
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 1 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/12/06/ue-audio-source-notes/ue-audio-source-01-overview-threads-modules/">UE5.7 音频架构总览：线程与模块边界</a>
+                    <span class="post-meta">2025.12.06</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 2 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/12/13/ue-audio-source-notes/ue-audio-source-02-playsound-to-activesound-lifecycle/">从 PlaySound 到 ActiveSound：播放请求生命周期</a>
+                    <span class="post-meta">2025.12.13</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 3 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/12/20/ue-audio-source-notes/ue-audio-source-03-voice-concurrency-virtualization/">Voice 分配、并发与虚拟化：为什么有些声音听不见</a>
+                    <span class="post-meta">2025.12.20</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 4 篇</span>
+                <div class="column-post-main">
+                    <a href="/2026/01/03/ue-audio-source-notes/ue-audio-source-04-soundwave-decoding-and-stream-caching/">SoundWave 解码与 Stream Caching：内存与延迟本质</a>
+                    <span class="post-meta">2026.01.03</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 5 篇</span>
+                <div class="column-post-main">
+                    <a href="/2026/01/10/ue-audio-source-notes/ue-audio-source-05-audio-mixer-rendering-mainline/">Audio Mixer 渲染主线：Source -> Submix -> Endpoint</a>
+                    <span class="post-meta">2026.01.10</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 6 篇</span>
+                <div class="column-post-main">
+                    <a href="/2026/01/24/ue-audio-source-notes/ue-audio-source-06-spatialization-attenuation-occlusion-timing/">空间化、衰减、遮挡的执行时机：3D 声音为何“像真的”</a>
+                    <span class="post-meta">2026.01.24</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 7 篇</span>
+                <div class="column-post-main">
+                    <a href="/2026/02/07/ue-audio-source-notes/ue-audio-source-07-submix-effects-and-audio-bus-routing/">Submix Effect 与 Audio Bus：DSP 路由与总线思维</a>
+                    <span class="post-meta">2026.02.07</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 8 篇</span>
+                <div class="column-post-main">
+                    <a href="/2026/02/21/ue-audio-source-notes/ue-audio-source-08-quartz-and-audio-debugging-system/">Quartz 与音频调试体系：样本级时序与性能定位</a>
+                    <span class="post-meta">2026.02.21</span>
+                </div>
+            </div>
+            
+        </div>
+        
+    </section>
+    
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

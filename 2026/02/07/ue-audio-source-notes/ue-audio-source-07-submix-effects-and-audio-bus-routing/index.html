@@ -1,0 +1,311 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Submix Effect 与 Audio Bus：DSP 路由与总线思维 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Submix Effect 与 Audio Bus：DSP 路由与总线思维</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.02.07
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Submix</span>
+            
+            <span style="color: var(--accent);">#Audio Bus</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 音频系统原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 7 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：UE5.7 Audio Mixer 主线</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 88%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-audio-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E6%9E%B6%E6%9E%84%E6%B8%85%E6%99%B0%E6%AF%94%E5%8F%82%E6%95%B0%E8%81%AA%E6%98%8E%E6%9B%B4%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">先给结论：架构清晰比参数聪明更重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B7%AF%E7%94%B1%E4%B8%8E%E5%A4%84%E7%90%86%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E5%88%86%E7%A6%BB"><span class="post-toc-list-text">路由与处理：为什么必须分离</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%B7%AF%E7%94%B1%E9%97%AE%E9%A2%98%EF%BC%9A%E5%A3%B0%E9%9F%B3%E5%BE%80%E5%93%AA%E8%B5%B0"><span class="post-toc-list-text">路由问题：声音往哪走</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%84%E7%90%86%E9%97%AE%E9%A2%98%EF%BC%9A%E5%A3%B0%E9%9F%B3%E6%80%8E%E4%B9%88%E5%8F%98"><span class="post-toc-list-text">处理问题：声音怎么变</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%90%BD%E5%9C%B0%E6%80%BB%E7%BA%BF%E8%AE%BE%E8%AE%A1"><span class="post-toc-list-text">我会怎么落地总线设计</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 音频系统原理与源码拆解（UE5.7）<br>
+本文主题：把“效果器堆叠”升级为“可维护的总线路由设计”</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>项目初期做音频很容易“先能响再说”，于是效果器和发送关系会慢慢长成一团。<br>
+短期能跑，长期很难维护。</p>
+<p>我自己吃过几次亏后，固定了一个原则：<br>
+先画总线拓扑，再决定每层挂什么效果。<br>
+这样排障、协作、后期调音都会轻很多。</p>
+<h2 id="本文问题">本文问题</h2>
+<p>为什么同一个项目里，音频资源越多，改一个参数影响范围越难预测？<br>
+因为“处理”和“路由”经常混在一起写，最后谁改了声音很难追踪。</p>
+<p>这一篇就把两件事拆开：</p>
+<ul>
+<li>Submix Effect 负责处理</li>
+<li>Audio Bus 负责路由</li>
+</ul>
+<h2 id="先给结论：架构清晰比参数聪明更重要">先给结论：架构清晰比参数聪明更重要</h2>
+<p>音频工程到中后期，最贵的不是“单次调音”，而是“可维护性崩塌后的返工”。<br>
+这篇的核心结论是：</p>
+<p><strong>先把路由拓扑稳定下来，再讨论效果器参数，长期成本最低。</strong></p>
+<h2 id="本文讨论范围">本文讨论范围</h2>
+<p>聚焦两个执行边界：</p>
+<ol>
+<li>Bus send 在哪里汇聚，怎么进入 Submix 图。</li>
+<li>Submix effect 在哪里执行，影响范围如何控制。</li>
+</ol>
+<p>不展开：</p>
+<ul>
+<li>单个效果器 DSP 细节</li>
+<li>MetaSounds 内部图级路由</li>
+</ul>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;Source 音频输出&quot;] --&gt; B[&quot;Pre/Post Bus Send&quot;]</span><br><span class="line">    B --&gt; C[&quot;Audio Bus 汇聚&quot;]</span><br><span class="line">    C --&gt; D[&quot;FMixerSubmix::RegisterAudioBus&quot;]</span><br><span class="line">    D --&gt; E[&quot;FMixerSubmix::ProcessAudio&quot;]</span><br><span class="line">    E --&gt; F[&quot;FSoundEffectSubmix::ProcessAudio&quot;]</span><br><span class="line">    F --&gt; G[&quot;父级 Submix / Master Endpoint&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="路由与处理：为什么必须分离">路由与处理：为什么必须分离</h2>
+<h3 id="路由问题：声音往哪走">路由问题：声音往哪走</h3>
+<p>Bus send、Submix parent-child 关系，决定的是信号路径。<br>
+这类问题表现为“某类声音突然进了不该进的总线”。</p>
+<h3 id="处理问题：声音怎么变">处理问题：声音怎么变</h3>
+<p>Submix effect 决定的是路径上“发生了什么处理”。<br>
+这类问题表现为“所有经过该总线的声音都一起变了”。</p>
+<p>把这两类问题混在一起时，排障会非常痛苦。</p>
+<h2 id="关键类型">关键类型</h2>
+<ul>
+<li><code>FMixerDevice::AddSubmixEffect</code>：把处理逻辑挂到指定总线，定义“这条总线怎么变声”。</li>
+<li><code>FSoundEffectSubmix::ProcessAudio</code>：效果器真正执行点，运行在线程安全要求更高的音频侧。</li>
+<li><code>FMixerSubmix::RegisterAudioBus</code>：把 Bus 信号接到 Submix 图，定义“这条声音往哪走”。</li>
+<li><code>USoundSourceBus</code>：把 Bus 输出变成可播放源，复用源级能力（空间化、并发等）。</li>
+<li><code>UAudioComponent::SetAudioBusSendPreEffect</code>：控制发送量和发送位置（前/后效果）。</li>
+</ul>
+<p>我常用链路：</p>
+<p><code>UAudioComponent::SetAudioBusSendPreEffect -&gt; FMixerSubmix::RegisterAudioBus -&gt; FMixerSubmix::ProcessAudio -&gt; FSoundEffectSubmix::ProcessAudio</code></p>
+<h2 id="我会怎么落地总线设计">我会怎么落地总线设计</h2>
+<p>一个可维护的最小起步方案：</p>
+<ol>
+<li>先定一级总线：<code>BGM / SFX / VO / Ambience / UI</code>。</li>
+<li>再决定哪些总线需要二级细分（例如 SFX 下再分 Weapon/Foley）。</li>
+<li>最后才给总线挂效果器，而不是给单资源到处挂。</li>
+</ol>
+<p>这样做的直接好处：</p>
+<ul>
+<li>影响范围可预估</li>
+<li>回归验证可分组</li>
+<li>团队协作时职责更清晰</li>
+</ul>
+<h2 id="常见误区">常见误区</h2>
+<ol>
+<li>
+<p>误区：先在资源上堆效果，后面再整理总线。<br>
+实际：后面整理成本通常远大于前期规划成本。</p>
+</li>
+<li>
+<p>误区：Bus 只是“技术路由”，和声音设计无关。<br>
+实际：Bus 拓扑本身就是混音设计的一部分。</p>
+</li>
+<li>
+<p>误区：所有效果都该挂在 Master。<br>
+实际：Master 适合全局处理，不适合承担全部风格塑形。</p>
+</li>
+</ol>
+<h2 id="本篇结论">本篇结论</h2>
+<p>把“处理”和“路由”分离，是音频工程可维护性的分水岭。<br>
+项目越大，这件事越不是“洁癖”，而是降低返工成本的硬需求。</p>
+<p>实战里我建议先稳定一版基础拓扑（BGM/SFX/VO/环境/系统音），再逐步细化。<br>
+这样后续做 Sidechain、动态混音、性能诊断，都会有稳定落点，而不会全靠记忆追线。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-audio-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/01/24/ue-audio-source-notes/ue-audio-source-06-spatialization-attenuation-occlusion-timing/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">空间化、衰减、遮挡的执行时机：3D 声音为何“像真的”</strong>
+                </a>
+                
+
+                
+                <a href="/2026/02/21/ue-audio-source-notes/ue-audio-source-08-quartz-and-audio-debugging-system/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 8 篇</span>
+                    <strong class="series-nav-title">Quartz 与音频调试体系：样本级时序与性能定位</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E6%9E%B6%E6%9E%84%E6%B8%85%E6%99%B0%E6%AF%94%E5%8F%82%E6%95%B0%E8%81%AA%E6%98%8E%E6%9B%B4%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">先给结论：架构清晰比参数聪明更重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B7%AF%E7%94%B1%E4%B8%8E%E5%A4%84%E7%90%86%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E5%88%86%E7%A6%BB"><span class="post-toc-list-text">路由与处理：为什么必须分离</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%B7%AF%E7%94%B1%E9%97%AE%E9%A2%98%EF%BC%9A%E5%A3%B0%E9%9F%B3%E5%BE%80%E5%93%AA%E8%B5%B0"><span class="post-toc-list-text">路由问题：声音往哪走</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%84%E7%90%86%E9%97%AE%E9%A2%98%EF%BC%9A%E5%A3%B0%E9%9F%B3%E6%80%8E%E4%B9%88%E5%8F%98"><span class="post-toc-list-text">处理问题：声音怎么变</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%90%BD%E5%9C%B0%E6%80%BB%E7%BA%BF%E8%AE%BE%E8%AE%A1"><span class="post-toc-list-text">我会怎么落地总线设计</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

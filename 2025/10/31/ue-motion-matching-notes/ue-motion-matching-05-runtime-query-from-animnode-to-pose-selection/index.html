@@ -1,0 +1,346 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>运行时查询主线：从 FAnimNode_MotionMatching 到最终姿态选择 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">运行时查询主线：从 FAnimNode_MotionMatching 到最终姿态选择</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.10.31
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Motion Matching</span>
+            
+            <span style="color: var(--accent);">#Pose Search</span>
+            
+            <span style="color: var(--accent);">#AnimGraph</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Motion Matching 源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.4/5.5 的 PoseSearch 与 Motion Matching 体系，从范式认知、Schema 与索引构建、运行时查询到调优排障，打通一条可落地的源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.4/5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 63%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-motion-matching/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E5%88%A4%E6%96%AD%E6%94%BE%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">先把判断放在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E8%BF%90%E8%A1%8C%E6%97%B6%E9%97%AD%E7%8E%AF%EF%BC%89"><span class="post-toc-list-text">主线图（运行时闭环）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E6%A0%B8%E5%BF%83%E5%85%A5%E5%8F%A3%E7%9A%84%E8%81%8C%E8%B4%A3"><span class="post-toc-list-text">先看核心入口的职责</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%B8%A7%E9%87%8C%E5%88%B0%E5%BA%95%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">一帧里到底发生了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-1%EF%BC%9A%E8%BE%93%E5%85%A5%E9%87%87%E6%A0%B7%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%A1%AE%E5%AE%9A"><span class="post-toc-list-text">阶段 1：输入采样与上下文确定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-2%EF%BC%9A%E6%9E%84%E5%BB%BA-Query-%E5%90%91%E9%87%8F"><span class="post-toc-list-text">阶段 2：构建 Query 向量</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-3%EF%BC%9A%E5%80%99%E9%80%89%E6%90%9C%E7%B4%A2%E4%B8%8E%E8%AF%84%E5%88%86"><span class="post-toc-list-text">阶段 3：候选搜索与评分</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-4%EF%BC%9A%E5%88%87%E6%8D%A2%E5%88%A4%E5%AE%9A"><span class="post-toc-list-text">阶段 4：切换判定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-5%EF%BC%9A%E7%8A%B6%E6%80%81%E6%9B%B4%E6%96%B0%E4%B8%8E%E8%BE%93%E5%87%BA"><span class="post-toc-list-text">阶段 5：状态更新与输出</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E6%9C%80%E4%BD%B3%E5%80%99%E9%80%89%E5%8F%98%E5%8C%96%E2%80%9D%E4%B8%8D%E7%AD%89%E4%BA%8E%E2%80%9C%E5%BF%85%E9%A1%BB%E5%88%87%E6%8D%A2%E2%80%9D"><span class="post-toc-list-text">为什么“最佳候选变化”不等于“必须切换”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%97%B6%E5%BB%BA%E8%AE%AE%E5%90%8C%E6%97%B6%E8%A7%82%E6%B5%8B-4-%E4%B8%AA%E9%87%8F"><span class="post-toc-list-text">调试时建议同时观测 4 个量</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%BB%BA%E8%AE%AE%E4%BD%A0%E8%BF%99%E6%A0%B7%E8%B7%9F%E4%B8%80%E9%81%8D"><span class="post-toc-list-text">我建议你这样跟一遍</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%BE%E5%88%B0%E5%B7%A5%E7%A8%8B%E9%87%8C%E6%80%8E%E4%B9%88%E7%94%A8"><span class="post-toc-list-text">放到工程里怎么用</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E8%B0%83%E7%94%A8%E9%93%BE%EF%BC%88UE5-5-%E5%87%BD%E6%95%B0%E5%90%8D%E7%89%88%EF%BC%89"><span class="post-toc-list-text">源码调用链（UE5.5 函数名版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%A4%E4%B8%AA%E5%B8%B8%E8%A2%AB%E5%BF%BD%E7%95%A5%E7%9A%84%E8%BF%90%E8%A1%8C%E6%97%B6%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">两个常被忽略的运行时细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%EF%BC%88%E6%96%AD%E7%82%B9%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">最小验证（断点建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Motion Matching 源码深挖（5.4/5.5）<br>
+本文主题：运行时每帧查询、评分与切换的核心闭环</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>这是本专栏的核心篇。<br>
+我们会把“节点每帧到底做了什么”拆成可跟踪的调用主线：输入更新、查询构建、候选评分、切换决策、状态更新。</p>
+<h2 id="先把判断放在前面">先把判断放在前面</h2>
+<p><code>FAnimNode_MotionMatching</code> 不是直接“播动画”，而是在每帧维护一个搜索状态机：<br>
+何时重搜、搜哪些库、如何避免抖动切换、如何保证连续性。</p>
+<h2 id="主线图（运行时闭环）">主线图（运行时闭环）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;AnimGraph Update&quot;] --&gt; B[&quot;更新 Trajectory/PoseHistory&quot;]</span><br><span class="line">    B --&gt; C[&quot;构建 Query 向量&quot;]</span><br><span class="line">    C --&gt; D[&quot;在目标 Database 中搜索&quot;]</span><br><span class="line">    D --&gt; E[&quot;候选评分与排序&quot;]</span><br><span class="line">    E --&gt; F[&quot;切换判定(是否继续当前/切新帧)&quot;]</span><br><span class="line">    F --&gt; G[&quot;更新 MotionMatchingState&quot;]</span><br><span class="line">    G --&gt; H[&quot;输出姿态并参与混合&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="先看核心入口的职责">先看核心入口的职责</h2>
+<p>在源码层面，<code>FAnimNode_MotionMatching</code> 的关键职责可以概括成：</p>
+<ol>
+<li>维护当前匹配状态（当前资产、当前时间、是否需要重搜）。</li>
+<li>在每帧更新中构建 Query。</li>
+<li>在候选数据库中搜索并评估。</li>
+<li>决定继续当前播放还是切换到新候选。</li>
+<li>把结果交给动画输出链路做混合。</li>
+</ol>
+<p>它更像“运行时调度器”，不是单纯“播片节点”。</p>
+<h2 id="一帧里到底发生了什么">一帧里到底发生了什么</h2>
+<p>把每帧拆开看，会更好理解参数的作用位置：</p>
+<h3 id="阶段-1：输入采样与上下文确定">阶段 1：输入采样与上下文确定</h3>
+<ul>
+<li>收集当前移动输入、朝向、速度等。</li>
+<li>更新轨迹与姿态历史缓存。</li>
+<li>通过 <code>Chooser</code> 或外部逻辑确定当前可搜索数据库集合。</li>
+</ul>
+<p>这一阶段常见问题：选库边界抖动，导致还没开始评分就先“上下文震荡”。</p>
+<h3 id="阶段-2：构建-Query-向量">阶段 2：构建 Query 向量</h3>
+<p>根据 <code>UPoseSearchSchema</code> 把当前输入转成统一特征向量。<br>
+这个向量必须与数据库索引向量同构，否则评分没有意义。</p>
+<p>这一阶段常见问题：输入噪声大，导致 Query 每帧抖动。</p>
+<h3 id="阶段-3：候选搜索与评分">阶段 3：候选搜索与评分</h3>
+<p>在当前数据库中检索候选姿态，并按代价函数排序。<br>
+这里得到的“最佳候选”并不必然立刻切换。</p>
+<p>这一阶段常见问题：大家只盯“分数最小”，忽略了连续性约束。</p>
+<h3 id="阶段-4：切换判定">阶段 4：切换判定</h3>
+<p>运行时会综合考虑：</p>
+<ul>
+<li>当前结果是否已经足够好</li>
+<li>新候选是否显著更优</li>
+<li>切换会不会造成突兀</li>
+</ul>
+<p>也就是说，系统追求的是“稳定的好结果”，不是“每帧贪心最优”。</p>
+<h3 id="阶段-5：状态更新与输出">阶段 5：状态更新与输出</h3>
+<p>最终把决策写回 <code>FMotionMatchingState</code> 一类状态容器，并输出姿态到 AnimGraph。<br>
+后续再与其他动画层（上半身叠加、Additive、IK 等）共同完成最终结果。</p>
+<h2 id="为什么“最佳候选变化”不等于“必须切换”">为什么“最佳候选变化”不等于“必须切换”</h2>
+<p>这是理解 Motion Matching 的关键之一。<br>
+如果每帧都切到当前全局最小代价，视觉上常常会抖。</p>
+<p>因此运行时通常会有“延续当前解”的策略：</p>
+<ul>
+<li>降低不必要切换</li>
+<li>保持动作惯性</li>
+<li>给短时噪声留缓冲</li>
+</ul>
+<p>这也解释了为什么调参时要同时看“分数曲线”和“切换事件”，只看其一很容易误判。</p>
+<h2 id="调试时建议同时观测-4-个量">调试时建议同时观测 4 个量</h2>
+<ol>
+<li>当前命中的 Database。</li>
+<li>最佳候选分数。</li>
+<li>是否触发切换。</li>
+<li>当前播放片段时间与速度。</li>
+</ol>
+<p>这四个量能覆盖“选库 -&gt; 搜索 -&gt; 判定 -&gt; 输出”完整链路。</p>
+<h2 id="我建议你这样跟一遍">我建议你这样跟一遍</h2>
+<ol>
+<li>在运行时打印或可视化当前选中 Database、最佳候选分数和是否触发切换。</li>
+<li>连续执行“匀速直跑 -&gt; 急转 -&gt; 急停 -&gt; 再加速”。</li>
+<li>观察切换时机是否与分数变化、输入变化一致。</li>
+<li>人为制造一段输入抖动（快速左右小幅摇杆），观察“分数抖动”与“切换抖动”是否同步。</li>
+</ol>
+<p>跟下来你会很直观地看到：<br>
+切换并不是每帧都触发，系统会在“更优匹配”和“动作连续性”之间做折中。</p>
+<h2 id="放到工程里怎么用">放到工程里怎么用</h2>
+<p>当你要优化“看起来不稳”的问题时，优先级建议是：</p>
+<ol>
+<li>先稳输入与选库边界。</li>
+<li>再看 Query 与分数曲线。</li>
+<li>最后看切换阈值与连续性策略。</li>
+</ol>
+<p>这样排查通常比直接改权重更快找到根因。</p>
+<h2 id="源码调用链（UE5-5-函数名版）">源码调用链（UE5.5 函数名版）</h2>
+<p>你可以直接在 <code>C:\Epic\UE_5.5</code> 下按这个顺序跟：</p>
+<ol>
+<li><code>AnimNode_MotionMatching.cpp</code><br>
+<code>FAnimNode_MotionMatching::UpdateAssetPlayer</code><br>
+这里处理 reset / 调试信息 / 数据库列表，然后调用 <code>UPoseSearchLibrary::UpdateMotionMatchingState(...)</code>。</li>
+<li><code>PoseSearchLibrary.cpp</code><br>
+<code>UPoseSearchLibrary::UpdateMotionMatchingState(...)</code><br>
+关键局部变量是 <code>bSearch</code>、<code>bSearchContinuingPose</code>、<code>bJumpToPose</code>。<br>
+流程是：先 <code>SearchContinuingPose</code>，再遍历各库 <code>Database-&gt;Search(...)</code> 比最优。</li>
+<li><code>PoseSearchDatabase.cpp</code><br>
+<code>UPoseSearchDatabase::Search(...)</code><br>
+根据 <code>PoseSearchMode</code> 分发到 <code>SearchBruteForce / SearchVPTree / SearchPCAKDTree</code>。</li>
+<li>回到 <code>AnimNode_MotionMatching.cpp</code><br>
+如果 <code>MotionMatchingState.bJumpedToPose</code>，执行 <code>BlendTo(...)</code>，否则延续当前播放并更新速率。</li>
+</ol>
+<h2 id="两个常被忽略的运行时细节">两个常被忽略的运行时细节</h2>
+<ol>
+<li><strong>继续姿态搜索不是“兜底”，而是主路径的一部分</strong><br>
+<code>SearchContinuingPose</code> 会带着 <code>ContinuingPoseCostBias</code> 参与同一轮比较，不是单独的后处理。</li>
+<li><strong>多库场景下会考虑 Query 缓存复用</strong><br>
+<code>SearchContext.SetUseCachedChannelData(...)</code> 只在“可能跨 Schema 构建 Query”时才更有价值，避免重复构建代价。</li>
+</ol>
+<h2 id="最小验证（断点建议）">最小验证（断点建议）</h2>
+<ol>
+<li>在 <code>FAnimNode_MotionMatching::UpdateAssetPlayer</code> 里观察 <code>DatabasesToSearch</code> 与 <code>NextUpdateInterruptMode</code>。</li>
+<li>在 <code>UPoseSearchLibrary::UpdateMotionMatchingState</code> 里看 <code>bSearchContinuingPose</code> 和最终 <code>bJumpToPose</code>。</li>
+<li>在 <code>UPoseSearchDatabase::Search</code> 里确认当前走的是哪种 <code>PoseSearchMode</code>。</li>
+<li>回到节点侧看 <code>MotionMatchingState.bJumpedToPose</code> 是否与视觉切换一致。</li>
+</ol>
+<p>把这 4 个点串起来，运行时就不再是黑盒。</p>
+<h2 id="最后">最后</h2>
+<p>读通这一篇后，Motion Matching 就不再是黑盒。<br>
+后续第 6、7、8 篇会围绕“输入质量、决策扩展、性能稳定性”把工程落地补完整。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-motion-matching/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/10/24/ue-motion-matching-notes/ue-motion-matching-04-database-indexing-pipeline/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">数据库索引构建主线：动画资产如何离线变成可检索索引</strong>
+                </a>
+                
+
+                
+                <a href="/2025/11/07/ue-motion-matching-notes/ue-motion-matching-06-trajectory-and-pose-history-input-quality/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">Trajectory 与 Pose History：查询输入质量如何决定结果上限</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E5%88%A4%E6%96%AD%E6%94%BE%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">先把判断放在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E8%BF%90%E8%A1%8C%E6%97%B6%E9%97%AD%E7%8E%AF%EF%BC%89"><span class="post-toc-list-text">主线图（运行时闭环）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E6%A0%B8%E5%BF%83%E5%85%A5%E5%8F%A3%E7%9A%84%E8%81%8C%E8%B4%A3"><span class="post-toc-list-text">先看核心入口的职责</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%B8%A7%E9%87%8C%E5%88%B0%E5%BA%95%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">一帧里到底发生了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-1%EF%BC%9A%E8%BE%93%E5%85%A5%E9%87%87%E6%A0%B7%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%A1%AE%E5%AE%9A"><span class="post-toc-list-text">阶段 1：输入采样与上下文确定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-2%EF%BC%9A%E6%9E%84%E5%BB%BA-Query-%E5%90%91%E9%87%8F"><span class="post-toc-list-text">阶段 2：构建 Query 向量</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-3%EF%BC%9A%E5%80%99%E9%80%89%E6%90%9C%E7%B4%A2%E4%B8%8E%E8%AF%84%E5%88%86"><span class="post-toc-list-text">阶段 3：候选搜索与评分</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-4%EF%BC%9A%E5%88%87%E6%8D%A2%E5%88%A4%E5%AE%9A"><span class="post-toc-list-text">阶段 4：切换判定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%98%B6%E6%AE%B5-5%EF%BC%9A%E7%8A%B6%E6%80%81%E6%9B%B4%E6%96%B0%E4%B8%8E%E8%BE%93%E5%87%BA"><span class="post-toc-list-text">阶段 5：状态更新与输出</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E6%9C%80%E4%BD%B3%E5%80%99%E9%80%89%E5%8F%98%E5%8C%96%E2%80%9D%E4%B8%8D%E7%AD%89%E4%BA%8E%E2%80%9C%E5%BF%85%E9%A1%BB%E5%88%87%E6%8D%A2%E2%80%9D"><span class="post-toc-list-text">为什么“最佳候选变化”不等于“必须切换”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%97%B6%E5%BB%BA%E8%AE%AE%E5%90%8C%E6%97%B6%E8%A7%82%E6%B5%8B-4-%E4%B8%AA%E9%87%8F"><span class="post-toc-list-text">调试时建议同时观测 4 个量</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%BB%BA%E8%AE%AE%E4%BD%A0%E8%BF%99%E6%A0%B7%E8%B7%9F%E4%B8%80%E9%81%8D"><span class="post-toc-list-text">我建议你这样跟一遍</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%BE%E5%88%B0%E5%B7%A5%E7%A8%8B%E9%87%8C%E6%80%8E%E4%B9%88%E7%94%A8"><span class="post-toc-list-text">放到工程里怎么用</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E8%B0%83%E7%94%A8%E9%93%BE%EF%BC%88UE5-5-%E5%87%BD%E6%95%B0%E5%90%8D%E7%89%88%EF%BC%89"><span class="post-toc-list-text">源码调用链（UE5.5 函数名版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%A4%E4%B8%AA%E5%B8%B8%E8%A2%AB%E5%BF%BD%E7%95%A5%E7%9A%84%E8%BF%90%E8%A1%8C%E6%97%B6%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">两个常被忽略的运行时细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%EF%BC%88%E6%96%AD%E7%82%B9%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">最小验证（断点建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

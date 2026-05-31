@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从认知到落地：GAS 是什么、能做什么、该怎么起步 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从认知到落地：GAS 是什么、能做什么、该怎么起步</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.05.08
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#Gameplay Ability System</span>
+            
+            <span style="color: var(--accent);">#GAS</span>
+            
+            <span style="color: var(--accent);">#网络同步</span>
+            
+            <span style="color: var(--accent);">#工程实践</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE4 Gameplay Ability System 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
+            <div class="series-meta">
+                <span>第 1 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：2022.05 - 2022.10 学习整理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 17%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gas/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-GAS"><span class="post-toc-list-text">为什么是 GAS</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%83%BD%E5%8A%9B%E8%BE%B9%E7%95%8C%E4%B8%8E%E7%8E%B0%E5%AE%9E%E9%A2%84%E6%9C%9F"><span class="post-toc-list-text">能力边界与现实预期</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A4%BA%E4%BE%8B%E9%A1%B9%E7%9B%AE%E7%BB%99%E5%87%BA%E7%9A%84%E5%85%B3%E9%94%AE%E5%90%AF%E5%8F%91"><span class="post-toc-list-text">示例项目给出的关键启发</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E8%B5%B7%E6%AD%A5%E6%B8%85%E5%8D%95%EF%BC%88%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%EF%BC%89"><span class="post-toc-list-text">项目起步清单（最小可运行）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%B3%BB%E5%88%97%E7%9A%84%E5%B7%A5%E7%A8%8B%E7%BA%A6%E5%AE%9A"><span class="post-toc-list-text">本系列的工程约定</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE4 Gameplay Ability System 学习专栏（基于 2022.05 - 2022.10 学习笔记）<br>
+本文主题：先建立 GAS 的整体认知，再完成项目最小可运行配置</p>
+</blockquote>
+<h2 id="为什么是-GAS">为什么是 GAS</h2>
+<p>GAS 不是“技能蓝图插件”，而是一个面向多人游戏的能力框架。<br>
+它把技能系统中最常见的几类问题放进统一模型：</p>
+<ol>
+<li>角色有什么能力（<code>GameplayAbility</code>）。</li>
+<li>能力如何改变状态（<code>GameplayEffect</code> + <code>Attribute</code>）。</li>
+<li>状态如何驱动逻辑（<code>GameplayTag</code>）。</li>
+<li>表现如何同步到多人（<code>GameplayCue</code> + 复制策略）。</li>
+<li>客户端如何减少输入到结果的延迟感（预测机制）。</li>
+</ol>
+<p>如果项目是 RPG、MOBA、TPS、技能驱动动作游戏，这套模型可以明显降低后期“改一处炸全局”的风险。</p>
+<h2 id="能力边界与现实预期">能力边界与现实预期</h2>
+<p>GAS 很强，但不等于“自动解决全部多人问题”。在开篇阶段要先接受三件事：</p>
+<ol>
+<li>GAS 的基础搭建必须落在 C++，不能全蓝图开局。</li>
+<li>有些内容可预测，有些天然难预测，比如 GE 移除与周期效果。</li>
+<li>你仍然需要自己做工程化约束，例如命名、初始化时机、调试路径。</li>
+</ol>
+<p>把这些边界先讲清，后面的设计才不会走弯路。</p>
+<h2 id="示例项目给出的关键启发">示例项目给出的关键启发</h2>
+<p>原笔记里的多人样例很典型：<br>
+玩家英雄把 <code>ASC</code> 放在 <code>PlayerState</code>，AI 小兵把 <code>ASC</code> 放在 <code>Character</code>。</p>
+<p>这背后是两个工程诉求：</p>
+<ol>
+<li>英雄死亡重生后希望保留部分能力系统状态，<code>PlayerState</code> 更稳。</li>
+<li>小兵生命周期短、状态简单，挂在 <code>Character</code> 上更直接。</li>
+</ol>
+<p>同时样例也展示了一个很实用的混合策略：</p>
+<ol>
+<li><code>GA_</code>、<code>GE_</code>、<code>GC_</code> 用统一前缀规范资产。</li>
+<li>C++ 和蓝图混用，核心链路在 C++，玩法层在蓝图迭代。</li>
+<li>不贪一次性覆盖所有高级特性，先保证基础链路可跑通。</li>
+</ol>
+<h2 id="项目起步清单（最小可运行）">项目起步清单（最小可运行）</h2>
+<p>以下是我认为最关键的启动顺序：</p>
+<ol>
+<li>启用 <code>Gameplay Ability System</code> 插件。</li>
+<li>在 <code>Build.cs</code> 添加依赖：<code>GameplayAbilities</code>、<code>GameplayTags</code>、<code>GameplayTasks</code>。</li>
+<li>重新生成工程文件并编译。</li>
+<li>在项目启动阶段调用 <code>UAbilitySystemGlobals::Get().InitGlobalData()</code>。</li>
+</ol>
+<p>第四步经常被漏掉，但它直接关系到 <code>TargetData</code> 链路能不能稳定工作。<br>
+如果你后面看到 <code>ScriptStructCache</code> 相关错误，第一反应就该回到这一步检查。</p>
+<h2 id="本系列的工程约定">本系列的工程约定</h2>
+<p>从这篇开始，后续文章默认遵守以下约定：</p>
+<ol>
+<li>先定义职责边界，再写技能逻辑。</li>
+<li>先保证服务端权威路径正确，再做客户端体验优化。</li>
+<li>任何“方便”的本地逻辑，都要先问一句是否会破坏复制一致性。</li>
+<li>调试信息、可视化与日志能力和功能一起建设，不在最后补救。</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>GAS 的正确打开方式不是“先做一个华丽技能”，而是先把系统骨架搭稳。<br>
+下一篇会进入真正的地基：<code>ASC</code>、<code>GameplayTag</code>、<code>Attribute</code>、<code>AttributeSet</code>。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gas/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前是本专栏的起点</span>
+                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
+                </div>
+                
+
+                
+                <a href="/2022/06/12/ue-gas-notes/ue-gas-02-asc-tags-attributes-and-attributeset/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-GAS"><span class="post-toc-list-text">为什么是 GAS</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%83%BD%E5%8A%9B%E8%BE%B9%E7%95%8C%E4%B8%8E%E7%8E%B0%E5%AE%9E%E9%A2%84%E6%9C%9F"><span class="post-toc-list-text">能力边界与现实预期</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A4%BA%E4%BE%8B%E9%A1%B9%E7%9B%AE%E7%BB%99%E5%87%BA%E7%9A%84%E5%85%B3%E9%94%AE%E5%90%AF%E5%8F%91"><span class="post-toc-list-text">示例项目给出的关键启发</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E8%B5%B7%E6%AD%A5%E6%B8%85%E5%8D%95%EF%BC%88%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%EF%BC%89"><span class="post-toc-list-text">项目起步清单（最小可运行）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%B3%BB%E5%88%97%E7%9A%84%E5%B7%A5%E7%A8%8B%E7%BA%A6%E5%AE%9A"><span class="post-toc-list-text">本系列的工程约定</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

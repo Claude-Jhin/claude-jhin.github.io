@@ -1,0 +1,358 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.11.05
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Networking</span>
+            
+            <span style="color: var(--accent);">#Combat</span>
+            
+            <span style="color: var(--accent);">#Lag Compensation</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 网络同步源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
+            <div class="series-meta">
+                <span>第 7 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 88%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-network-sync/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E6%83%B3%E5%9B%9E%E7%AD%94%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇想回答什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E5%85%88%E5%AE%9A%E2%80%9C%E5%88%A4%E5%AE%9A%E5%B1%82%E7%BA%A7%E2%80%9D"><span class="post-toc-list-text">战斗同步先定“判定层级”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E4%B8%8E%E4%BC%A4%E5%AE%B3%E9%93%BE%E8%B7%AF%E6%80%8E%E4%B9%88%E6%8B%86"><span class="post-toc-list-text">命中与伤害链路怎么拆</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E5%88%A4%E5%AE%9A"><span class="post-toc-list-text">命中判定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%BC%A4%E5%AE%B3%E7%BB%93%E7%AE%97"><span class="post-toc-list-text">伤害结算</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BB%93%E6%9E%9C%E4%BC%A0%E6%92%AD"><span class="post-toc-list-text">结果传播</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%95%E5%B0%84%E7%89%A9%E5%90%8C%E6%AD%A5%EF%BC%9A%E5%88%AB%E5%8F%AA%E7%9C%8B%E4%BD%8D%E7%BD%AE"><span class="post-toc-list-text">投射物同步：别只看位置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BB%B6%E8%BF%9F%E8%A1%A5%E5%81%BF%E4%B8%8D%E6%98%AF%E5%BC%80%E5%85%B3%EF%BC%8C%E6%98%AF%E7%AD%96%E7%95%A5%E9%9B%86%E5%90%88"><span class="post-toc-list-text">延迟补偿不是开关，是策略集合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（战斗同步排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E8%90%BD%E5%9C%B0%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">工程落地建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 网络同步源码拆解（5.5）<br>
+本文主题：把“战斗里最难吵清楚的问题”拆成一套可执行的工程规则</p>
+</blockquote>
+<h2 id="这一篇想回答什么">这一篇想回答什么</h2>
+<p>多人战斗同步里最容易陷入争论的三个词是：</p>
+<ul>
+<li>手感</li>
+<li>公平</li>
+<li>成本</li>
+</ul>
+<p>它们经常彼此冲突。<br>
+这篇不追求银弹，而是给一套“可落地、可复盘、可扩展”的权衡框架。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;客户端发起攻击/交互请求&quot;] --&gt; B[&quot;Server RPC 上传意图与时间信息&quot;]</span><br><span class="line">    B --&gt; C[&quot;服务器权威判定命中&quot;]</span><br><span class="line">    C --&gt; D[&quot;服务器执行伤害/状态写入&quot;]</span><br><span class="line">    D --&gt; E[&quot;属性复制同步结果&quot;]</span><br><span class="line">    C --&gt; F[&quot;必要时广播关键表现事件&quot;]</span><br><span class="line">    E --&gt; G[&quot;客户端状态一致&quot;]</span><br><span class="line">    F --&gt; G</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>LineTraceSingleByChannel / Sweep</code>：服务器权威命中判定基础。</li>
+<li><code>UGameplayStatics::ApplyPointDamage / ApplyDamage</code>：伤害链路入口。</li>
+<li><code>AActor::TakeDamage</code>：最终伤害处理落点。</li>
+<li><code>bReplicateMovement / OnRep_ReplicatedMovement</code>：投射物与运动对象的复制基础。</li>
+<li>Server RPC + 属性复制：请求与结果职责分离主线。</li>
+</ul>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Classes\Engine\World.h:1833</code><br>
+<code>LineTraceSingleByChannel(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\GameplayStatics.cpp:785</code><br>
+<code>ApplyPointDamage(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\GameplayStatics.cpp:799</code><br>
+<code>ApplyDamage(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Actor.cpp:2984</code><br>
+<code>AActor::TakeDamage(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\GameplayStatics.cpp:2817</code><br>
+<code>PredictProjectilePath(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Classes\GameFramework\Actor.h:2869</code><br>
+<code>OnRep_ReplicatedMovement()</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Actor.cpp:6241</code><br>
+<code>bReplicateMovement = bInReplicateMovement;</code></li>
+</ul>
+<h2 id="战斗同步先定“判定层级”">战斗同步先定“判定层级”</h2>
+<p>建议固定三层：</p>
+<ol>
+<li>客户端预反馈层
+<ul>
+<li>只负责即时体感（枪口火花、挥刀轨迹、本地手柄反馈）</li>
+</ul>
+</li>
+<li>服务器权威判定层
+<ul>
+<li>负责命中成立与否、伤害结算、状态写入</li>
+</ul>
+</li>
+<li>结果同步层
+<ul>
+<li>把权威结果传播给所有相关客户端</li>
+</ul>
+</li>
+</ol>
+<p>当三层明确后，很多争议会自动消失：</p>
+<ul>
+<li>为什么本地命中不等于真实命中</li>
+<li>为什么客户端看到“打中”但没扣血</li>
+<li>为什么有些表现必须延后到权威确认后再播</li>
+</ul>
+<h2 id="命中与伤害链路怎么拆">命中与伤害链路怎么拆</h2>
+<h3 id="命中判定">命中判定</h3>
+<p>服务器用 Trace/Sweep 做权威判定。<br>
+客户端可以做预测，但不能作为最终依据。</p>
+<h3 id="伤害结算">伤害结算</h3>
+<p>通过 <code>ApplyPointDamage/ApplyDamage</code> 进入 <code>TakeDamage</code>。<br>
+真正改变血量、护盾、状态机必须在权威侧完成。</p>
+<h3 id="结果传播">结果传播</h3>
+<ul>
+<li>持续状态：属性复制</li>
+<li>一次性表现：事件广播（谨慎使用 Multicast）</li>
+</ul>
+<h2 id="投射物同步：别只看位置">投射物同步：别只看位置</h2>
+<p>只开 <code>bReplicateMovement</code> 只能解决“飞到哪”。<br>
+战斗系统还要额外保证：</p>
+<ol>
+<li>谁生成（生成权）</li>
+<li>谁判定命中（判定权）</li>
+<li>谁写结果（结果权）</li>
+</ol>
+<p>如果三权不收口，投射物会变成争议制造机。</p>
+<h2 id="延迟补偿不是开关，是策略集合">延迟补偿不是开关，是策略集合</h2>
+<p>同一个“延迟补偿”在不同武器/技能上策略应该不同：</p>
+<ol>
+<li>命中窗口长度</li>
+<li>可补偿的目标类型</li>
+<li>可补偿的历史范围</li>
+<li>对公平性的容忍边界</li>
+</ol>
+<p>建议按武器或技能类别配置，而不是全局一刀切。</p>
+<h2 id="我会怎么跟源码（战斗同步排障）">我会怎么跟源码（战斗同步排障）</h2>
+<ol>
+<li>请求上行点：确认客户端上传的是意图，不是结果。</li>
+<li>服务器判定点：确认判定输入完整（位置、时间、状态）。</li>
+<li>伤害落地点：确认 <code>TakeDamage</code> 执行且写入权威状态。</li>
+<li>结果复制点：确认状态是否正确传播到相关客户端。</li>
+<li>表现触发点：确认预反馈与权威反馈不会互相覆盖。</li>
+</ol>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>客户端本地先判定命中并立即扣本地血量显示。</li>
+<li>服务器判定该次命中无效。</li>
+<li>在 120ms RTT 场景连续触发。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>玩家看到“先掉血后回弹”，体感为不公平，复盘难度高。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>预反馈和权威结果没有分层；本地状态与权威状态混写。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>客户端仅做轻量预反馈；真实血量与状态只接受服务器写入并通过复制回写。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;命中争议/状态冲突&quot;] --&gt; B&#123;&quot;命中判定是否服务器权威&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;迁移到服务器权威判定&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;请求和结果是否职责分离&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;请求走 RPC, 结果走属性复制&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;延迟补偿策略是否按武器分级&quot;&#125;</span><br><span class="line">    F --&gt;|否| G[&quot;建立分级补偿策略&quot;]</span><br><span class="line">    F --&gt;|是| H&#123;&quot;预反馈是否覆盖权威结果&quot;&#125;</span><br><span class="line">    H --&gt;|是| I[&quot;重构表现触发时机&quot;]</span><br><span class="line">    H --&gt;|否| J[&quot;进入指标化回归验证&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="工程落地建议">工程落地建议</h2>
+<ol>
+<li>每个战斗行为都标注“请求层/权威层/表现层”责任归属。</li>
+<li>关键技能必须有高延迟回归脚本。</li>
+<li>命中争议必须可还原到日志三点：请求、判定、应用。</li>
+<li>对玩家可见的“回弹”建立量化阈值（频率、幅度、持续时长）。</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>战斗同步不是“让客户端看起来永远正确”，而是“在延迟环境里让权威结果稳定且可接受”。<br>
+你要管理的不是一次命中，而是长期体验曲线。</p>
+<p>下一篇收束全专栏：网络模拟、日志、Trace、回归基线，形成可长期执行的排障闭环。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-network-sync/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/09/17/ue-network-sync-notes/ue-network-sync-06-prediction-replay-and-correction/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">预测、重演与纠偏范式：客户端预测、服务器校正、重放与平滑机制</strong>
+                </a>
+                
+
+                
+                <a href="/2023/12/24/ue-network-sync-notes/ue-network-sync-08-troubleshooting-and-regression-baseline/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 8 篇</span>
+                    <strong class="series-nav-title">排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E6%83%B3%E5%9B%9E%E7%AD%94%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇想回答什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E5%85%88%E5%AE%9A%E2%80%9C%E5%88%A4%E5%AE%9A%E5%B1%82%E7%BA%A7%E2%80%9D"><span class="post-toc-list-text">战斗同步先定“判定层级”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E4%B8%8E%E4%BC%A4%E5%AE%B3%E9%93%BE%E8%B7%AF%E6%80%8E%E4%B9%88%E6%8B%86"><span class="post-toc-list-text">命中与伤害链路怎么拆</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E5%88%A4%E5%AE%9A"><span class="post-toc-list-text">命中判定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%BC%A4%E5%AE%B3%E7%BB%93%E7%AE%97"><span class="post-toc-list-text">伤害结算</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BB%93%E6%9E%9C%E4%BC%A0%E6%92%AD"><span class="post-toc-list-text">结果传播</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%95%E5%B0%84%E7%89%A9%E5%90%8C%E6%AD%A5%EF%BC%9A%E5%88%AB%E5%8F%AA%E7%9C%8B%E4%BD%8D%E7%BD%AE"><span class="post-toc-list-text">投射物同步：别只看位置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BB%B6%E8%BF%9F%E8%A1%A5%E5%81%BF%E4%B8%8D%E6%98%AF%E5%BC%80%E5%85%B3%EF%BC%8C%E6%98%AF%E7%AD%96%E7%95%A5%E9%9B%86%E5%90%88"><span class="post-toc-list-text">延迟补偿不是开关，是策略集合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（战斗同步排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E8%90%BD%E5%9C%B0%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">工程落地建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

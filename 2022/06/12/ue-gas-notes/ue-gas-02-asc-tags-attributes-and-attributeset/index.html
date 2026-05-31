@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.06.12
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#Gameplay Ability System</span>
+            
+            <span style="color: var(--accent);">#GAS</span>
+            
+            <span style="color: var(--accent);">#GameplayTag</span>
+            
+            <span style="color: var(--accent);">#AttributeSet</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE4 Gameplay Ability System 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
+            <div class="series-meta">
+                <span>第 2 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：2022.05 - 2022.10 学习整理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 33%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gas/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B0%E4%BD%8F%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="post-toc-list-text">先记住一句话</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ASC%EF%BC%9AOwner%E3%80%81Avatar-%E4%B8%8E%E5%A4%8D%E5%88%B6%E6%A8%A1%E5%BC%8F"><span class="post-toc-list-text">ASC：Owner、Avatar 与复制模式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ASC-%E5%88%9D%E5%A7%8B%E5%8C%96%E6%97%B6%E6%9C%BA"><span class="post-toc-list-text">ASC 初始化时机</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GameplayTag%EF%BC%9A%E7%94%A8%E6%A0%87%E7%AD%BE%E8%A1%A8%E8%BE%BE%E7%8A%B6%E6%80%81%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E6%95%A3%E8%90%BD%E7%9A%84-bool"><span class="post-toc-list-text">GameplayTag：用标签表达状态，而不是散落的 bool</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Attribute%EF%BC%9ABaseValue-%E4%B8%8E-CurrentValue-%E6%98%AF%E4%B8%A4%E4%B8%AA%E4%B8%96%E7%95%8C"><span class="post-toc-list-text">Attribute：BaseValue 与 CurrentValue 是两个世界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Meta-Attribute%EF%BC%9A%E6%8A%8A%E2%80%9C%E7%BB%93%E7%AE%97%E4%B8%AD%E9%97%B4%E9%87%8F%E2%80%9D%E4%BB%8E%E6%9C%80%E7%BB%88%E5%B1%9E%E6%80%A7%E9%87%8C%E5%89%A5%E7%A6%BB"><span class="post-toc-list-text">Meta Attribute：把“结算中间量”从最终属性里剥离</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#AttributeSet%EF%BC%9A%E5%B1%9E%E6%80%A7%E7%BB%84%E7%BB%87%E4%B8%8E%E7%BA%A6%E6%9D%9F%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">AttributeSet：属性组织与约束入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E4%B8%AA%E9%AB%98%E9%A2%91%E5%9B%9E%E8%B0%83"><span class="post-toc-list-text">三个高频回调</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE4 Gameplay Ability System 学习专栏（基于 2022.05 - 2022.10 学习笔记）<br>
+本文主题：把 GAS 的数据核心层读通，建立稳定的系统地基</p>
+</blockquote>
+<h2 id="先记住一句话">先记住一句话</h2>
+<p><code>AbilitySystemComponent</code>（ASC）是 GAS 的“状态总线”。<br>
+只要一个 Actor 需要能力、属性、效果、标签交互，它就必须接入 ASC。</p>
+<h2 id="ASC：Owner、Avatar-与复制模式">ASC：Owner、Avatar 与复制模式</h2>
+<p>理解 ASC 时，最容易混淆的是两个角色：</p>
+<ol>
+<li><code>OwnerActor</code>：拥有 ASC 的对象。</li>
+<li><code>AvatarActor</code>：ASC 实际作用到的对象。</li>
+</ol>
+<p>它们可以是同一个，也可以分离。分离场景在玩家角色中非常常见。<br>
+另外，ASC 复制模式是多人项目第一道性能开关：</p>
+<ol>
+<li><code>Full</code>：GE 全复制，适合单机或调试。</li>
+<li><code>Mixed</code>：GE 只给拥有者，Tag/Cue 给所有人，适合玩家。</li>
+<li><code>Minimal</code>：不复制 GE，仅同步 Tag/Cue，适合 AI。</li>
+</ol>
+<p>如果你用 <code>Mixed</code>，要确保 Owner 链正确连到 <code>Controller</code>，否则会出现“看起来随机”的同步问题。</p>
+<h2 id="ASC-初始化时机">ASC 初始化时机</h2>
+<p>这块是新手最容易踩坑的位置。核心原则：</p>
+<ol>
+<li>服务器端和客户端都要做 <code>InitAbilityActorInfo</code>。</li>
+<li><code>ASC</code> 在 <code>Pawn</code> 上和在 <code>PlayerState</code> 上，初始化钩子不同。</li>
+<li>客户端初始化漏掉时，常见报错就是本地预测技能无法激活。</li>
+</ol>
+<p>如果看到 <code>Can't activate LocalOnly or LocalPredicted ability when not local</code>，优先回头查这条链。</p>
+<h2 id="GameplayTag：用标签表达状态，而不是散落的-bool">GameplayTag：用标签表达状态，而不是散落的 bool</h2>
+<p><code>GameplayTag</code> 是层级化状态描述系统。<br>
+相比 <code>bool</code> 或枚举，标签体系最大的价值是组合能力：</p>
+<ol>
+<li>可表达多层语义，比如 <code>State.Debuff.Stun</code>。</li>
+<li>可直接参与激活条件、阻断条件、效果条件。</li>
+<li>可在 ASC 上统一监听增删事件，减少分散逻辑。</li>
+</ol>
+<p>实战建议：</p>
+<ol>
+<li>统一在配置中定义标签，避免硬编码字符串飘散。</li>
+<li>优先用 <code>GameplayTagContainer</code>，不要到处传 <code>TArray&lt;FGameplayTag&gt;</code>。</li>
+<li>对临时本地状态谨慎使用 <code>LooseGameplayTag</code>，并明确生命周期管理。</li>
+</ol>
+<h2 id="Attribute：BaseValue-与-CurrentValue-是两个世界">Attribute：BaseValue 与 CurrentValue 是两个世界</h2>
+<p>属性有两个值：</p>
+<ol>
+<li><code>BaseValue</code>：基础值，通常被 <code>Instant</code>/<code>Periodic</code> 类效果改动。</li>
+<li><code>CurrentValue</code>：聚合结果，叠加持续类效果后的当前值。</li>
+</ol>
+<p>最常见误解是把 <code>BaseValue</code> 当“最大值”。<br>
+更稳的模型是把最大生命、最大法力也设计成独立属性，然后通过规则去约束当前值。</p>
+<h2 id="Meta-Attribute：把“结算中间量”从最终属性里剥离">Meta Attribute：把“结算中间量”从最终属性里剥离</h2>
+<p>像伤害、治疗这类“结算中间值”，很适合做 <code>Meta Attribute</code>。<br>
+这样你可以把流程拆成两层：</p>
+<ol>
+<li>GE/ExecCalc 负责产出伤害值。</li>
+<li>AttributeSet 负责决定这份伤害如何落到护盾、生命等最终属性。</li>
+</ol>
+<p>这个拆分会显著提高复杂战斗系统的可扩展性。</p>
+<h2 id="AttributeSet：属性组织与约束入口">AttributeSet：属性组织与约束入口</h2>
+<p><code>AttributeSet</code> 负责定义和管理属性。<br>
+设计时有三个关键点：</p>
+<ol>
+<li>一个 ASC 可有多个 AttributeSet，但同类来源不要重复挂多个实例。</li>
+<li>动态添加/移除 AttributeSet 要极其谨慎，复制时序错位可能崩溃。</li>
+<li>物品属性（如弹药）不一定非要硬塞 AttributeSet，很多场景直接 float 更稳。</li>
+</ol>
+<h2 id="三个高频回调">三个高频回调</h2>
+<p>属性系统里最实用的是这三个钩子：</p>
+<ol>
+<li><code>PreAttributeChange</code>：改值前做区间限制。</li>
+<li><code>PostGameplayEffectExecute</code>：处理 Instant GE 后置逻辑。</li>
+<li><code>OnAttributeAggregatorCreated</code>：自定义聚合规则（如“只吃最强减速”）。</li>
+</ol>
+<p>注意一个细节：属性重算不一定走你预想的路径，必要的 clamp 逻辑要在多个关键点重复兜底。</p>
+<h2 id="小结">小结</h2>
+<p>这一篇的目标只有一个：先把数据层变“可解释”。<br>
+下一篇进入数值系统主战场：<code>GameplayEffect</code>、<code>Modifier</code>、<code>MMC</code>、<code>ExecCalc</code> 如何配合，才能在多人项目里既好改又不乱。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gas/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2022/05/08/ue-gas-notes/ue-gas-01-overview-sample-and-project-setup/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 1 篇</span>
+                    <strong class="series-nav-title">从认知到落地：GAS 是什么、能做什么、该怎么起步</strong>
+                </a>
+                
+
+                
+                <a href="/2022/07/17/ue-gas-notes/ue-gas-03-gameplayeffect-modeling-and-execution/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">数值系统核心：GameplayEffect、Modifier、MMC 与 ExecCalc</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B0%E4%BD%8F%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="post-toc-list-text">先记住一句话</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ASC%EF%BC%9AOwner%E3%80%81Avatar-%E4%B8%8E%E5%A4%8D%E5%88%B6%E6%A8%A1%E5%BC%8F"><span class="post-toc-list-text">ASC：Owner、Avatar 与复制模式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ASC-%E5%88%9D%E5%A7%8B%E5%8C%96%E6%97%B6%E6%9C%BA"><span class="post-toc-list-text">ASC 初始化时机</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GameplayTag%EF%BC%9A%E7%94%A8%E6%A0%87%E7%AD%BE%E8%A1%A8%E8%BE%BE%E7%8A%B6%E6%80%81%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E6%95%A3%E8%90%BD%E7%9A%84-bool"><span class="post-toc-list-text">GameplayTag：用标签表达状态，而不是散落的 bool</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Attribute%EF%BC%9ABaseValue-%E4%B8%8E-CurrentValue-%E6%98%AF%E4%B8%A4%E4%B8%AA%E4%B8%96%E7%95%8C"><span class="post-toc-list-text">Attribute：BaseValue 与 CurrentValue 是两个世界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Meta-Attribute%EF%BC%9A%E6%8A%8A%E2%80%9C%E7%BB%93%E7%AE%97%E4%B8%AD%E9%97%B4%E9%87%8F%E2%80%9D%E4%BB%8E%E6%9C%80%E7%BB%88%E5%B1%9E%E6%80%A7%E9%87%8C%E5%89%A5%E7%A6%BB"><span class="post-toc-list-text">Meta Attribute：把“结算中间量”从最终属性里剥离</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#AttributeSet%EF%BC%9A%E5%B1%9E%E6%80%A7%E7%BB%84%E7%BB%87%E4%B8%8E%E7%BA%A6%E6%9D%9F%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">AttributeSet：属性组织与约束入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E4%B8%AA%E9%AB%98%E9%A2%91%E5%9B%9E%E8%B0%83"><span class="post-toc-list-text">三个高频回调</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

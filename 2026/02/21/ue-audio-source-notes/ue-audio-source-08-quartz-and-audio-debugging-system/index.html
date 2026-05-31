@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quartz 与音频调试体系：样本级时序与性能定位 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Quartz 与音频调试体系：样本级时序与性能定位</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.02.21
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Quartz</span>
+            
+            <span style="color: var(--accent);">#Audio Insights</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 音频系统原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 8 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：UE5.7 Audio Mixer 主线</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-audio-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E5%8F%AF%E9%AA%8C%E8%AF%81%E6%98%AF%E9%9F%B3%E9%A2%91%E7%B3%BB%E7%BB%9F%E4%B8%8A%E7%BA%BF%E5%89%8D%E6%8F%90"><span class="post-toc-list-text">先给结论：可验证是音频系统上线前提</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Quartz-%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E2%80%9C%E6%83%B3%E5%9C%A8%E6%8B%8D%E7%82%B9%E8%A7%A6%E5%8F%91%E2%80%9D%E5%88%B0%E2%80%9C%E7%9C%9F%E7%9A%84%E5%9C%A8%E6%8B%8D%E7%82%B9%E8%A7%A6%E5%8F%91%E2%80%9D"><span class="post-toc-list-text">Quartz 主线：从“想在拍点触发”到“真的在拍点触发”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B8%B8%E6%88%8F%E7%BA%BF%E7%A8%8B%E6%8F%90%E5%87%BA%E9%87%8F%E5%8C%96%E8%AF%B7%E6%B1%82"><span class="post-toc-list-text">1) 游戏线程提出量化请求</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%BB%A3%E7%90%86%E6%A1%A5%E6%8E%A5%E5%88%B0%E9%9F%B3%E9%A2%91%E4%BE%A7"><span class="post-toc-list-text">2) 代理桥接到音频侧</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%97%B6%E9%92%9F%E6%8C%89%E6%B8%B2%E6%9F%93%E8%8A%82%E5%A5%8F%E8%A7%A6%E5%8F%91"><span class="post-toc-list-text">3) 时钟按渲染节奏触发</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8C%87%E6%A0%87%E9%97%AD%E7%8E%AF%EF%BC%9A%E4%BB%8E%E2%80%9C%E6%84%9F%E8%A7%89%E4%B8%8D%E7%A8%B3%E2%80%9D%E5%88%B0%E2%80%9C%E8%AF%81%E6%8D%AE%E6%98%8E%E7%A1%AE%E2%80%9D"><span class="post-toc-list-text">指标闭环：从“感觉不稳”到“证据明确”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 音频系统原理与源码拆解（UE5.7）<br>
+本文主题：把“时序正确”与“性能可控”收敛为同一套工程化排障方法</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>如果前 7 篇解决的是“系统怎么工作”，那最后这一篇要解决的是“系统怎么证明自己工作正确”。<br>
+音频系统真正难的，不只是把功能做出来，而是把“听感问题”转成可复现、可度量、可回归的工程问题。</p>
+<p>我自己会把收尾固定成两条线：</p>
+<ol>
+<li>Quartz 线：确保事件在正确量化边界触发。</li>
+<li>指标线：确保负载变化时仍然稳定输出。</li>
+</ol>
+<h2 id="本文问题">本文问题</h2>
+<p>为什么音频项目到了后期，最容易陷入“听着不太对，但说不清哪不对”？<br>
+因为缺少统一的时序语义和可观测指标。</p>
+<p>Quartz 负责把“什么时候发生”说清楚，调试工具负责把“发生时系统状态”说清楚。<br>
+这两者合在一起，排障效率会发生质变。</p>
+<h2 id="先给结论：可验证是音频系统上线前提">先给结论：可验证是音频系统上线前提</h2>
+<p>这篇的收束结论很明确：</p>
+<p><strong>没有时序语义和指标闭环的音频系统，无法稳定上线。</strong></p>
+<p>Quartz 解决“时序语义”；<br>
+Audio Insights + Stat 解决“系统状态可见性”。<br>
+两者缺一都会让排障停留在主观争论。</p>
+<h2 id="本文讨论范围">本文讨论范围</h2>
+<p>聚焦最终工程闭环：</p>
+<ul>
+<li>Quartz 调度链路如何跨线程生效</li>
+<li>如何把量化事件和玩法逻辑对齐</li>
+<li>如何用指标判断系统是否健康</li>
+</ul>
+<p>不展开：</p>
+<ul>
+<li>音乐理论层面的节拍设计</li>
+<li>DAW 侧内容制作流程</li>
+</ul>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;GameThread 量化请求&quot;] --&gt; B[&quot;UQuartzClockHandle::SubscribeToQuantizationEvent&quot;]</span><br><span class="line">    B --&gt; C[&quot;Audio::FQuartzClockProxy&quot;]</span><br><span class="line">    C --&gt; D[&quot;FQuartzClock::Tick&quot;]</span><br><span class="line">    D --&gt; E[&quot;量化边界触发播放/事件&quot;]</span><br><span class="line">    E --&gt; F[&quot;Audio Insights + Stat 指标观测&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="Quartz-主线：从“想在拍点触发”到“真的在拍点触发”">Quartz 主线：从“想在拍点触发”到“真的在拍点触发”</h2>
+<h3 id="1-游戏线程提出量化请求">1) 游戏线程提出量化请求</h3>
+<p>通过 <code>UQuartzClockHandle</code> 提交时钟控制和订阅请求。<br>
+这一层定义的是“意图”。</p>
+<h3 id="2-代理桥接到音频侧">2) 代理桥接到音频侧</h3>
+<p><code>FQuartzClockProxy</code> 把请求传到真正执行时钟。<br>
+这一层定义的是“跨线程一致性”。</p>
+<h3 id="3-时钟按渲染节奏触发">3) 时钟按渲染节奏触发</h3>
+<p><code>FQuartzClock</code> 在渲染节奏中推进并触发事件。<br>
+这一层定义的是“可听结果的时间精度”。</p>
+<h2 id="关键类型">关键类型</h2>
+<ul>
+<li><code>UQuartzClockHandle</code>：GT 侧操作入口，负责创建、控制、订阅时钟行为。</li>
+<li><code>UQuartzClockHandle::SubscribeToQuantizationEvent</code>：把“节拍边界”显式绑定到逻辑事件。</li>
+<li><code>Audio::FQuartzClockProxy</code>：跨线程代理层，连接 GT 控制与音频渲染时钟。</li>
+<li><code>FQuartzClock</code>：真正计时与触发命令的对象，负责在边界点发出事件。</li>
+<li>调试抓手：<code>Audio Insights</code>、<code>stat audio</code>、<code>stat audiomixer</code>、<code>stat audiostreaming</code>。</li>
+</ul>
+<p>我自己定位节拍问题时，会先跑这条最短链：</p>
+<p><code>UQuartzClockHandle::SubscribeToQuantizationEvent -&gt; Audio::FQuartzClockProxy -&gt; FQuartzClock::Tick</code></p>
+<h2 id="指标闭环：从“感觉不稳”到“证据明确”">指标闭环：从“感觉不稳”到“证据明确”</h2>
+<p>建议把这几个指标做成固定排障面板：</p>
+<ul>
+<li><code>stat audio</code>：看整体音频线程与对象规模。</li>
+<li><code>stat audiomixer</code>：看混音执行侧负载与峰值。</li>
+<li><code>stat audiostreaming</code>：看缓存与读取压力。</li>
+<li>Audio Insights：做时序与对象级可视化核对。</li>
+</ul>
+<p>核心思路不是“一个指标决定真相”，而是交叉验证：</p>
+<ul>
+<li>节拍偏移问题优先看 Quartz 链。</li>
+<li>爆音/抖动问题优先看峰值负载与缓存 miss。</li>
+<li>两者共振时，再看命令提交时机与 block 边界关系。</li>
+</ul>
+<h2 id="本篇结论">本篇结论</h2>
+<p>把 Quartz 时序语义和调试指标体系放在一起，音频排障就能从“经验判断”升级为“证据驱动”。<br>
+这也是这套专栏的收尾：从架构、生命周期、并发、缓存、混音、3D 参数、路由，最后落到验证闭环。</p>
+<p>如果要给这季专栏只留一句话，我会写：</p>
+<blockquote>
+<p><strong>音频系统不是“能响就行”，而是“可解释、可验证、可回归”。</strong></p>
+</blockquote>
+<p>回链前 7 篇：</p>
+<ul>
+<li>第 1 篇：<a href="#">Post not found: ue-audio-source-01-overview-threads-modules</a></li>
+<li>第 2 篇：<a href="#">Post not found: ue-audio-source-02-playsound-to-activesound-lifecycle</a></li>
+<li>第 3 篇：<a href="#">Post not found: ue-audio-source-03-voice-concurrency-virtualization</a></li>
+<li>第 4 篇：<a href="#">Post not found: ue-audio-source-04-soundwave-decoding-and-stream-caching</a></li>
+<li>第 5 篇：<a href="#">Post not found: ue-audio-source-05-audio-mixer-rendering-mainline</a></li>
+<li>第 6 篇：<a href="#">Post not found: ue-audio-source-06-spatialization-attenuation-occlusion-timing</a></li>
+<li>第 7 篇：<a href="#">Post not found: ue-audio-source-07-submix-effects-and-audio-bus-routing</a></li>
+</ul>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-audio-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/02/07/ue-audio-source-notes/ue-audio-source-07-submix-effects-and-audio-bus-routing/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">Submix Effect 与 Audio Bus：DSP 路由与总线思维</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E5%8F%AF%E9%AA%8C%E8%AF%81%E6%98%AF%E9%9F%B3%E9%A2%91%E7%B3%BB%E7%BB%9F%E4%B8%8A%E7%BA%BF%E5%89%8D%E6%8F%90"><span class="post-toc-list-text">先给结论：可验证是音频系统上线前提</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Quartz-%E4%B8%BB%E7%BA%BF%EF%BC%9A%E4%BB%8E%E2%80%9C%E6%83%B3%E5%9C%A8%E6%8B%8D%E7%82%B9%E8%A7%A6%E5%8F%91%E2%80%9D%E5%88%B0%E2%80%9C%E7%9C%9F%E7%9A%84%E5%9C%A8%E6%8B%8D%E7%82%B9%E8%A7%A6%E5%8F%91%E2%80%9D"><span class="post-toc-list-text">Quartz 主线：从“想在拍点触发”到“真的在拍点触发”</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%B8%B8%E6%88%8F%E7%BA%BF%E7%A8%8B%E6%8F%90%E5%87%BA%E9%87%8F%E5%8C%96%E8%AF%B7%E6%B1%82"><span class="post-toc-list-text">1) 游戏线程提出量化请求</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%BB%A3%E7%90%86%E6%A1%A5%E6%8E%A5%E5%88%B0%E9%9F%B3%E9%A2%91%E4%BE%A7"><span class="post-toc-list-text">2) 代理桥接到音频侧</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%97%B6%E9%92%9F%E6%8C%89%E6%B8%B2%E6%9F%93%E8%8A%82%E5%A5%8F%E8%A7%A6%E5%8F%91"><span class="post-toc-list-text">3) 时钟按渲染节奏触发</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8C%87%E6%A0%87%E9%97%AD%E7%8E%AF%EF%BC%9A%E4%BB%8E%E2%80%9C%E6%84%9F%E8%A7%89%E4%B8%8D%E7%A8%B3%E2%80%9D%E5%88%B0%E2%80%9C%E8%AF%81%E6%8D%AE%E6%98%8E%E7%A1%AE%E2%80%9D"><span class="post-toc-list-text">指标闭环：从“感觉不稳”到“证据明确”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

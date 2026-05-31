@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<article class="post-container module archive-page-shell"
+    style="position: relative; margin: 80px auto; transform: none; max-width: 920px; width: 92%; cursor: auto;">
+    <header class="archive-page-hero">
+        <div class="archive-page-head">
+            <div>
+                <p class="archive-page-kicker">时间索引</p>
+                <h1 class="archive-page-title">归档 <span>(65 篇)</span></h1>
+            </div>
+            <div class="archive-page-meta">
+                <span>1 个年份分组</span>
+                <span>共 11 篇</span>
+            </div>
+        </div>
+        <p class="archive-page-summary">
+            这里按时间回看博客的写作轨迹。顺着这一页时间轴向下滚动，会更容易看到主题是怎样从博客搭建延伸到 OpenGL 和 UE 渲染源码梳理的。
+        </p>
+    </header>
+
+    <section class="archive-timeline" aria-label="归档时间轴">
+        
+        <section class="archive-year-block">
+            <div class="archive-year-rail">
+                <span class="archive-year-label">2025</span>
+            </div>
+
+            <div class="archive-year-content">
+                
+                <section class="archive-month-group">
+                    <div class="archive-month-head">
+                        <span class="archive-month-dot" aria-hidden="true"></span>
+                        <h2 class="archive-month-label">2025年 12月</h2>
+                    </div>
+
+                    <div class="archive-timeline-list">
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">12.20</span>
+                            <a class="archive-timeline-card" href="/2025/12/20/ue-audio-source-notes/ue-audio-source-03-voice-concurrency-virtualization/">
+                                <span class="archive-timeline-title">Voice 分配、并发与虚拟化：为什么有些声音听不见</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">12.13</span>
+                            <a class="archive-timeline-card" href="/2025/12/13/ue-audio-source-notes/ue-audio-source-02-playsound-to-activesound-lifecycle/">
+                                <span class="archive-timeline-title">从 PlaySound 到 ActiveSound：播放请求生命周期</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">12.06</span>
+                            <a class="archive-timeline-card" href="/2025/12/06/ue-audio-source-notes/ue-audio-source-01-overview-threads-modules/">
+                                <span class="archive-timeline-title">UE5.7 音频架构总览：线程与模块边界</span>
+                            </a>
+                        </article>
+                        
+                    </div>
+                </section>
+                
+                <section class="archive-month-group">
+                    <div class="archive-month-head">
+                        <span class="archive-month-dot" aria-hidden="true"></span>
+                        <h2 class="archive-month-label">2025年 11月</h2>
+                    </div>
+
+                    <div class="archive-timeline-list">
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">11.21</span>
+                            <a class="archive-timeline-card" href="/2025/11/21/ue-motion-matching-notes/ue-motion-matching-08-performance-stability-and-troubleshooting/">
+                                <span class="archive-timeline-title">性能与稳定性实战：数据库规模、采样密度、查询成本与排障清单</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">11.14</span>
+                            <a class="archive-timeline-card" href="/2025/11/14/ue-motion-matching-notes/ue-motion-matching-07-chooser-and-multi-database-strategy/">
+                                <span class="archive-timeline-title">Chooser 与多数据库切换：如何做可扩展的动作上下文决策</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">11.07</span>
+                            <a class="archive-timeline-card" href="/2025/11/07/ue-motion-matching-notes/ue-motion-matching-06-trajectory-and-pose-history-input-quality/">
+                                <span class="archive-timeline-title">Trajectory 与 Pose History：查询输入质量如何决定结果上限</span>
+                            </a>
+                        </article>
+                        
+                    </div>
+                </section>
+                
+                <section class="archive-month-group">
+                    <div class="archive-month-head">
+                        <span class="archive-month-dot" aria-hidden="true"></span>
+                        <h2 class="archive-month-label">2025年 10月</h2>
+                    </div>
+
+                    <div class="archive-timeline-list">
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">10.31</span>
+                            <a class="archive-timeline-card" href="/2025/10/31/ue-motion-matching-notes/ue-motion-matching-05-runtime-query-from-animnode-to-pose-selection/">
+                                <span class="archive-timeline-title">运行时查询主线：从 FAnimNode_MotionMatching 到最终姿态选择</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">10.24</span>
+                            <a class="archive-timeline-card" href="/2025/10/24/ue-motion-matching-notes/ue-motion-matching-04-database-indexing-pipeline/">
+                                <span class="archive-timeline-title">数据库索引构建主线：动画资产如何离线变成可检索索引</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">10.17</span>
+                            <a class="archive-timeline-card" href="/2025/10/17/ue-motion-matching-notes/ue-motion-matching-03-schema-channels-sampling-and-cost/">
+                                <span class="archive-timeline-title">Pose Search Schema 深入：Channel、采样、权重与代价函数语义</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">10.10</span>
+                            <a class="archive-timeline-card" href="/2025/10/10/ue-motion-matching-notes/ue-motion-matching-02-system-overview-posesearch-trajectory-chooser-animgraph/">
+                                <span class="archive-timeline-title">UE5 Motion Matching 体系总览：PoseSearch、Trajectory、Chooser、AnimGraph 如何协作</span>
+                            </a>
+                        </article>
+                        
+                        <article class="archive-timeline-item">
+                            <span class="archive-timeline-date">10.03</span>
+                            <a class="archive-timeline-card" href="/2025/10/03/ue-motion-matching-notes/ue-motion-matching-01-why-query-driven-animation/">
+                                <span class="archive-timeline-title">为什么是 Motion Matching：从状态机 / BlendSpace 到查询式动画</span>
+                            </a>
+                        </article>
+                        
+                    </div>
+                </section>
+                
+            </div>
+        </section>
+        
+    </section>
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

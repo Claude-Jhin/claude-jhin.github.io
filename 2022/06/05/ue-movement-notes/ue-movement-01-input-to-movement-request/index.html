@@ -1,0 +1,355 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>输入如何变成移动请求：从 Enhanced Input 到 AddMovementInput - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">输入如何变成移动请求：从 Enhanced Input 到 AddMovementInput</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.06.05
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Character Movement</span>
+            
+            <span style="color: var(--accent);">#Enhanced Input</span>
+            
+            <span style="color: var(--accent);">#AddMovementInput</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 移动系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.4/5.5 的 CharacterMovementComponent 主线，从输入向量积累、每帧移动执行、Walking/Falling 分支到 MOVE_Custom 与网络同步，形成一条可落地的问题定位路径。</p>
+            <div class="series-meta">
+                <span>第 1 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：5.4/5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 17%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-movement/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-UE-%E8%A6%81%E5%81%9A%E2%80%9C%E8%BE%93%E5%85%A5%E7%A7%AF%E7%B4%AF-%E5%BB%B6%E8%BF%9F%E6%B6%88%E8%B4%B9%E2%80%9D"><span class="post-toc-list-text">深入一层：为什么 UE 要做“输入积累 + 延迟消费”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E7%BA%BF%EF%BC%88UE-5-5%EF%BC%8C%E5%9F%BA%E4%BA%8E-C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">源码主线（UE_5.5，基于 C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Tick-%E5%86%85%E9%83%A8%E5%88%B0%E5%BA%95%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E6%B6%88%E8%B4%B9%E8%BE%93%E5%85%A5"><span class="post-toc-list-text">Tick 内部到底什么时候消费输入</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BE%93%E5%85%A5%E5%90%91%E9%87%8F%E4%BB%8E%E2%80%9C%E6%84%8F%E5%9B%BE%E2%80%9D%E5%88%B0%E2%80%9C%E5%8F%AF%E8%AE%A1%E7%AE%97%E9%87%8F%E2%80%9D%E7%9A%84%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">输入向量从“意图”到“可计算量”的一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%9D%A1%E9%93%BE%E5%92%8C%E7%BD%91%E7%BB%9C%E9%A2%84%E6%B5%8B%E6%9C%89%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">这条链和网络预测有什么关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E8%87%AA%E5%B7%B1%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E7%BB%84%E5%90%88"><span class="post-toc-list-text">我自己常用的断点组合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91%EF%BC%9A%E6%8A%8A%E8%BE%93%E5%85%A5%E5%BD%93%E6%88%90%E2%80%9C%E7%8A%B6%E6%80%81%E2%80%9D%E6%8C%81%E4%B9%85%E5%AD%98"><span class="post-toc-list-text">一个容易踩的坑：把输入当成“状态”持久存</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 移动系统源码拆解（5.4/5.5）<br>
+本文主题：输入事件如何在一帧内变成 CharacterMovement 可消费的移动请求</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>很多人刚接触 <code>Enhanced Input + CharacterMovement</code> 时，直觉都是“按下去就该立刻动”。<br>
+但 UE 这套移动链不是这么工作的：输入先被记下来，后面统一在移动更新里消费。<br>
+如果你遇到“松开按键还在滑”这类问题，基本都和这条链有关。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;Enhanced Input Action Triggered&quot;] --&gt; B[&quot;角色输入回调 Move(...) &quot;]</span><br><span class="line">    B --&gt; C[&quot;APawn::AddMovementInput&quot;]</span><br><span class="line">    C --&gt; D[&quot;APawn::Internal_AddMovementInput&quot;]</span><br><span class="line">    D --&gt; E[&quot;ControlInputVector 累积&quot;]</span><br><span class="line">    E --&gt; F[&quot;UCharacterMovementComponent::TickComponent&quot;]</span><br><span class="line">    F --&gt; G[&quot;UPawnMovementComponent::ConsumeInputVector&quot;]</span><br><span class="line">    G --&gt; H[&quot;Acceleration / 方向解算&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>UEnhancedInputComponent::BindAction</code>：把 IA 事件绑定到角色输入函数。</li>
+<li><code>APawn::AddMovementInput</code>：入口函数，处理方向和缩放值，再交给内部累积逻辑。</li>
+<li><code>APawn::Internal_AddMovementInput</code>：把输入累积到 <code>ControlInputVector</code>。</li>
+<li><code>UPawnMovementComponent::ConsumeInputVector</code>：在移动组件更新阶段消费并清空本帧输入。</li>
+<li><code>UCharacterMovementComponent::TickComponent</code>：把消费到的输入向量转换成可用于物理分支的加速度。</li>
+</ul>
+<h2 id="我会怎么跟源码">我会怎么跟源码</h2>
+<p>这段我平时是用“关键词跳转法”看的，速度很快：</p>
+<ol>
+<li>打开 <code>Engine/Source/Runtime/Engine/Private/Pawn.cpp</code>，搜索 <code>APawn::AddMovementInput(</code>。</li>
+<li>在同文件继续搜索 <code>APawn::Internal_AddMovementInput(</code>，观察 <code>ControlInputVector</code> 的写入点。</li>
+<li>打开 <code>Engine/Source/Runtime/Engine/Private/Components/PawnMovementComponent.cpp</code>，搜索 <code>ConsumeInputVector(</code>。</li>
+<li>打开 <code>Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp</code>，搜索 <code>TickComponent(</code>，确认输入在移动更新里被消费并转为加速度。</li>
+<li>断点建议：分别在 <code>AddMovementInput</code> 和 <code>ConsumeInputVector</code> 打断点，先确认“写入帧”和“消费帧”是否对得上。</li>
+</ol>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>基于 <code>APawn</code>/自定义移动组件实现角色输入。</li>
+<li>在 <code>TickComponent</code> 中直接读 <code>GetPendingInputVector()</code>，但不调用 <code>ConsumeInputVector()</code>。</li>
+<li>持续按住 <code>W</code> 两秒后松开。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>松开按键后角色还会继续滑行，甚至在某些帧出现突发加速。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>输入向量没有在每帧移动更新中被消费，<code>ControlInputVector</code> 跨帧累积，导致后续帧读到“历史输入”。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>在移动更新起点消费输入（<code>ConsumeInputVector</code>），并在调试时同时打印 Pending/Last 输入向量，确认每帧输入生命周期正确闭环。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;输入异常：按键后不动/松键后还滑&quot;] --&gt; B&#123;&quot;输入回调是否触发&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;先查 Enhanced Input 映射与 BindAction&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;AddMovementInput 是否命中&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;检查输入函数绑定对象是否为当前 Pawn&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;PendingInputVector 是否变化&quot;&#125;</span><br><span class="line">    F --&gt;|否| G[&quot;检查方向向量是否为零或被 Gate 阻断&quot;]</span><br><span class="line">    F --&gt;|是| H&#123;&quot;ConsumeInputVector 是否每帧命中&quot;&#125;</span><br><span class="line">    H --&gt;|否| I[&quot;修复 TickComponent 流程，保证消费输入&quot;]</span><br><span class="line">    H --&gt;|是| J&#123;&quot;Acceleration 是否被正确更新&quot;&#125;</span><br><span class="line">    J --&gt;|否| K[&quot;检查 MovementMode 与 MaxAcceleration 限制&quot;]</span><br><span class="line">    J --&gt;|是| L[&quot;输入链路正常，转查具体 Phys 分支&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="收尾">收尾</h2>
+<p><code>AddMovementInput</code> 做的是“登记输入意图”，不是直接改位置。<br>
+真正的移动发生在 <code>CharacterMovementComponent</code> 的每帧更新里。<br>
+把这个边界看清楚，后面很多移动问题都会简单很多。</p>
+<hr>
+<h2 id="深入一层：为什么-UE-要做“输入积累-延迟消费”">深入一层：为什么 UE 要做“输入积累 + 延迟消费”</h2>
+<p>从设计上看，UE 这套方案不是为了“写起来顺手”，而是为了满足下面三个约束：</p>
+<ol>
+<li>输入采样频率和移动模拟频率不一定一致。</li>
+<li>网络预测需要“可重放”的输入快照。</li>
+<li>物理分支（Walking/Falling/Custom）希望用统一入口消费输入。</li>
+</ol>
+<p>所以你会看到输入不是在 <code>BindAction</code> 回调里直接改位置，而是先写入 <code>ControlInputVector</code>，等移动组件 Tick 时再拿走。</p>
+<p>如果把它想象成流水线，其实是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">输入设备采样 -&gt; Pawn 记录意图 -&gt; Movement 在本帧统一消费 -&gt; 进入具体 Phys 分支</span><br></pre></td></tr></table></figure>
+<p>这个结构带来的最大好处是：你调试移动问题时，可以先确认“输入有没有被记录”，再确认“记录有没有被消费”，最后才看“消费之后怎么解算”。</p>
+<hr>
+<h2 id="源码主线（UE-5-5，基于-C-Epic-UE-5-5）">源码主线（UE_5.5，基于 <code>C:\Epic\UE_5.5</code>）</h2>
+<p>先给你最关键的落点，方便直接跳：</p>
+<ul>
+<li><code>Engine/Source/Runtime/Engine/Private/Pawn.cpp:786</code><br>
+<code>APawn::AddMovementInput</code>，先取 <code>MovementComponent</code>，有组件就走 <code>AddInputVector</code>。</li>
+<li><code>Engine/Source/Runtime/Engine/Private/Pawn.cpp:825</code><br>
+<code>APawn::Internal_AddMovementInput</code>，核心就是 <code>ControlInputVector += WorldAccel</code>（前提不是 <code>IsMoveInputIgnored</code>）。</li>
+<li><code>Engine/Source/Runtime/Engine/Private/Pawn.cpp:833</code><br>
+<code>APawn::Internal_ConsumeMovementInputVector</code>，把 <code>ControlInputVector</code> 复制到 <code>LastControlInputVector</code> 后清零。</li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/PawnMovementComponent.cpp:64</code><br>
+<code>UPawnMovementComponent::AddInputVector</code>，本质还是回到 Pawn 内部输入累积。</li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/PawnMovementComponent.cpp:82</code><br>
+<code>UPawnMovementComponent::ConsumeInputVector</code>，取并清本帧输入。</li>
+<li><code>Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp:1576</code><br>
+<code>UCharacterMovementComponent::TickComponent</code>，这里才是真正消费输入的地方（异步模式除外）。</li>
+</ul>
+<p>可以把这段源码缩成下面这个伪代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Pawn.cpp</span></span><br><span class="line"><span class="built_in">AddMovementInput</span>(WorldDir, Scale)</span><br><span class="line">&#123;</span><br><span class="line">    MovementComponent-&gt;<span class="built_in">AddInputVector</span>(WorldDir * Scale);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">Internal_AddMovementInput</span>(WorldAccel)</span><br><span class="line">&#123;</span><br><span class="line">    ControlInputVector += WorldAccel;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">Internal_ConsumeMovementInputVector</span>()</span><br><span class="line">&#123;</span><br><span class="line">    LastControlInputVector = ControlInputVector;</span><br><span class="line">    ControlInputVector = Zero;</span><br><span class="line">    <span class="keyword">return</span> LastControlInputVector;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="Tick-内部到底什么时候消费输入">Tick 内部到底什么时候消费输入</h2>
+<p>这个点很多人会忽略：<code>TickComponent</code> 一开始就消费输入，但有个例外。</p>
+<p>在 <code>CharacterMovementComponent.cpp:1583-1589</code>：</p>
+<ul>
+<li>普通模式：<code>InputVector = ConsumeInputVector();</code></li>
+<li>异步移动模式（<code>AsyncCharacterMovement == 1</code>）：这里不会马上消费，输入会在异步输入构建阶段处理。</li>
+</ul>
+<p>这意味着你如果项目开了异步角色移动，调试“输入为什么没进来”时，断点位置要变，不然会误判。</p>
+<hr>
+<h2 id="输入向量从“意图”到“可计算量”的一步">输入向量从“意图”到“可计算量”的一步</h2>
+<p>仅仅消费 <code>InputVector</code> 还不够，移动解算真正吃的是 <code>Acceleration</code>。<br>
+在 <code>ControlledCharacterMove</code>（<code>CharacterMovementComponent.cpp:6226</code>）里，这一步是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Acceleration = <span class="built_in">ScaleInputAcceleration</span>(<span class="built_in">ConstrainInputAcceleration</span>(InputVector));</span><br><span class="line">AnalogInputModifier = <span class="built_in">ComputeAnalogInputModifier</span>();</span><br></pre></td></tr></table></figure>
+<p>所以很多“按键没问题但手感不对”的 case，不在输入系统，而在：</p>
+<ol>
+<li><code>ConstrainInputAcceleration</code>（输入方向被约束）。</li>
+<li><code>ScaleInputAcceleration</code>（输入大小被缩放）。</li>
+<li><code>AnalogInputModifier</code>（手柄/模拟输入被折算）。</li>
+</ol>
+<hr>
+<h2 id="这条链和网络预测有什么关系">这条链和网络预测有什么关系</h2>
+<p>网络预测这块经常被误会成“另一个系统”。<br>
+其实它建立在同一条输入链上：客户端把本地每帧输入快照记录成 <code>FSavedMove_Character</code>，服务端再按相似时间步重演。</p>
+<p>你在 <code>CharacterMovementComponent.h:2327</code> 附近能看到官方注释把这件事写得很清楚：<br>
+客户端会保存 move、发送 move、收到纠偏后重放未确认 move。</p>
+<p>换句话说，如果本地输入生命周期不稳定（比如某帧没消费、某帧重复消费），网络层一定会放大这个问题。</p>
+<hr>
+<h2 id="我自己常用的断点组合">我自己常用的断点组合</h2>
+<p>如果你要快速判断问题在输入还是在物理：</p>
+<ol>
+<li><code>APawn::AddMovementInput</code>（<code>Pawn.cpp:786</code>）<br>
+看输入回调是否真的进入。</li>
+<li><code>APawn::Internal_AddMovementInput</code>（<code>Pawn.cpp:825</code>）<br>
+看 <code>ControlInputVector</code> 是否累积。</li>
+<li><code>UPawnMovementComponent::ConsumeInputVector</code>（<code>PawnMovementComponent.cpp:82</code>）<br>
+看本帧是否被消费并清零。</li>
+<li><code>ControlledCharacterMove</code>（<code>CharacterMovementComponent.cpp:6226</code>）<br>
+看 <code>Acceleration</code> 是否符合预期。</li>
+</ol>
+<p>这 4 个断点足够把 80% 输入链问题定位清楚。</p>
+<hr>
+<h2 id="一个容易踩的坑：把输入当成“状态”持久存">一个容易踩的坑：把输入当成“状态”持久存</h2>
+<p>有些项目会在角色类里再保存一份“当前输入方向”，然后在多个地方重复叠加，最后和 <code>ControlInputVector</code> 混着用。<br>
+这样很容易出现：</p>
+<ul>
+<li>松键后残留输入</li>
+<li>网络重放时方向偏差</li>
+<li>帧率变化时体感不一致</li>
+</ul>
+<p>建议做法是：<br>
+把输入状态分成两类，<code>意图</code> 和 <code>历史</code>。意图只走 <code>AddMovementInput/ConsumeInputVector</code> 这条主链，历史数据另存但不参与本帧叠加。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-movement/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前是本专栏的起点</span>
+                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
+                </div>
+                
+
+                
+                <a href="/2022/06/26/ue-movement-notes/ue-movement-02-frame-execution-skeleton/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">CharacterMovement 一帧执行骨架：TickComponent、PerformMovement、StartNewPhysics</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-UE-%E8%A6%81%E5%81%9A%E2%80%9C%E8%BE%93%E5%85%A5%E7%A7%AF%E7%B4%AF-%E5%BB%B6%E8%BF%9F%E6%B6%88%E8%B4%B9%E2%80%9D"><span class="post-toc-list-text">深入一层：为什么 UE 要做“输入积累 + 延迟消费”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E7%BA%BF%EF%BC%88UE-5-5%EF%BC%8C%E5%9F%BA%E4%BA%8E-C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">源码主线（UE_5.5，基于 C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Tick-%E5%86%85%E9%83%A8%E5%88%B0%E5%BA%95%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E6%B6%88%E8%B4%B9%E8%BE%93%E5%85%A5"><span class="post-toc-list-text">Tick 内部到底什么时候消费输入</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BE%93%E5%85%A5%E5%90%91%E9%87%8F%E4%BB%8E%E2%80%9C%E6%84%8F%E5%9B%BE%E2%80%9D%E5%88%B0%E2%80%9C%E5%8F%AF%E8%AE%A1%E7%AE%97%E9%87%8F%E2%80%9D%E7%9A%84%E4%B8%80%E6%AD%A5"><span class="post-toc-list-text">输入向量从“意图”到“可计算量”的一步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%9D%A1%E9%93%BE%E5%92%8C%E7%BD%91%E7%BB%9C%E9%A2%84%E6%B5%8B%E6%9C%89%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">这条链和网络预测有什么关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E8%87%AA%E5%B7%B1%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E7%BB%84%E5%90%88"><span class="post-toc-list-text">我自己常用的断点组合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91%EF%BC%9A%E6%8A%8A%E8%BE%93%E5%85%A5%E5%BD%93%E6%88%90%E2%80%9C%E7%8A%B6%E6%80%81%E2%80%9D%E6%8C%81%E4%B9%85%E5%AD%98"><span class="post-toc-list-text">一个容易踩的坑：把输入当成“状态”持久存</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>数值系统核心：GameplayEffect、Modifier、MMC 与 ExecCalc - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">数值系统核心：GameplayEffect、Modifier、MMC 与 ExecCalc</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.07.17
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#Gameplay Ability System</span>
+            
+            <span style="color: var(--accent);">#GAS</span>
+            
+            <span style="color: var(--accent);">#GameplayEffect</span>
+            
+            <span style="color: var(--accent);">#MMC</span>
+            
+            <span style="color: var(--accent);">#ExecCalc</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE4 Gameplay Ability System 学习专栏</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
+            <div class="series-meta">
+                <span>第 3 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：2022.05 - 2022.10 学习整理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 50%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gas/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GE-%E6%98%AF%E2%80%9C%E6%95%B0%E6%8D%AE%E5%AE%B9%E5%99%A8%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E9%80%BB%E8%BE%91%E5%AE%B9%E5%99%A8"><span class="post-toc-list-text">GE 是“数据容器”，不是逻辑容器</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Modifier%EF%BC%9A%E5%8F%AF%E9%A2%84%E6%B5%8B%E6%94%B9%E5%80%BC%E7%9A%84%E4%B8%BB%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">Modifier：可预测改值的主路径</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GESpec-%E4%B8%8E-SetByCaller%EF%BC%9A%E8%BF%90%E8%A1%8C%E6%97%B6%E5%8F%AF%E5%8F%98%E5%B1%82"><span class="post-toc-list-text">GESpec 与 SetByCaller：运行时可变层</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#MMC-%E4%B8%8E-ExecCalc%EF%BC%9A%E6%80%8E%E4%B9%88%E9%80%89"><span class="post-toc-list-text">MMC 与 ExecCalc：怎么选</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%90%E6%9C%AC%E4%B8%8E%E5%86%B7%E5%8D%B4%E5%BB%BA%E6%A8%A1"><span class="post-toc-list-text">成本与冷却建模</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8A%A8%E6%80%81-GE-%E7%9A%84%E4%BD%BF%E7%94%A8%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">动态 GE 的使用边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E8%90%BD%E5%9C%B0%E7%9A%84%E5%BB%BA%E6%A8%A1%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">一套可落地的建模策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE4 Gameplay Ability System 学习专栏（基于 2022.05 - 2022.10 学习笔记）<br>
+本文主题：建立可维护的 GE 数值建模方式，理清可预测与不可预测边界</p>
+</blockquote>
+<h2 id="GE-是“数据容器”，不是逻辑容器">GE 是“数据容器”，不是逻辑容器</h2>
+<p><code>GameplayEffect</code>（GE）负责描述“影响是什么”，不负责承载复杂流程逻辑。<br>
+先把这个边界守住，后期你才不会出现 GE 蓝图越来越难维护的问题。</p>
+<p>GE 按持续类型可分三类：</p>
+<ol>
+<li><code>Instant</code>：立即生效，通常改 <code>BaseValue</code>。</li>
+<li><code>Duration</code>：持续一段时间，通常改 <code>CurrentValue</code>。</li>
+<li><code>Infinite</code>：无限持续，需要显式移除。</li>
+</ol>
+<h2 id="Modifier：可预测改值的主路径">Modifier：可预测改值的主路径</h2>
+<p>在 GAS 里，<code>Modifier</code> 是属性改值的基础路径，也是预测链路的核心入口。<br>
+常用操作有四种：<code>Add</code>、<code>Multiply</code>、<code>Divide</code>、<code>Override</code>。</p>
+<p>一个非常关键的聚合公式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">((Base + Additive) * Multiplicitive) / Division</span><br></pre></td></tr></table></figure>
+<p>这也是很多“数值和直觉不一致”问题的源头，特别是多个乘法叠加时。<br>
+如果项目对乘除叠加语义有严格要求，通常要提前统一规则，必要时改引擎实现。</p>
+<h2 id="GESpec-与-SetByCaller：运行时可变层">GESpec 与 SetByCaller：运行时可变层</h2>
+<p><code>GameplayEffect</code> 是模板，<code>GameplayEffectSpec</code> 才是运行时实例。<br>
+你可以在 Spec 上动态调整等级、持续时间、动态标签和 <code>SetByCaller</code> 参数。</p>
+<p><code>SetByCaller</code> 特别适合做技能运行时参数注入，例如：</p>
+<ol>
+<li>蓄力时长转伤害。</li>
+<li>动态冷却时长。</li>
+<li>来自外部系统的临时倍率。</li>
+</ol>
+<p>建议优先用 <code>GameplayTag</code> 作为 key，而不是 <code>FName</code>，可读性和复制效率都更稳。</p>
+<h2 id="MMC-与-ExecCalc：怎么选">MMC 与 ExecCalc：怎么选</h2>
+<p>这两个经常被混用，建议按“预测需求”先分流：</p>
+<ol>
+<li><code>MMC</code>：返回单个浮点结果，可预测，适合大多数动态倍率逻辑。</li>
+<li><code>ExecCalc</code>：功能最强，可改多个属性，但不可预测，适合复杂结算。</li>
+</ol>
+<p>简化决策：</p>
+<ol>
+<li>需要客户端预测体验优先，先考虑 <code>MMC</code>。</li>
+<li>需要复杂多属性结算与规则控制，再上 <code>ExecCalc</code>。</li>
+</ol>
+<h2 id="成本与冷却建模">成本与冷却建模</h2>
+<p><code>Cost GE</code> 和 <code>Cooldown GE</code> 是技能系统稳定性的关键契约：</p>
+<ol>
+<li><code>Cost GE</code> 通常是 <code>Instant</code>，处理资源消耗。</li>
+<li><code>Cooldown GE</code> 通常是 <code>Duration</code>，用独立 <code>Cooldown Tag</code> 标识。</li>
+</ol>
+<p>进阶做法不是“每个技能一个 GE”，而是复用 GE 模板，在 Spec 上注入差异。<br>
+常见策略：</p>
+<ol>
+<li>冷却时长由 <code>SetByCaller</code> 注入。</li>
+<li>或由 <code>MMC</code> 读取技能等级与配置计算。</li>
+</ol>
+<h2 id="动态-GE-的使用边界">动态 GE 的使用边界</h2>
+<p>运行时动态创建 GE 是高阶能力，默认不建议滥用。<br>
+当前经验上更稳的边界是：</p>
+<ol>
+<li>动态创建 <code>Instant</code> GE 可以做。</li>
+<li><code>Duration</code>/<code>Infinite</code> 更推荐用预制类 + 运行时改 Spec。</li>
+</ol>
+<p>原因很直接：复制链路依赖类定义一致性，纯运行时类在多人下风险高。</p>
+<h2 id="一套可落地的建模策略">一套可落地的建模策略</h2>
+<p>结合这阶段学习，我更推荐如下拆分：</p>
+<ol>
+<li>GE 负责描述与组合，不承载重逻辑。</li>
+<li><code>Modifier</code> 处理通用、可预测数值变化。</li>
+<li><code>MMC</code> 负责可预测的动态幅值。</li>
+<li><code>ExecCalc</code> 负责复杂、服务端权威结算。</li>
+<li>关键参数统一通过 Spec 注入，减少类数量膨胀。</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>GE 系统真正难的不是“怎么生效”，而是“怎么长期不失控”。<br>
+下一篇进入技能运行时主线：<code>GameplayAbility</code>、输入绑定、<code>AbilityTask</code> 与 RPC 批处理。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gas/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2022/06/12/ue-gas-notes/ue-gas-02-asc-tags-attributes-and-attributeset/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet</strong>
+                </a>
+                
+
+                
+                <a href="/2022/08/14/ue-gas-notes/ue-gas-04-gameplayability-input-task-and-batching/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">技能运行时主线：GameplayAbility、输入绑定、AbilityTask 与批处理</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GE-%E6%98%AF%E2%80%9C%E6%95%B0%E6%8D%AE%E5%AE%B9%E5%99%A8%E2%80%9D%EF%BC%8C%E4%B8%8D%E6%98%AF%E9%80%BB%E8%BE%91%E5%AE%B9%E5%99%A8"><span class="post-toc-list-text">GE 是“数据容器”，不是逻辑容器</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Modifier%EF%BC%9A%E5%8F%AF%E9%A2%84%E6%B5%8B%E6%94%B9%E5%80%BC%E7%9A%84%E4%B8%BB%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">Modifier：可预测改值的主路径</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GESpec-%E4%B8%8E-SetByCaller%EF%BC%9A%E8%BF%90%E8%A1%8C%E6%97%B6%E5%8F%AF%E5%8F%98%E5%B1%82"><span class="post-toc-list-text">GESpec 与 SetByCaller：运行时可变层</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#MMC-%E4%B8%8E-ExecCalc%EF%BC%9A%E6%80%8E%E4%B9%88%E9%80%89"><span class="post-toc-list-text">MMC 与 ExecCalc：怎么选</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%90%E6%9C%AC%E4%B8%8E%E5%86%B7%E5%8D%B4%E5%BB%BA%E6%A8%A1"><span class="post-toc-list-text">成本与冷却建模</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8A%A8%E6%80%81-GE-%E7%9A%84%E4%BD%BF%E7%94%A8%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">动态 GE 的使用边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E8%90%BD%E5%9C%B0%E7%9A%84%E5%BB%BA%E6%A8%A1%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">一套可落地的建模策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

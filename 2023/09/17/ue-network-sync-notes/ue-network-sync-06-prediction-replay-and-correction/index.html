@@ -1,0 +1,353 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>预测、重演与纠偏范式：客户端预测、服务器校正、重放与平滑机制 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">预测、重演与纠偏范式：客户端预测、服务器校正、重放与平滑机制</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.09.17
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Networking</span>
+            
+            <span style="color: var(--accent);">#Prediction</span>
+            
+            <span style="color: var(--accent);">#Correction</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 网络同步源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
+            <div class="series-meta">
+                <span>第 6 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 75%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-network-sync/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B2%E4%B8%80%E4%B8%AA%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%88%A4"><span class="post-toc-list-text">先讲一个常见误判</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%8A-CMC-%E6%8A%BD%E8%B1%A1%E6%88%90%E9%80%9A%E7%94%A8%E9%A2%84%E6%B5%8B%E5%8D%8F%E8%AE%AE"><span class="post-toc-list-text">把 CMC 抽象成通用预测协议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E6%A8%A1%E5%9E%8B%E4%B8%80%E8%87%B4%E6%80%A7%E2%80%9D%E4%B8%80%E5%AE%9A%E6%8E%92%E7%AC%AC%E4%B8%80"><span class="post-toc-list-text">为什么“模型一致性”一定排第一</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BA%A0%E5%81%8F%E4%B8%8D%E6%98%AF%E5%9D%8F%E4%BA%8B%EF%BC%8C%E7%BA%A0%E5%81%8F%E9%A3%8E%E6%9A%B4%E6%89%8D%E6%98%AF%E5%9D%8F%E4%BA%8B"><span class="post-toc-list-text">纠偏不是坏事，纠偏风暴才是坏事</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E9%A2%84%E6%B5%8B%E6%8E%92%E9%9A%9C%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（预测排障顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E5%BC%80%E5%85%B3%EF%BC%9A%E5%88%AB%E6%B5%AA%E8%B4%B9"><span class="post-toc-list-text">调试开关：别浪费</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A2%84%E6%B5%8B%E7%BA%A0%E5%81%8F%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%E8%90%BD%E6%96%87%E6%A1%A3%EF%BC%89"><span class="post-toc-list-text">预测纠偏清单（建议落文档）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 网络同步源码拆解（5.5）<br>
+本文主题：把“回弹、抖动、纠偏风暴”还原成可验证的协议问题</p>
+</blockquote>
+<h2 id="先讲一个常见误判">先讲一个常见误判</h2>
+<p>项目里经常听到一句话：</p>
+<blockquote>
+<p>“这个角色抖，是平滑参数没调好。”</p>
+</blockquote>
+<p>有时对，但不是多数情况。<br>
+更多时候，平滑只是把底层错误暂时抹平，真正根因是：</p>
+<ul>
+<li>客户端预测模型和服务器模型不一致</li>
+<li>输入快照协议不完整</li>
+<li>纠偏后没有正确重放</li>
+</ul>
+<p>这篇我们就把它拆成协议问题来谈，而不是“手感玄学”。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;客户端本地预测执行&quot;] --&gt; B[&quot;记录输入序号/时间戳&quot;]</span><br><span class="line">    B --&gt; C[&quot;发送请求到服务器&quot;]</span><br><span class="line">    C --&gt; D[&quot;服务器权威重演&quot;]</span><br><span class="line">    D --&gt; E&#123;&quot;误差超阈值?&quot;&#125;</span><br><span class="line">    E --&gt;|是| F[&quot;下发纠偏数据&quot;]</span><br><span class="line">    E --&gt;|否| G[&quot;ACK 继续&quot;]</span><br><span class="line">    F --&gt; H[&quot;客户端重放未确认输入&quot;]</span><br><span class="line">    H --&gt; I[&quot;平滑过渡到新状态&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>ReplicateMoveToServer</code>：客户端预测上行入口（CMC 典型实现）。</li>
+<li><code>FSavedMove_Character</code>：输入快照、重放、合并策略。</li>
+<li><code>ServerMove_HandleMoveData / PerformMovement</code>：服务器重演与权威执行。</li>
+<li><code>ClientAdjustPosition_Implementation</code>：纠偏接收与应用。</li>
+<li><code>SmoothClientPosition</code>：视觉层平滑。</li>
+</ul>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:8666</code><br>
+<code>ReplicateMoveToServer(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:8897</code><br>
+<code>CallServerMovePacked(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:9684</code><br>
+<code>ServerMove_HandleMoveData(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:9723</code><br>
+<code>ServerMove_PerformMovement(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:10928</code><br>
+<code>ClientAdjustPosition_Implementation(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:8129</code><br>
+<code>SmoothClientPosition(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\CharacterMovementComponent.cpp:392</code><br>
+<code>p.NetShowCorrections</code> 相关变量</li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Classes\GameFramework\CharacterMovementComponent.h:2895</code><br>
+<code>FSavedMove_Character</code></li>
+</ul>
+<h2 id="把-CMC-抽象成通用预测协议">把 CMC 抽象成通用预测协议</h2>
+<p>虽然这些函数在移动组件里，但协议思想可以迁移到任何高频交互：</p>
+<ol>
+<li>输入要可编号</li>
+<li>状态要可重演</li>
+<li>差异要可度量</li>
+<li>纠偏要可回放</li>
+<li>表现要可平滑</li>
+</ol>
+<p>如果你自己写冲刺、滑铲、攀爬、载具、近战位移，都能直接复用这套骨架。</p>
+<h2 id="为什么“模型一致性”一定排第一">为什么“模型一致性”一定排第一</h2>
+<p>模型一致性一旦破坏，后面所有优化都会变成补丁。</p>
+<p>常见破坏来源：</p>
+<ol>
+<li>客户端多了一段本地加速逻辑。</li>
+<li>服务器用了不同参数表或曲线版本。</li>
+<li>快照里漏传了影响结果的关键状态。</li>
+<li>不同平台浮点路径差异未收敛（极端场景下会放大）。</li>
+</ol>
+<p>判断方式很简单：</p>
+<ul>
+<li>在相同输入序列下，双端重演轨迹是否一致。</li>
+</ul>
+<p>不一致就先修模型，不要先调平滑。</p>
+<h2 id="纠偏不是坏事，纠偏风暴才是坏事">纠偏不是坏事，纠偏风暴才是坏事</h2>
+<p>健康系统里，纠偏应该是“偶发、可控、可解释”。<br>
+危险信号是：</p>
+<ul>
+<li>高频连续纠偏</li>
+<li>同一交互动作每次都纠偏</li>
+<li>纠偏后下一帧继续纠偏</li>
+</ul>
+<p>这通常意味着协议闭环不完整。</p>
+<h2 id="我会怎么跟源码（预测排障顺序）">我会怎么跟源码（预测排障顺序）</h2>
+<ol>
+<li>客户端快照记录（确认输入序号和关键状态都在）。</li>
+<li>服务器重演入口（确认按同序列执行）。</li>
+<li>权威结果比较（确认误差阈值策略）。</li>
+<li>客户端纠偏应用（确认 ACK 与重放流程）。</li>
+<li>平滑层（只管视觉，不改权威状态）。</li>
+</ol>
+<h2 id="调试开关：别浪费">调试开关：别浪费</h2>
+<p><code>p.NetShowCorrections</code> 是非常好用的入口。<br>
+配合日志，你至少要回答三件事：</p>
+<ol>
+<li>每分钟纠偏次数</li>
+<li>单次纠偏幅度</li>
+<li>纠偏后稳定时长</li>
+</ol>
+<p>没有这三项数据，调平滑参数大概率靠感觉。</p>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>自定义冲刺支持客户端预测。</li>
+<li>冲刺加速度只在客户端读取新配置，服务器仍是旧配置。</li>
+<li>在 120ms RTT + 抖动场景做连续转向冲刺。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>角色出现“前冲一小段再被拉回”，纠偏频率显著上升。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>预测模型与权威模型分叉，误差持续累积，触发纠偏风暴。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>统一参数来源，必要时把关键配置纳入快照校验；确保纠偏后重放链路完整。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;频繁回弹/抖动&quot;] --&gt; B&#123;&quot;预测与权威模型一致吗&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;先统一参数与执行路径&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;输入序号与ACK协议完整吗&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;补齐快照、确认、重放&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;纠偏后是否正确重放&quot;&#125;</span><br><span class="line">    F --&gt;|否| G[&quot;修复重放队列与时序&quot;]</span><br><span class="line">    F --&gt;|是| H&#123;&quot;平滑窗口是否过短或过长&quot;&#125;</span><br><span class="line">    H --&gt;|是| I[&quot;再调平滑参数&quot;]</span><br><span class="line">    H --&gt;|否| J[&quot;继续排查业务层覆盖&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="预测纠偏清单（建议落文档）">预测纠偏清单（建议落文档）</h2>
+<ol>
+<li>输入必须可编号、可追踪。</li>
+<li>关键状态必须进快照。</li>
+<li>服务器必须可重演同序列。</li>
+<li>纠偏必须绑定重放机制。</li>
+<li>平滑层不参与权威判定。</li>
+<li>每次改动必须跑网络模拟回归。</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>预测系统的核心不是“看起来丝滑”，而是“在延迟和抖动下仍然可解释”。<br>
+可解释，才可维护；可维护，才可上线。</p>
+<p>下一篇进入战斗与交互：命中判定、投射物、技能状态和延迟补偿如何做工程化取舍。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-network-sync/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/07/30/ue-network-sync-notes/ue-network-sync-05-relevancy-priority-and-bandwidth/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">带宽与可见性治理：Relevancy、Priority、NetUpdateFrequency、Dormancy 与 Replication Graph</strong>
+                </a>
+                
+
+                
+                <a href="/2023/11/05/ue-network-sync-notes/ue-network-sync-07-combat-and-interaction-sync/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B2%E4%B8%80%E4%B8%AA%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%88%A4"><span class="post-toc-list-text">先讲一个常见误判</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%8A-CMC-%E6%8A%BD%E8%B1%A1%E6%88%90%E9%80%9A%E7%94%A8%E9%A2%84%E6%B5%8B%E5%8D%8F%E8%AE%AE"><span class="post-toc-list-text">把 CMC 抽象成通用预测协议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E6%A8%A1%E5%9E%8B%E4%B8%80%E8%87%B4%E6%80%A7%E2%80%9D%E4%B8%80%E5%AE%9A%E6%8E%92%E7%AC%AC%E4%B8%80"><span class="post-toc-list-text">为什么“模型一致性”一定排第一</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BA%A0%E5%81%8F%E4%B8%8D%E6%98%AF%E5%9D%8F%E4%BA%8B%EF%BC%8C%E7%BA%A0%E5%81%8F%E9%A3%8E%E6%9A%B4%E6%89%8D%E6%98%AF%E5%9D%8F%E4%BA%8B"><span class="post-toc-list-text">纠偏不是坏事，纠偏风暴才是坏事</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E9%A2%84%E6%B5%8B%E6%8E%92%E9%9A%9C%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（预测排障顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E5%BC%80%E5%85%B3%EF%BC%9A%E5%88%AB%E6%B5%AA%E8%B4%B9"><span class="post-toc-list-text">调试开关：别浪费</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A2%84%E6%B5%8B%E7%BA%A0%E5%81%8F%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%E8%90%BD%E6%96%87%E6%A1%A3%EF%BC%89"><span class="post-toc-list-text">预测纠偏清单（建议落文档）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

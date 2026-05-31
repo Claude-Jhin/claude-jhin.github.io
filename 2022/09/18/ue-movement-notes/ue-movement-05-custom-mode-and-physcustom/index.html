@@ -1,0 +1,352 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>自定义移动模式扩展：MOVE_Custom 与 PhysCustom 的可维护实现 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">自定义移动模式扩展：MOVE_Custom 与 PhysCustom 的可维护实现</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.09.18
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Character Movement</span>
+            
+            <span style="color: var(--accent);">#MOVE_Custom</span>
+            
+            <span style="color: var(--accent);">#PhysCustom</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 移动系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.4/5.5 的 CharacterMovementComponent 主线，从输入向量积累、每帧移动执行、Walking/Falling 分支到 MOVE_Custom 与网络同步，形成一条可落地的问题定位路径。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：5.4/5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 83%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-movement/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9AMOVE-Custom-%E9%BB%98%E8%AE%A4%E5%85%B6%E5%AE%9E%E9%9D%9E%E5%B8%B8%E2%80%9C%E8%96%84%E2%80%9D"><span class="post-toc-list-text">深入一层：MOVE_Custom 默认其实非常“薄”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2%E7%9A%84%E7%9C%9F%E5%AE%9E%E5%85%A5%E5%8F%A3%EF%BC%9ASetMovementMode"><span class="post-toc-list-text">模式切换的真实入口：SetMovementMode</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#OnMovementModeChanged-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">OnMovementModeChanged 为什么关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BD%91%E7%BB%9C%E9%87%8C-CustomMovementMode-%E6%98%AF%E6%80%8E%E4%B9%88%E5%8F%91%E7%9A%84"><span class="post-toc-list-text">网络里 CustomMovementMode 是怎么发的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#C-%E6%89%A9%E5%B1%95%E6%97%B6%E7%9A%84%E6%8E%A8%E8%8D%90%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">C++ 扩展时的推荐结构</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A8%A1%E5%BC%8F%E5%92%8C%E9%BB%98%E8%AE%A4%E6%A8%A1%E5%BC%8F%E4%BA%92%E7%9B%B8%E6%B1%A1%E6%9F%93%E7%9A%84%E5%85%B8%E5%9E%8B%E5%8E%9F%E5%9B%A0"><span class="post-toc-list-text">自定义模式和默认模式互相污染的典型原因</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%8E%9F%E5%9B%A0-1%EF%BC%9A%E9%80%80%E5%87%BA-custom-%E6%97%B6%E4%B8%8D%E8%B5%B0-SetMovementMode"><span class="post-toc-list-text">原因 1：退出 custom 时不走 SetMovementMode</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%8E%9F%E5%9B%A0-2%EF%BC%9Acustom-%E9%87%8C%E5%A4%8D%E5%86%99%E4%BA%86%E9%80%9F%E5%BA%A6%E4%BD%86%E6%B2%A1%E7%BA%A6%E6%9D%9F%E9%87%8D%E5%8A%9B%E5%B9%B3%E9%9D%A2"><span class="post-toc-list-text">原因 2：custom 里复写了速度但没约束重力平面</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%8E%9F%E5%9B%A0-3%EF%BC%9A%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2%E6%9D%A1%E4%BB%B6%E5%88%86%E6%95%A3%E5%9C%A8%E5%A4%9A%E4%B8%AA%E7%B1%BB"><span class="post-toc-list-text">原因 3：模式切换条件分散在多个类</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AE%9E%E6%88%98%E5%BB%BA%E8%AE%AE%EF%BC%9A%E6%8A%8A%E2%80%9C%E5%8D%8F%E8%AE%AE%E2%80%9D%E5%86%99%E8%BF%9B%E6%B3%A8%E9%87%8A%E5%92%8C%E6%97%A5%E5%BF%97"><span class="post-toc-list-text">实战建议：把“协议”写进注释和日志</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%92%8C%E7%BD%91%E7%BB%9C%E9%A2%84%E6%B5%8B%E7%BB%93%E5%90%88%E6%97%B6%E8%A6%81%E9%A2%9D%E5%A4%96%E6%B3%A8%E6%84%8F%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">和网络预测结合时要额外注意什么</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 移动系统源码拆解（5.4/5.5）<br>
+本文主题：如何在不破坏默认模式的前提下扩展自定义移动能力</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p><code>MOVE_Custom</code> 真正难的不是“能跑起来”，而是“能长期维护”。<br>
+很多项目后期变难改，问题都出在切入切出协议没定义清楚。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;SetMovementMode(MOVE_Custom, CustomMode)&quot;] --&gt; B[&quot;StartNewPhysics&quot;]</span><br><span class="line">    B --&gt; C[&quot;PhysCustom&quot;]</span><br><span class="line">    C --&gt; D&#123;&quot;CustomMovementMode&quot;&#125;</span><br><span class="line">    D --&gt;|Climb| E[&quot;PhysClimb&quot;]</span><br><span class="line">    D --&gt;|WallRun| F[&quot;PhysWallRun&quot;]</span><br><span class="line">    D --&gt;|Zipline| G[&quot;PhysZipline&quot;]</span><br><span class="line">    E --&gt; H[&quot;SafeMoveUpdatedComponent&quot;]</span><br><span class="line">    F --&gt; H</span><br><span class="line">    G --&gt; H</span><br><span class="line">    H --&gt; I[&quot;必要时切回 Walking/Falling&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>UCharacterMovementComponent::SetMovementMode</code>：模式切换入口，同时触发相关状态回调。</li>
+<li><code>UCharacterMovementComponent::PhysCustom</code>：自定义模式总分发。</li>
+<li><code>UCharacterMovementComponent::OnMovementModeChanged</code>：切换前后状态收尾与初始化。</li>
+<li><code>UCharacterMovementComponent::SafeMoveUpdatedComponent</code>：自定义模式下仍应复用的位移碰撞接口。</li>
+<li><code>ACharacter::OnMovementModeChanged</code>：角色层同步动画/表现状态的常用接点。</li>
+</ul>
+<h2 id="我会怎么跟源码">我会怎么跟源码</h2>
+<p>自定义模式我会先看“切换协议”，再看具体位移实现：</p>
+<ol>
+<li>打开 <code>Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp</code>。</li>
+<li>搜索 <code>SetMovementMode(</code>，确认 <code>MOVE_Custom</code> 的切入和回切入口。</li>
+<li>搜索 <code>PhysCustom(</code>，查看 <code>CustomMovementMode</code> 的分发结构。</li>
+<li>搜索 <code>OnMovementModeChanged(</code>，确认切换时状态初始化与清理点。</li>
+<li>断点建议：进入模式和离开模式各打一组断点，确认进入、持续、退出三段条件都能命中。</li>
+</ol>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>新增 <code>MOVE_Custom</code>（例如攀爬）并在条件满足时切入。</li>
+<li>只在进入时设置模式，不处理退出时机。</li>
+<li>从墙面边缘离开后观察角色状态。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>角色离开可攀爬表面后仍停留在 <code>MOVE_Custom</code>，出现悬空、输入异常或无法恢复 Walking。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>自定义模式只处理“进入”，没有建立稳定的“退出协议”（例如失去附着条件后切回 Falling），导致模式状态机悬挂。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>为每个 Custom 子模式明确三件事：进入条件、持续条件、退出条件；退出统一走 <code>SetMovementMode</code>，并在 <code>OnMovementModeChanged</code> 中做状态收尾。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;MOVE_Custom 行为异常&quot;] --&gt; B&#123;&quot;是否成功切入 MOVE_Custom&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;检查切入条件与 SetMovementMode 调用&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;PhysCustom 是否每帧命中&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;检查 MovementMode 被其他逻辑覆盖&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;持续条件是否稳定成立&quot;&#125;</span><br><span class="line">    F --&gt;|否| G[&quot;补齐持续判定，避免模式悬挂&quot;]</span><br><span class="line">    F --&gt;|是| H&#123;&quot;退出条件是否明确&quot;&#125;</span><br><span class="line">    H --&gt;|否| I[&quot;补齐切回 Walking/Falling 的协议&quot;]</span><br><span class="line">    H --&gt;|是| J&#123;&quot;OnMovementModeChanged 是否完成收尾&quot;&#125;</span><br><span class="line">    J --&gt;|否| K[&quot;补齐状态清理与动画同步&quot;]</span><br><span class="line">    J --&gt;|是| L[&quot;模式生命周期闭环成立&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="收尾">收尾</h2>
+<p><code>MOVE_Custom</code> 想做稳，关键是生命周期闭环。<br>
+切入、持续、切出三段定义清楚之后，自定义能力才能和默认移动长期共存。</p>
+<hr>
+<h2 id="深入一层：MOVE-Custom-默认其实非常“薄”">深入一层：<code>MOVE_Custom</code> 默认其实非常“薄”</h2>
+<p>很多人第一次看 <code>MOVE_Custom</code> 会以为 UE 已经帮你准备好了复杂框架。<br>
+实际上默认实现非常薄，在 <code>UE_5.5</code> 里：</p>
+<ul>
+<li><code>PhysCustom</code>（<code>CharacterMovementComponent.cpp:6058</code>）默认只调用 <code>CharacterOwner-&gt;K2_UpdateCustomMovement(deltaTime)</code>。</li>
+</ul>
+<p>也就是说，UE 只给你一个分发入口，真正的运动学、碰撞策略、网络状态一致性都要你自己补。</p>
+<hr>
+<h2 id="模式切换的真实入口：SetMovementMode">模式切换的真实入口：<code>SetMovementMode</code></h2>
+<p>你能控制自定义模式是否稳定，核心不在 <code>PhysCustom</code>，而在 <code>SetMovementMode</code> 和 <code>OnMovementModeChanged</code>：</p>
+<ul>
+<li><code>SetMovementMode</code>：<code>...:1313</code></li>
+<li><code>OnMovementModeChanged</code>：<code>...:1360</code></li>
+</ul>
+<p><code>SetMovementMode</code> 做了几件重要事：</p>
+<ol>
+<li>非 <code>MOVE_Custom</code> 自动把 <code>CustomMovementMode</code> 清零。</li>
+<li>拒绝无效的 NavWalking 场景（无 NavData 会回退）。</li>
+<li>真正写入 <code>MovementMode/CustomMovementMode</code> 后调用 <code>OnMovementModeChanged</code>。</li>
+</ol>
+<p>所以你在业务层直接改枚举变量，而不走 <code>SetMovementMode</code>，迟早会出状态不同步。</p>
+<hr>
+<h2 id="OnMovementModeChanged-为什么关键"><code>OnMovementModeChanged</code> 为什么关键</h2>
+<p><code>OnMovementModeChanged</code> 不只是一个通知钩子。<br>
+它会做一堆“模式切换后必须一致”的收尾动作：</p>
+<ol>
+<li>Walking 进入时：刷新地面、修正高度、设置 base。</li>
+<li>Falling 进入时：应用地面基座速度、触发 <code>CharacterOwner-&gt;Falling()</code>。</li>
+<li>None 进入时：清速度、清 jump state、清累计外力。</li>
+<li>最后调用 <code>CharacterOwner-&gt;OnMovementModeChanged(...)</code>。</li>
+</ol>
+<p>这意味着你做自定义模式时，如果切换时机错了，不仅自定义逻辑错，默认模式恢复也会错。</p>
+<hr>
+<h2 id="网络里-CustomMovementMode-是怎么发的">网络里 <code>CustomMovementMode</code> 是怎么发的</h2>
+<p>这一块经常被忽视。<br>
+在 <code>PackNetworkMovementMode</code>（<code>...:1456</code>）里，UE 会把模式压到 1 字节里：</p>
+<ol>
+<li>非 custom：编码 <code>MovementMode + GroundModeBit</code>。</li>
+<li>custom：编码 <code>CustomMovementMode + CustomModeThr</code>。</li>
+</ol>
+<p>对应解包在 <code>UnpackNetworkMovementMode</code>（<code>...:1471</code>），应用在 <code>ApplyNetworkMovementMode</code>（<code>...:1489</code>）。</p>
+<p>这说明两件事：</p>
+<ol>
+<li><code>CustomMovementMode</code> 本质就是一个 <code>uint8</code> 子模式号。</li>
+<li>客户端/服务端必须对这个编号语义完全一致，否则一定错模式。</li>
+</ol>
+<hr>
+<h2 id="C-扩展时的推荐结构">C++ 扩展时的推荐结构</h2>
+<p>如果你准备把它做成长期可维护方案，我建议：</p>
+<ol>
+<li>定义清晰的 <code>enum class ECustomMoveMode : uint8</code>。</li>
+<li><code>PhysCustom</code> 只做分发，不塞业务细节。</li>
+<li>每个子模式拆成独立函数（<code>PhysClimb/PhysWallRun/...</code>）。</li>
+<li>每个子模式都写“进入条件、持续条件、退出条件”。</li>
+</ol>
+<p>你可以把 <code>PhysCustom</code> 写成这种结构：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UMyMovement::PhysCustom</span><span class="params">(<span class="type">float</span> DT, int32 Iter)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (CustomMovementMode)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="built_in">case</span> (uint8)ECustomMoveMode::Climb:   <span class="built_in">PhysClimb</span>(DT, Iter); <span class="keyword">break</span>;</span><br><span class="line">    <span class="built_in">case</span> (uint8)ECustomMoveMode::WallRun: <span class="built_in">PhysWallRun</span>(DT, Iter); <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>: <span class="built_in">SetMovementMode</span>(MOVE_Falling); <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个 default 回退很重要，它能避免未知子模式把角色“卡死”在 custom。</p>
+<hr>
+<h2 id="自定义模式和默认模式互相污染的典型原因">自定义模式和默认模式互相污染的典型原因</h2>
+<h3 id="原因-1：退出-custom-时不走-SetMovementMode">原因 1：退出 custom 时不走 <code>SetMovementMode</code></h3>
+<p>直接改 <code>MovementMode</code> 会绕开 <code>OnMovementModeChanged</code>，导致 floor/base/jump state 不一致。</p>
+<h3 id="原因-2：custom-里复写了速度但没约束重力平面">原因 2：custom 里复写了速度但没约束重力平面</h3>
+<p>下个模式恢复后会出现速度方向突变，表现成“切回 Walking 突然抽动”。</p>
+<h3 id="原因-3：模式切换条件分散在多个类">原因 3：模式切换条件分散在多个类</h3>
+<p>一个在 Character，一个在 Anim，一个在 Movement，后期必然互相打架。</p>
+<hr>
+<h2 id="实战建议：把“协议”写进注释和日志">实战建议：把“协议”写进注释和日志</h2>
+<p>我一般要求每个 custom 子模式在代码里明确三条日志：</p>
+<ol>
+<li>Enter：为什么进来（命中了什么条件）。</li>
+<li>Tick：持续条件是否仍成立。</li>
+<li>Exit：为什么出去（失败条件是什么）。</li>
+</ol>
+<p>这比后期看一堆断点快太多，尤其是联机环境。</p>
+<hr>
+<h2 id="和网络预测结合时要额外注意什么">和网络预测结合时要额外注意什么</h2>
+<p>只要 custom 模式会影响速度、方向、输入语义，就需要考虑 <code>SavedMove</code> 扩展。<br>
+否则客户端预测和服务端重演会使用不同状态，纠偏会非常频繁。</p>
+<p>从工程角度看，<code>MOVE_Custom</code> 不是“只改本地物理”，它其实是“改一个需要预测和重演的状态机”。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-movement/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2022/08/21/ue-movement-notes/ue-movement-04-jump-fall-aircontrol/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">跳跃与空中控制主线：DoJump、PhysFalling、AirControl 如何协作</strong>
+                </a>
+                
+
+                
+                <a href="/2022/10/16/ue-movement-notes/ue-movement-06-network-prediction-and-correction/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">网络同步与纠偏：SavedMove、客户端预测、服务器校正与平滑</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9AMOVE-Custom-%E9%BB%98%E8%AE%A4%E5%85%B6%E5%AE%9E%E9%9D%9E%E5%B8%B8%E2%80%9C%E8%96%84%E2%80%9D"><span class="post-toc-list-text">深入一层：MOVE_Custom 默认其实非常“薄”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2%E7%9A%84%E7%9C%9F%E5%AE%9E%E5%85%A5%E5%8F%A3%EF%BC%9ASetMovementMode"><span class="post-toc-list-text">模式切换的真实入口：SetMovementMode</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#OnMovementModeChanged-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">OnMovementModeChanged 为什么关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BD%91%E7%BB%9C%E9%87%8C-CustomMovementMode-%E6%98%AF%E6%80%8E%E4%B9%88%E5%8F%91%E7%9A%84"><span class="post-toc-list-text">网络里 CustomMovementMode 是怎么发的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#C-%E6%89%A9%E5%B1%95%E6%97%B6%E7%9A%84%E6%8E%A8%E8%8D%90%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">C++ 扩展时的推荐结构</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A8%A1%E5%BC%8F%E5%92%8C%E9%BB%98%E8%AE%A4%E6%A8%A1%E5%BC%8F%E4%BA%92%E7%9B%B8%E6%B1%A1%E6%9F%93%E7%9A%84%E5%85%B8%E5%9E%8B%E5%8E%9F%E5%9B%A0"><span class="post-toc-list-text">自定义模式和默认模式互相污染的典型原因</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%8E%9F%E5%9B%A0-1%EF%BC%9A%E9%80%80%E5%87%BA-custom-%E6%97%B6%E4%B8%8D%E8%B5%B0-SetMovementMode"><span class="post-toc-list-text">原因 1：退出 custom 时不走 SetMovementMode</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%8E%9F%E5%9B%A0-2%EF%BC%9Acustom-%E9%87%8C%E5%A4%8D%E5%86%99%E4%BA%86%E9%80%9F%E5%BA%A6%E4%BD%86%E6%B2%A1%E7%BA%A6%E6%9D%9F%E9%87%8D%E5%8A%9B%E5%B9%B3%E9%9D%A2"><span class="post-toc-list-text">原因 2：custom 里复写了速度但没约束重力平面</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%8E%9F%E5%9B%A0-3%EF%BC%9A%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2%E6%9D%A1%E4%BB%B6%E5%88%86%E6%95%A3%E5%9C%A8%E5%A4%9A%E4%B8%AA%E7%B1%BB"><span class="post-toc-list-text">原因 3：模式切换条件分散在多个类</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AE%9E%E6%88%98%E5%BB%BA%E8%AE%AE%EF%BC%9A%E6%8A%8A%E2%80%9C%E5%8D%8F%E8%AE%AE%E2%80%9D%E5%86%99%E8%BF%9B%E6%B3%A8%E9%87%8A%E5%92%8C%E6%97%A5%E5%BF%97"><span class="post-toc-list-text">实战建议：把“协议”写进注释和日志</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%92%8C%E7%BD%91%E7%BB%9C%E9%A2%84%E6%B5%8B%E7%BB%93%E5%90%88%E6%97%B6%E8%A6%81%E9%A2%9D%E5%A4%96%E6%B3%A8%E6%84%8F%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">和网络预测结合时要额外注意什么</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

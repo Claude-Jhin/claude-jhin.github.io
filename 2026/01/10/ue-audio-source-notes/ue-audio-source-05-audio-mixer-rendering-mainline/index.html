@@ -1,0 +1,307 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Audio Mixer 渲染主线：Source -> Submix -> Endpoint - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Audio Mixer 渲染主线：Source -> Submix -> Endpoint</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.01.10
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Audio Mixer</span>
+            
+            <span style="color: var(--accent);">#Submix</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 音频系统原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：UE5.7 Audio Mixer 主线</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 63%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-audio-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E6%B8%B2%E6%9F%93%E4%BE%A7%E6%98%AF%E8%8A%82%E6%8B%8D%E5%99%A8%EF%BC%8C%E4%B8%8D%E6%98%AF%E8%AE%B8%E6%84%BF%E6%B1%A0"><span class="post-toc-list-text">先给结论：渲染侧是节拍器，不是许愿池</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B8%B2%E6%9F%93%E4%B8%BB%E7%BA%BF%E6%8B%86%E8%A7%A3%EF%BC%9A%E4%B8%80%E5%B8%A7%E9%87%8C%E7%9C%9F%E6%AD%A3%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">渲染主线拆解：一帧里真正发生了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E9%98%9F%E5%88%97%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%85%88%E6%94%B6%E5%91%BD%E4%BB%A4"><span class="post-toc-list-text">1) 队列阶段：先收命令</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B3%B5%E9%98%9F%E5%88%97%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%86%8D%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4"><span class="post-toc-list-text">2) 泵队列阶段：再执行命令</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%B7%B7%E5%90%88%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%BA%90%E8%BF%9B-Submix-%E5%9B%BE"><span class="post-toc-list-text">3) 混合阶段：源进 Submix 图</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E8%BE%93%E5%87%BA%E9%98%B6%E6%AE%B5%EF%BC%9A%E7%BB%88%E7%AB%AF%E5%86%99%E5%85%A5%E8%AE%BE%E5%A4%87"><span class="post-toc-list-text">4) 输出阶段：终端写入设备</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E5%AE%9A%E4%BD%8D%E2%80%9C%E5%8F%82%E6%95%B0%E6%99%9A%E7%94%9F%E6%95%88%E2%80%9D"><span class="post-toc-list-text">我会怎么定位“参数晚生效”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 音频系统原理与源码拆解（UE5.7）<br>
+本文主题：把“播放请求”正式接到“每帧混音与设备输出”执行链</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>前几篇我们一直在讲“谁进入播放池、谁被并发裁掉、谁拿到数据”。<br>
+这篇开始进入真正会影响最终听感的地方：Mixer 每一帧到底怎么工作。</p>
+<p>如果把前面的流程比作“排队入场”，这里就是“真正演出”。<br>
+这一步看不清，很多延迟、爆音、参数不同步问题都很难解释。</p>
+<h2 id="本文问题">本文问题</h2>
+<p>Audio Mixer 在一帧里到底做了什么，才会把上游的一堆 <code>WaveInstance</code> 变成设备可播放的缓冲？<br>
+更关键的是：参数更新为什么会“感觉慢半拍”。</p>
+<h2 id="先给结论：渲染侧是节拍器，不是许愿池">先给结论：渲染侧是节拍器，不是许愿池</h2>
+<p>这篇先给一个很关键的心智模型：</p>
+<p><strong>AudioRenderThread 是按固定 block 节奏运行的“节拍器”。</strong></p>
+<p>它不会因为你刚改了参数就立刻打断当前 block。<br>
+所以“慢半拍”的本质往往不是错误，而是命令生效边界和 block 边界重合关系。</p>
+<h2 id="本文讨论范围">本文讨论范围</h2>
+<p>聚焦渲染主链：</p>
+<ul>
+<li>命令如何进入渲染队列</li>
+<li>队列如何在渲染周期被泵出</li>
+<li>Source 如何进入 Submix 图</li>
+<li>Submix 如何走向终端输出</li>
+</ul>
+<p>不展开：</p>
+<ul>
+<li>具体效果器算法细节（第 7 篇只讨论路由与执行位置）</li>
+</ul>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;FAudioDevice 准备 WaveInstances&quot;] --&gt; B[&quot;FMixerDevice 接管混音执行&quot;]</span><br><span class="line">    B --&gt; C[&quot;FMixerDevice::PumpCommandQueue&quot;]</span><br><span class="line">    C --&gt; D[&quot;SourceManager 生成/更新 SourceVoice&quot;]</span><br><span class="line">    D --&gt; E[&quot;FMixerSubmix::ProcessAudio&quot;]</span><br><span class="line">    E --&gt; F[&quot;Submix Effect 链处理&quot;]</span><br><span class="line">    F --&gt; G[&quot;FMixerSubmix::ProcessAudioAndSendToEndpoint&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="渲染主线拆解：一帧里真正发生了什么">渲染主线拆解：一帧里真正发生了什么</h2>
+<h3 id="1-队列阶段：先收命令">1) 队列阶段：先收命令</h3>
+<p><code>AudioRenderThreadCommand</code> 把控制命令发送到渲染侧队列。<br>
+这一层是时序敏感点：命令何时入队，决定何时有机会生效。</p>
+<h3 id="2-泵队列阶段：再执行命令">2) 泵队列阶段：再执行命令</h3>
+<p><code>PumpCommandQueue</code> 在渲染周期内处理队列。<br>
+如果命令入队时机卡在 block 边界后，听感上就可能延后一个处理块。</p>
+<h3 id="3-混合阶段：源进-Submix-图">3) 混合阶段：源进 Submix 图</h3>
+<p>源经过 SourceManager 更新后进入 <code>FMixerSubmix::ProcessAudio</code>。<br>
+这一步会汇总源信号、应用路由、串联效果链。</p>
+<h3 id="4-输出阶段：终端写入设备">4) 输出阶段：终端写入设备</h3>
+<p>根 Submix 最终通过 <code>ProcessAudioAndSendToEndpoint</code> 输出到设备后端。<br>
+这一步是“持续供数”，不是“再做一次语义决策”。</p>
+<h2 id="关键类型">关键类型</h2>
+<ul>
+<li><code>FMixerDevice</code>：Mixer 总控，持有 SourceManager、Submix 图、平台后端接口。</li>
+<li><code>FMixerDevice::AudioRenderThreadCommand</code>：把 GT/AT 的控制变更投递到音频渲染线程。</li>
+<li><code>FMixerDevice::PumpCommandQueue</code>：渲染周期里泵队列，确保变更在正确块边界生效。</li>
+<li><code>FMixerSubmix::ProcessAudio</code>：Submix 真正执行混合、路由、效果处理的入口。</li>
+<li><code>FMixerSubmix::ProcessAudioAndSendToEndpoint</code>：到达根节点后，送往硬件端点。</li>
+</ul>
+<p>我会优先跟这条链：</p>
+<p><code>FAudioDevice::StartSources -&gt; FMixerDevice::AudioRenderThreadCommand -&gt; FMixerDevice::PumpCommandQueue -&gt; FMixerSubmix::ProcessAudio -&gt; FMixerSubmix::ProcessAudioAndSendToEndpoint</code></p>
+<h2 id="我会怎么定位“参数晚生效”">我会怎么定位“参数晚生效”</h2>
+<ol>
+<li>记录参数提交时刻（GT）。</li>
+<li>记录命令入渲染队列时刻。</li>
+<li>记录 <code>PumpCommandQueue</code> 处理该命令的时刻。</li>
+<li>对齐当时 block 序号，确认延迟是否恰好是 1~N 个 block。</li>
+</ol>
+<p>如果延迟和 block 对齐高度一致，通常不是 bug，而是时序模型本身的结果。</p>
+<h2 id="常见误区">常见误区</h2>
+<ol>
+<li>
+<p>误区：音频参数应该像变量赋值一样立即生效。<br>
+实际：渲染侧是块处理模型，存在天然生效边界。</p>
+</li>
+<li>
+<p>误区：一切延迟都应该在 Mixer 里修。<br>
+实际：上游命令提交时机同样关键，常常需要 GT/AT 协同优化。</p>
+</li>
+<li>
+<p>误区：只看平均 CPU 就够了。<br>
+实际：音频更怕瞬时峰值，偶发峰值也会造成可闻抖动。</p>
+</li>
+</ol>
+<h2 id="本篇结论">本篇结论</h2>
+<p>Audio Mixer 是标准的 pull 模型：渲染侧按固定 block 取数并混音。<br>
+所以“什么时候把命令送进渲染队列”几乎和“命令值是什么”同样重要。</p>
+<p>很多听感上的“突然跳一下”并不是算法问题，而是命令生效时机跨了一个 block。<br>
+理解这一点后，再看参数平滑和时序控制会顺很多。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-audio-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2026/01/03/ue-audio-source-notes/ue-audio-source-04-soundwave-decoding-and-stream-caching/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">SoundWave 解码与 Stream Caching：内存与延迟本质</strong>
+                </a>
+                
+
+                
+                <a href="/2026/01/24/ue-audio-source-notes/ue-audio-source-06-spatialization-attenuation-occlusion-timing/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">空间化、衰减、遮挡的执行时机：3D 声音为何“像真的”</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E6%B8%B2%E6%9F%93%E4%BE%A7%E6%98%AF%E8%8A%82%E6%8B%8D%E5%99%A8%EF%BC%8C%E4%B8%8D%E6%98%AF%E8%AE%B8%E6%84%BF%E6%B1%A0"><span class="post-toc-list-text">先给结论：渲染侧是节拍器，不是许愿池</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B8%B2%E6%9F%93%E4%B8%BB%E7%BA%BF%E6%8B%86%E8%A7%A3%EF%BC%9A%E4%B8%80%E5%B8%A7%E9%87%8C%E7%9C%9F%E6%AD%A3%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">渲染主线拆解：一帧里真正发生了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E9%98%9F%E5%88%97%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%85%88%E6%94%B6%E5%91%BD%E4%BB%A4"><span class="post-toc-list-text">1) 队列阶段：先收命令</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B3%B5%E9%98%9F%E5%88%97%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%86%8D%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4"><span class="post-toc-list-text">2) 泵队列阶段：再执行命令</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%B7%B7%E5%90%88%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%BA%90%E8%BF%9B-Submix-%E5%9B%BE"><span class="post-toc-list-text">3) 混合阶段：源进 Submix 图</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E8%BE%93%E5%87%BA%E9%98%B6%E6%AE%B5%EF%BC%9A%E7%BB%88%E7%AB%AF%E5%86%99%E5%85%A5%E8%AE%BE%E5%A4%87"><span class="post-toc-list-text">4) 输出阶段：终端写入设备</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E5%AE%9A%E4%BD%8D%E2%80%9C%E5%8F%82%E6%95%B0%E6%99%9A%E7%94%9F%E6%95%88%E2%80%9D"><span class="post-toc-list-text">我会怎么定位“参数晚生效”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

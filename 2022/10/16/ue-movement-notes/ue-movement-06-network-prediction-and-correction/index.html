@@ -1,0 +1,388 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>网络同步与纠偏：SavedMove、客户端预测、服务器校正与平滑 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">网络同步与纠偏：SavedMove、客户端预测、服务器校正与平滑</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2022.10.16
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Character Movement</span>
+            
+            <span style="color: var(--accent);">#SavedMove</span>
+            
+            <span style="color: var(--accent);">#Client Prediction</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 移动系统源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.4/5.5 的 CharacterMovementComponent 主线，从输入向量积累、每帧移动执行、Walking/Falling 分支到 MOVE_Custom 与网络同步，形成一条可落地的问题定位路径。</p>
+            <div class="series-meta">
+                <span>第 6 篇</span>
+                <span>已发布 6 / 6</span>
+                
+                <span>阶段：5.4/5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-movement/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9AUE-%E7%BD%91%E7%BB%9C%E7%A7%BB%E5%8A%A8%E5%85%B6%E5%AE%9E%E6%98%AF%E2%80%9C%E5%8F%AF%E9%87%8D%E6%BC%94%E6%A8%A1%E6%8B%9F%E2%80%9D"><span class="post-toc-list-text">深入一层：UE 网络移动其实是“可重演模拟”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E9%93%BE%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">源码主链（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ReplicateMoveToServer-%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">ReplicateMoveToServer 做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSavedMove-Character-%E9%87%8C%E7%9C%9F%E6%AD%A3%E5%AD%98%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSavedMove_Character 里真正存了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#CallServerMovePacked-%E7%9A%84%E4%BB%B7%E5%80%BC"><span class="post-toc-list-text">CallServerMovePacked 的价值</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%80%8E%E4%B9%88%E9%87%8D%E6%BC%94"><span class="post-toc-list-text">服务端怎么重演</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ClientAdjustPosition-Implementation-%E4%B9%8B%E5%90%8E%E5%8F%91%E7%94%9F%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">ClientAdjustPosition_Implementation 之后发生什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B9%B3%E6%BB%91%E5%B1%82-SmoothClientPosition-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">平滑层 (SmoothClientPosition) 的职责边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%80%E5%AE%9A%E8%A6%81%E6%89%A9%E5%B1%95-SavedMove"><span class="post-toc-list-text">什么时候一定要扩展 SavedMove</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E7%BD%91%E7%BB%9C%E7%A7%BB%E5%8A%A8%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">我常用的网络移动排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%8F%A5%E5%AE%9E%E8%AF%9D"><span class="post-toc-list-text">一句实话</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 移动系统源码拆解（5.4/5.5）<br>
+本文主题：读通 CMC 网络移动闭环，并给出抖动/回弹排障路径</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>网络移动这块最容易被一句“延迟高”带过去。<br>
+但多数抖动问题其实能拆开：预测、重演、纠偏、平滑，具体是哪一段出了偏差。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;客户端输入&quot;] --&gt; B[&quot;本地 PerformMovement 预测&quot;]</span><br><span class="line">    B --&gt; C[&quot;记录 FSavedMove_Character&quot;]</span><br><span class="line">    C --&gt; D[&quot;ServerMove RPC&quot;]</span><br><span class="line">    D --&gt; E[&quot;服务器重放并校验&quot;]</span><br><span class="line">    E --&gt; F&#123;&quot;误差是否超阈值&quot;&#125;</span><br><span class="line">    F --&gt;|是| G[&quot;ClientAdjustPosition&quot;]</span><br><span class="line">    G --&gt; H[&quot;重放未确认 SavedMove&quot;]</span><br><span class="line">    F --&gt;|否| I[&quot;ACK move&quot;]</span><br><span class="line">    H --&gt; J[&quot;网络平滑 NetworkSmoothing&quot;]</span><br><span class="line">    I --&gt; J</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>FSavedMove_Character</code>：客户端每帧输入与状态快照。</li>
+<li><code>UCharacterMovementComponent::ReplicateMoveToServer</code>：客户端发送移动数据入口。</li>
+<li><code>UCharacterMovementComponent::ServerMove*</code>：服务器接收并重演移动。</li>
+<li><code>UCharacterMovementComponent::ClientAdjustPosition*</code>：服务器纠偏下发。</li>
+<li><code>UCharacterMovementComponent::SmoothClientPosition</code>：客户端视觉平滑，减少硬回弹。</li>
+</ul>
+<h2 id="我会怎么跟源码">我会怎么跟源码</h2>
+<p>这块我一般按“预测 -&gt; 校验 -&gt; 纠偏 -&gt; 平滑”四段读：</p>
+<ol>
+<li>打开 <code>Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp</code>。</li>
+<li>搜索 <code>ReplicateMoveToServer(</code>，确认客户端如何打包并发送移动。</li>
+<li>搜索 <code>ServerMove_</code>（或 <code>ServerMove(</code>）系列函数，查看服务器重放与校验逻辑。</li>
+<li>搜索 <code>ClientAdjustPosition</code> 系列函数，确认纠偏触发与参数下发。</li>
+<li>搜索 <code>SmoothClientPosition(</code>，排查时重点对照 correction 频率和本地平滑窗口是否匹配。</li>
+</ol>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>在网络模拟中设置中高延迟与抖动（例如 120ms RTT + 抖动）。</li>
+<li>角色连续冲刺并频繁转向。</li>
+<li>打开移动日志，观察 correction 次数与位移误差。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>客户端频繁出现“向前一步再被拉回”，镜头有明显抖动感。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>本地预测轨迹与服务器重演轨迹持续偏离，<code>ClientAdjustPosition</code> 触发频率高；若平滑参数不足或自定义速度改动未进入 <code>SavedMove</code> 压缩数据，回弹会更明显。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>先确认自定义移动变量是否正确写入/恢复 <code>SavedMove</code>；再调 <code>NetworkSmoothingMode</code> 和平滑时间窗，最后对 correction 触发阈值与冲刺状态切换时机做联合排查。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;网络抖动/回弹&quot;] --&gt; B&#123;&quot;SavedMove 是否记录了关键状态&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;补齐 SavedMove 压缩与恢复字段&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;ServerMove 重演结果是否稳定&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;检查服务端与客户端速度/模式计算一致性&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;ClientAdjustPosition 频率是否过高&quot;&#125;</span><br><span class="line">    F --&gt;|是| G[&quot;先查预测误差来源，再看纠偏阈值&quot;]</span><br><span class="line">    F --&gt;|否| H&#123;&quot;视觉抖动是否仍明显&quot;&#125;</span><br><span class="line">    H --&gt;|是| I[&quot;调整 SmoothClientPosition 策略与平滑时间窗&quot;]</span><br><span class="line">    H --&gt;|否| J&#123;&quot;高速状态切换时是否突跳&quot;&#125;</span><br><span class="line">    J --&gt;|是| K[&quot;排查冲刺等状态切换边界帧数据&quot;]</span><br><span class="line">    J --&gt;|否| L[&quot;网络移动链路基本稳定&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="收尾">收尾</h2>
+<p>网络移动稳定，不是追求“零纠偏”，而是纠偏可控、平滑自然。<br>
+把 <code>SavedMove</code> 生命周期看透后，抖动和回弹会好查很多。</p>
+<hr>
+<h2 id="深入一层：UE-网络移动其实是“可重演模拟”">深入一层：UE 网络移动其实是“可重演模拟”</h2>
+<p>这块最重要的不是 RPC 名字，而是一个原则：<br>
+客户端和服务端要尽量在“相同输入、相近时间步”下跑出相近结果。</p>
+<p><code>CharacterMovementComponent.h</code> 在 <code>2327</code> 行附近的注释其实已经把模型写明白了：</p>
+<ol>
+<li>客户端保存 move。</li>
+<li>客户端本地先模拟，再发给服务端。</li>
+<li>服务端重演并校验。</li>
+<li>误差大就下发 <code>ClientAdjustPosition</code>。</li>
+<li>客户端回到服务器状态后重放未确认 move。</li>
+</ol>
+<p>这就是“预测 + 纠偏 + 重放”的闭环。</p>
+<hr>
+<h2 id="源码主链（UE-5-5）">源码主链（UE_5.5）</h2>
+<p>你可以按这组函数跟读：</p>
+<ul>
+<li><code>CharacterMovementComponent.cpp:8666</code> <code>ReplicateMoveToServer</code></li>
+<li><code>...:8897</code> <code>CallServerMovePacked</code></li>
+<li><code>...:9619</code> <code>ServerMovePacked_ClientSend</code></li>
+<li><code>...:9637</code> <code>ServerMovePacked_ServerReceive</code></li>
+<li><code>...:9723</code> <code>ServerMove_PerformMovement</code></li>
+<li><code>...:10928</code> <code>ClientAdjustPosition_Implementation</code></li>
+<li><code>...:8365</code> <code>ClientUpdatePositionAfterServerUpdate</code></li>
+<li><code>...:8129</code> <code>SmoothClientPosition</code></li>
+</ul>
+<p>这几段连起来就是完整闭环。</p>
+<hr>
+<h2 id="ReplicateMoveToServer-做了什么"><code>ReplicateMoveToServer</code> 做了什么</h2>
+<p>在 <code>ReplicateMoveToServer</code>（<code>...:8666</code>）里，核心流程是：</p>
+<ol>
+<li>检查控制器同步状态（避免可靠队列被淹）。</li>
+<li>通过 <code>UpdateTimeStampAndDeltaTime</code> 对齐时间步。</li>
+<li>创建 <code>FSavedMove_Character</code>，记录这帧输入和状态。</li>
+<li>尝试与 <code>PendingMove</code> 合并，减少带宽。</li>
+<li>本地执行移动并把 move 打包发送。</li>
+</ol>
+<p>一个非常关键的细节是它会模拟服务端的 <code>DeltaTime</code> 取法，减少两端浮点误差。<br>
+这就是为什么看起来只是“时间戳处理”，但对抖动影响巨大。</p>
+<hr>
+<h2 id="FSavedMove-Character-里真正存了什么"><code>FSavedMove_Character</code> 里真正存了什么</h2>
+<p>从 <code>CharacterMovementComponent.h:2894</code> 开始看类定义，你会发现它不只是存输入方向：</p>
+<ul>
+<li><code>TimeStamp / DeltaTime</code></li>
+<li><code>StartLocation / SavedLocation</code></li>
+<li><code>StartVelocity / SavedVelocity</code></li>
+<li><code>StartPackedMovementMode / EndPackedMovementMode</code></li>
+<li><code>CompressedFlags</code>（jump/crouch/custom flags）</li>
+</ul>
+<p>换句话说，它是“可重演所需最小状态快照”。<br>
+你自定义移动如果有关键状态没进 <code>SavedMove</code>，客户端和服务端一定跑偏。</p>
+<hr>
+<h2 id="CallServerMovePacked-的价值"><code>CallServerMovePacked</code> 的价值</h2>
+<p><code>CallServerMovePacked</code>（<code>...:8897</code>）本质是把 move 数据写进 bit stream：<br>
+先 <code>ClientFillNetworkMoveData</code>，再序列化，再通过 <code>ServerMovePacked</code> 发出。</p>
+<p>这套 packed 路径比旧 RPC 更省带宽，也更统一。<br>
+你如果在项目里做了自定义网络移动，通常也应该沿这套容器扩展，不要走散装参数 RPC。</p>
+<hr>
+<h2 id="服务端怎么重演">服务端怎么重演</h2>
+<p><code>ServerMovePacked_ServerReceive</code>（<code>...:9637</code>）会先反序列化，再走 <code>ServerMove_HandleMoveData</code>，最终到 <code>ServerMove_PerformMovement</code>（<code>...:9723</code>）。</p>
+<p><code>ServerMove_PerformMovement</code> 里有几个关键动作：</p>
+<ol>
+<li>校验时间戳 <code>VerifyClientTimeStamp</code>。</li>
+<li>计算服务端这次 move 的 <code>DeltaTime</code>。</li>
+<li>应用客户端控制旋转和压缩 flags。</li>
+<li>真正执行移动并做误差判断。</li>
+</ol>
+<p>这解释了一个常见现象：<br>
+“客户端看着很顺，服务端仍然频繁纠偏”通常是时间步或状态恢复不一致，不是单纯延迟问题。</p>
+<hr>
+<h2 id="ClientAdjustPosition-Implementation-之后发生什么"><code>ClientAdjustPosition_Implementation</code> 之后发生什么</h2>
+<p>在 <code>ClientAdjustPosition_Implementation</code>（<code>...:10928</code>）里，流程非常明确：</p>
+<ol>
+<li>根据时间戳找到并 Ack 对应 move。</li>
+<li>把服务器位置/速度/模式当权威写回本地。</li>
+<li><code>ApplyNetworkMovementMode(ServerMovementMode)</code> 同步模式。</li>
+<li>置 <code>bUpdatePosition = true</code>，下一帧触发重放。</li>
+</ol>
+<p>下一步就是 <code>ClientUpdatePositionAfterServerUpdate</code>（<code>...:8365</code>）：</p>
+<ol>
+<li>重放所有未确认 move。</li>
+<li>恢复必要状态。</li>
+<li>继续本地预测。</li>
+</ol>
+<p>所以“回弹”通常不是设置位置那一帧造成的，而是“校正 + 重放”两段叠加后在视觉上体现出来。</p>
+<hr>
+<h2 id="平滑层-SmoothClientPosition-的职责边界">平滑层 (<code>SmoothClientPosition</code>) 的职责边界</h2>
+<p><code>SmoothClientPosition</code>（<code>...:8129</code>）只管视觉插值，不改权威物理结果。<br>
+它内部是：</p>
+<ol>
+<li><code>SmoothClientPosition_Interpolate</code></li>
+<li><code>SmoothClientPosition_UpdateVisuals</code></li>
+</ol>
+<p>这层能解决“看起来抖”，但不能解决“模拟本身跑偏”。<br>
+如果 correction 频率很高，你只调平滑参数通常是治标不治本。</p>
+<hr>
+<h2 id="什么时候一定要扩展-SavedMove">什么时候一定要扩展 <code>SavedMove</code></h2>
+<p>出现下面任一情况，就不要只改本地变量：</p>
+<ol>
+<li>自定义冲刺会改 <code>MaxSpeed/Acceleration</code>。</li>
+<li>自定义模式切换会改变可输入方向或重力方向。</li>
+<li>某些能力会改变碰撞响应或制动规则。</li>
+</ol>
+<p>这些都会影响服务端重演结果。<br>
+如果不把关键状态压进 <code>SavedMove</code> 和 move data，校正频率会飙升。</p>
+<hr>
+<h2 id="我常用的网络移动排查顺序">我常用的网络移动排查顺序</h2>
+<ol>
+<li>先看 <code>ReplicateMoveToServer</code> 的发送频率和时间戳是否连续。</li>
+<li>再看 <code>ServerMove_PerformMovement</code> 是否频繁判定误差。</li>
+<li>再看 <code>ClientAdjustPosition</code> 后是否立即进入大量重放。</li>
+<li>最后再调 <code>SmoothClientPosition</code> 参数。</li>
+</ol>
+<p>这套顺序能避免“还没定位根因就疯狂调平滑”的低效循环。</p>
+<hr>
+<h2 id="一句实话">一句实话</h2>
+<p>网络移动最难的部分不是“写一个移动功能”，而是“让它可预测、可重演、可纠偏”。<br>
+你只要用这个标准看代码，很多看似复杂的分支都会变得有逻辑。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-movement/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2022/09/18/ue-movement-notes/ue-movement-05-custom-mode-and-physcustom/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">自定义移动模式扩展：MOVE_Custom 与 PhysCustom 的可维护实现</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9AUE-%E7%BD%91%E7%BB%9C%E7%A7%BB%E5%8A%A8%E5%85%B6%E5%AE%9E%E6%98%AF%E2%80%9C%E5%8F%AF%E9%87%8D%E6%BC%94%E6%A8%A1%E6%8B%9F%E2%80%9D"><span class="post-toc-list-text">深入一层：UE 网络移动其实是“可重演模拟”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E9%93%BE%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">源码主链（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ReplicateMoveToServer-%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">ReplicateMoveToServer 做了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#FSavedMove-Character-%E9%87%8C%E7%9C%9F%E6%AD%A3%E5%AD%98%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">FSavedMove_Character 里真正存了什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#CallServerMovePacked-%E7%9A%84%E4%BB%B7%E5%80%BC"><span class="post-toc-list-text">CallServerMovePacked 的价值</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%80%8E%E4%B9%88%E9%87%8D%E6%BC%94"><span class="post-toc-list-text">服务端怎么重演</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#ClientAdjustPosition-Implementation-%E4%B9%8B%E5%90%8E%E5%8F%91%E7%94%9F%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">ClientAdjustPosition_Implementation 之后发生什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B9%B3%E6%BB%91%E5%B1%82-SmoothClientPosition-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">平滑层 (SmoothClientPosition) 的职责边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%80%E5%AE%9A%E8%A6%81%E6%89%A9%E5%B1%95-SavedMove"><span class="post-toc-list-text">什么时候一定要扩展 SavedMove</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E7%BD%91%E7%BB%9C%E7%A7%BB%E5%8A%A8%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">我常用的网络移动排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%8F%A5%E5%AE%9E%E8%AF%9D"><span class="post-toc-list-text">一句实话</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

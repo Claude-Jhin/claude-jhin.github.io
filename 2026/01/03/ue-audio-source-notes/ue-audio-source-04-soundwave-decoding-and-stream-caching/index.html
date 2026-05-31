@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SoundWave 解码与 Stream Caching：内存与延迟本质 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">SoundWave 解码与 Stream Caching：内存与延迟本质</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2026.01.03
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#SoundWave</span>
+            
+            <span style="color: var(--accent);">#Stream Caching</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 音频系统原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 4 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：UE5.7 Audio Mixer 主线</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 50%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-audio-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E9%A6%96%E5%8C%85%E5%BB%B6%E8%BF%9F%E6%9C%AC%E8%B4%A8%E6%98%AF%E2%80%9C%E5%91%BD%E4%B8%AD%E7%8E%87%E9%97%AE%E9%A2%98%E2%80%9D"><span class="post-toc-list-text">先给结论：首包延迟本质是“命中率问题”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%A3%E7%A0%81%E4%B8%8E%E7%BC%93%E5%AD%98%E7%9A%84%E5%85%B3%E9%94%AE%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">解码与缓存的关键边界</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#USoundWave-%E4%B8%8D%E7%AD%89%E4%BA%8E%E2%80%9C%E9%9F%B3%E9%A2%91%E6%95%B0%E6%8D%AE%E5%B8%B8%E9%A9%BB%E5%86%85%E5%AD%98%E2%80%9D"><span class="post-toc-list-text">USoundWave 不等于“音频数据常驻内存”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FCachedAudioStreamingManager-%E8%B4%9F%E8%B4%A3%E2%80%9C%E8%A6%81%E5%93%AA%E4%B8%AA-chunk%E2%80%9D"><span class="post-toc-list-text">FCachedAudioStreamingManager 负责“要哪个 chunk”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FAudioChunkCache-%E8%B4%9F%E8%B4%A3%E2%80%9C%E8%BF%99%E4%B8%AA-chunk-%E5%9C%A8%E4%B8%8D%E5%9C%A8%E2%80%9D"><span class="post-toc-list-text">FAudioChunkCache 负责“这个 chunk 在不在”</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E5%81%9A%E5%AE%9E%E9%AA%8C%E9%AA%8C%E8%AF%81"><span class="post-toc-list-text">我会怎么做实验验证</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E7%94%A8%E8%B0%83%E8%AF%95%E6%8A%93%E6%89%8B"><span class="post-toc-list-text">常用调试抓手</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 音频系统原理与源码拆解（UE5.7）<br>
+本文主题：压缩音频不是一次性进内存，而是按缓存策略分块供给</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>音频性能问题里，最容易被误判的一类就是“首包慢”。<br>
+很多时候大家会先怪资源太大，或者怪磁盘慢，但真正决定体验的，通常是缓存策略和访问时机。</p>
+<p>UE5.7 的 Stream Caching 不只是“省内存”开关，它会直接改变音频数据从包体到解码器的路径。<br>
+理解这条路径之后，很多“偶发卡顿”和“第一次播放慢”就不再玄学。</p>
+<h2 id="本文问题">本文问题</h2>
+<p>为什么同一条 <code>USoundWave</code>，有时秒播，有时却要等一拍？<br>
+关键不在“文件多大”，而在“这一帧有没有命中缓存、有没有及时拿到 chunk 并完成解码供给”。</p>
+<h2 id="先给结论：首包延迟本质是“命中率问题”">先给结论：首包延迟本质是“命中率问题”</h2>
+<p>这篇最核心的结论：</p>
+<p><strong>首包延迟通常不是解码器“算得慢”，而是缓存没命中导致的取数等待。</strong></p>
+<p>这也是为什么同一个资源在不同场景表现差异很大。<br>
+资源本身没变，但场景并发和缓存占用变了。</p>
+<h2 id="本文讨论范围">本文讨论范围</h2>
+<p>聚焦三段：</p>
+<ol>
+<li><code>USoundWave</code> 如何发起压缩数据请求。</li>
+<li>Stream Caching 如何分配和命中 chunk。</li>
+<li>命中/未命中如何改变首包时延。</li>
+</ol>
+<p>不展开：</p>
+<ul>
+<li>并发剔除导致的“听不到”（第 3 篇）</li>
+<li>Mixer 渲染侧时序（第 5 篇）</li>
+</ul>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;USoundWave 请求播放&quot;] --&gt; B[&quot;USoundWave::BeginGetCompressedData&quot;]</span><br><span class="line">    B --&gt; C[&quot;FCachedAudioStreamingManager::RequestChunk&quot;]</span><br><span class="line">    C --&gt; D[&quot;FAudioChunkCache::GetChunk / AddOrTouchChunk&quot;]</span><br><span class="line">    D --&gt; E&#123;&quot;Chunk 已命中?&quot;&#125;</span><br><span class="line">    E --&gt;|是| F[&quot;解码连续供给&quot;]</span><br><span class="line">    E --&gt;|否| G[&quot;I/O 读取 + 缓存回填&quot;]</span><br><span class="line">    G --&gt; F</span><br></pre></td></tr></table></figure>
+<h2 id="解码与缓存的关键边界">解码与缓存的关键边界</h2>
+<h3 id="USoundWave-不等于“音频数据常驻内存”"><code>USoundWave</code> 不等于“音频数据常驻内存”</h3>
+<p>在 Stream Caching 打开时，<code>USoundWave</code> 的加载并不意味着完整音频数据已经就绪。<br>
+真正播放时还可能需要按 chunk 请求压缩数据。</p>
+<h3 id="FCachedAudioStreamingManager-负责“要哪个-chunk”"><code>FCachedAudioStreamingManager</code> 负责“要哪个 chunk”</h3>
+<p>请求阶段决定了缓存系统是否需要额外 I/O。<br>
+这一步如果 miss，多半会直接反映到首包等待上。</p>
+<h3 id="FAudioChunkCache-负责“这个-chunk-在不在”"><code>FAudioChunkCache</code> 负责“这个 chunk 在不在”</h3>
+<p><code>GetChunk</code> 命中就快，未命中就要等加载。<br>
+<code>AddOrTouchChunk</code> 则决定 LRU 热度，影响后续再次播放是否还快。</p>
+<h2 id="关键类型">关键类型</h2>
+<ul>
+<li><code>USoundWave::BeginGetCompressedData</code>：压缩数据获取入口，决定后续走实时取数还是已有资源路径。</li>
+<li><code>FCachedAudioStreamingManager::RequestChunk</code>：向缓存管理器请求目标片段，是“会不会等”的关键节点。</li>
+<li><code>FAudioChunkCache::GetChunk</code>：命中直接返回，未命中就要走加载链。</li>
+<li><code>FAudioChunkCache::AddOrTouchChunk</code>：维护 LRU 热度，决定下次是否更容易命中。</li>
+<li><code>FAudioStreamCacheMemoryHandle</code>：把额外特性的内存借用显式纳入预算，避免隐形挤占缓存池。</li>
+</ul>
+<p>排查首包问题时，我通常按这条链路做断点：</p>
+<p><code>USoundWave::BeginGetCompressedData -&gt; FCachedAudioStreamingManager::RequestChunk -&gt; FAudioChunkCache::GetChunk -&gt; FAudioChunkCache::AddOrTouchChunk</code></p>
+<h2 id="我会怎么做实验验证">我会怎么做实验验证</h2>
+<p>一个简单但有效的验证方式：</p>
+<ol>
+<li>固定同一批 <code>USoundWave</code>，在低并发场景下播放并记录首包延迟。</li>
+<li>切到高并发场景（更多同时播放资源）重复测试。</li>
+<li>对比 <code>stat audiostreaming</code> 中的缓存占用、miss 行为和读请求压力。</li>
+</ol>
+<p>如果高并发显著拉长首包，基本就能确认是缓存命中压力，而不是单资源解码耗时。</p>
+<h2 id="常用调试抓手">常用调试抓手</h2>
+<ul>
+<li><code>stat audiostreaming</code></li>
+<li><code>au.streamcaching.ReadRequestPriority</code></li>
+<li><code>au.streamcaching.PlaybackRequestPriority</code></li>
+</ul>
+<p>这些抓手的价值不在“调一个参数立刻解决”，而在于帮你确认瓶颈到底在“读取优先级”还是“缓存容量”。</p>
+<h2 id="本篇结论">本篇结论</h2>
+<p>Stream Caching 的本质是一个很现实的交易：</p>
+<ul>
+<li>缓存小：内存更稳，但 miss 多，首包更容易慢。</li>
+<li>缓存大：首包更稳，但内存上限更高，且容易和其他系统抢预算。</li>
+</ul>
+<p>所以音频优化不能只盯单个 <code>USoundWave</code>，要结合场景并发峰值一起看。<br>
+实战里我会把 <code>stat audiostreaming</code> 当成常驻面板，而不是“出问题才打开”的工具。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-audio-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/12/20/ue-audio-source-notes/ue-audio-source-03-voice-concurrency-virtualization/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">Voice 分配、并发与虚拟化：为什么有些声音听不见</strong>
+                </a>
+                
+
+                
+                <a href="/2026/01/10/ue-audio-source-notes/ue-audio-source-05-audio-mixer-rendering-mainline/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">Audio Mixer 渲染主线：Source -&gt; Submix -&gt; Endpoint</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E9%A6%96%E5%8C%85%E5%BB%B6%E8%BF%9F%E6%9C%AC%E8%B4%A8%E6%98%AF%E2%80%9C%E5%91%BD%E4%B8%AD%E7%8E%87%E9%97%AE%E9%A2%98%E2%80%9D"><span class="post-toc-list-text">先给结论：首包延迟本质是“命中率问题”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%A3%E7%A0%81%E4%B8%8E%E7%BC%93%E5%AD%98%E7%9A%84%E5%85%B3%E9%94%AE%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">解码与缓存的关键边界</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#USoundWave-%E4%B8%8D%E7%AD%89%E4%BA%8E%E2%80%9C%E9%9F%B3%E9%A2%91%E6%95%B0%E6%8D%AE%E5%B8%B8%E9%A9%BB%E5%86%85%E5%AD%98%E2%80%9D"><span class="post-toc-list-text">USoundWave 不等于“音频数据常驻内存”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FCachedAudioStreamingManager-%E8%B4%9F%E8%B4%A3%E2%80%9C%E8%A6%81%E5%93%AA%E4%B8%AA-chunk%E2%80%9D"><span class="post-toc-list-text">FCachedAudioStreamingManager 负责“要哪个 chunk”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FAudioChunkCache-%E8%B4%9F%E8%B4%A3%E2%80%9C%E8%BF%99%E4%B8%AA-chunk-%E5%9C%A8%E4%B8%8D%E5%9C%A8%E2%80%9D"><span class="post-toc-list-text">FAudioChunkCache 负责“这个 chunk 在不在”</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E5%81%9A%E5%AE%9E%E9%AA%8C%E9%AA%8C%E8%AF%81"><span class="post-toc-list-text">我会怎么做实验验证</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E7%94%A8%E8%B0%83%E8%AF%95%E6%8A%93%E6%89%8B"><span class="post-toc-list-text">常用调试抓手</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pose Search Schema 深入：Channel、采样、权重与代价函数语义 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Pose Search Schema 深入：Channel、采样、权重与代价函数语义</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.10.17
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Motion Matching</span>
+            
+            <span style="color: var(--accent);">#Pose Search</span>
+            
+            <span style="color: var(--accent);">#Schema</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Motion Matching 源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.4/5.5 的 PoseSearch 与 Motion Matching 体系，从范式认知、Schema 与索引构建、运行时查询到调优排障，打通一条可落地的源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 3 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.4/5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 38%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-motion-matching/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E7%BB%93%E8%AE%BA%E6%91%86%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">先把结论摆在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E8%AF%84%E5%88%86%E8%AF%AD%E4%B9%89%EF%BC%89"><span class="post-toc-list-text">主线图（评分语义）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Schema-%E7%9A%84%E6%9C%AC%E8%B4%A8%EF%BC%9A%E5%AE%9A%E4%B9%89%E2%80%9C%E4%BB%80%E4%B9%88%E5%8F%AB%E5%83%8F%E2%80%9D"><span class="post-toc-list-text">Schema 的本质：定义“什么叫像”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE-Channel-%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="post-toc-list-text">关键 Channel 怎么理解</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Trajectory-Channel%EF%BC%9A%E8%AE%A9%E7%B3%BB%E7%BB%9F%E8%B7%9F%E7%9D%80%E6%84%8F%E5%9B%BE%E8%B5%B0"><span class="post-toc-list-text">Trajectory Channel：让系统跟着意图走</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Pose-Channel%EF%BC%9A%E8%AE%A9%E7%B3%BB%E7%BB%9F%E8%BA%AB%E4%BD%93%E5%A7%BF%E6%80%81%E6%9B%B4%E8%BF%9E%E7%BB%AD"><span class="post-toc-list-text">Pose Channel：让系统身体姿态更连续</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E6%9D%83%E9%87%8D%E5%8F%98%E5%8C%96-%E8%A7%92%E8%89%B2%E6%80%A7%E6%A0%BC%E5%8F%98%E5%8C%96%E2%80%9D"><span class="post-toc-list-text">为什么“权重变化 &#x3D; 角色性格变化”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%87%87%E6%A0%B7%E8%AE%BE%E8%AE%A1%E9%87%8C%E6%9C%80%E5%B8%B8%E8%A7%81%E7%9A%84%E4%B8%89%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">采样设计里最常见的三个坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%9E%E7%94%A8%E7%9A%84%E8%B0%83%E5%8F%82%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">一个实用的调参顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E5%AF%B9%E7%85%A7%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">我常用的对照实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E9%87%8C-Schema-%E6%98%AF%E6%80%8E%E4%B9%88%E2%80%9C%E9%95%BF%E5%87%BA%E6%9D%A5%E2%80%9D%E7%9A%84"><span class="post-toc-list-text">源码里 Schema 是怎么“长出来”的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%BB%98%E8%AE%A4-Channel-%E7%9A%84%E7%9C%9F%E5%AE%9E%E7%BB%86%E8%8A%82%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">默认 Channel 的真实细节（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%EF%BC%88%E6%BA%90%E7%A0%81%E7%89%88%EF%BC%89"><span class="post-toc-list-text">最小验证（源码版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Motion Matching 源码深挖（5.4/5.5）<br>
+本文主题：Schema 如何把“动画观感”转换为可计算特征</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>Motion Matching 的上限，首先取决于你如何定义特征空间。<br>
+而 Schema 就是这套特征定义协议：采什么、怎么采、各维度影响多大。</p>
+<h2 id="先把结论摆在前面">先把结论摆在前面</h2>
+<p>Schema 的本质是“查询向量与候选向量的同构约定”。<br>
+Channel 决定信息来源，采样决定信息时间分布，权重决定评分倾向。<br>
+你调的不是参数，而是“系统偏好”。</p>
+<h2 id="主线图（评分语义）">主线图（评分语义）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;Trajectory Channel&quot;] --&gt; D[&quot;特征向量拼接&quot;]</span><br><span class="line">    B[&quot;Pose Channel&quot;] --&gt; D</span><br><span class="line">    C[&quot;其他 Channel&quot;] --&gt; D</span><br><span class="line">    D --&gt; E[&quot;按权重计算距离/代价&quot;]</span><br><span class="line">    E --&gt; F[&quot;候选帧排序&quot;]</span><br><span class="line">    F --&gt; G[&quot;选中最优帧&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="Schema-的本质：定义“什么叫像”">Schema 的本质：定义“什么叫像”</h2>
+<p>如果把 Motion Matching 看成检索系统，<code>UPoseSearchSchema</code> 就是检索协议。</p>
+<p>它至少定义了三类信息：</p>
+<ol>
+<li><strong>采样对象</strong>：比如轨迹点、脚部骨骼、朝向等。</li>
+<li><strong>采样时域</strong>：过去多久、未来多久、各时间点权重。</li>
+<li><strong>评分权重</strong>：不同特征在总代价中的占比。</li>
+</ol>
+<p>这三件事一起决定“系统偏好”。<br>
+所以调 Schema，本质是在调“检索价值观”。</p>
+<h2 id="关键-Channel-怎么理解">关键 Channel 怎么理解</h2>
+<h3 id="Trajectory-Channel：让系统跟着意图走">Trajectory Channel：让系统跟着意图走</h3>
+<p>Trajectory 通常描述角色未来短时意图和历史轨迹。<br>
+它会显著影响：</p>
+<ul>
+<li>转向灵敏度</li>
+<li>急停命中率</li>
+<li>高速状态下的动作前瞻性</li>
+</ul>
+<p>Trajectory 权重高时，系统更愿意优先满足路径一致性。</p>
+<h3 id="Pose-Channel：让系统身体姿态更连续">Pose Channel：让系统身体姿态更连续</h3>
+<p>Pose 通常关注关键骨骼的位置/速度/朝向信息。<br>
+它会显著影响：</p>
+<ul>
+<li>脚部连贯性</li>
+<li>上下肢姿态延续性</li>
+<li>切换时的“突兀感”</li>
+</ul>
+<p>Pose 权重高时，系统更倾向维持动作连续性。</p>
+<h2 id="为什么“权重变化-角色性格变化”">为什么“权重变化 = 角色性格变化”</h2>
+<p>可以把总评分抽象为：</p>
+<p><code>TotalCost = Wt * TrajectoryCost + Wp * PoseCost + ...</code></p>
+<p>虽然这是简化表达，但足够解释调参现象：</p>
+<ul>
+<li>提高 <code>Wt</code>：角色更“听方向盘”，更跟路径。</li>
+<li>提高 <code>Wp</code>：角色更“重身体惯性”，更稳但可能更迟。</li>
+</ul>
+<p>所以“性格变化”并非玄学，而是目标函数重心变化。</p>
+<h2 id="采样设计里最常见的三个坑">采样设计里最常见的三个坑</h2>
+<ol>
+<li><strong>样本太多</strong>：信息更细，但噪声也更容易放大，成本上涨。</li>
+<li><strong>样本太少</strong>：信息不足，系统分不清相近候选。</li>
+<li><strong>时间分布不合理</strong>：预测点过远导致前瞻过度，或过近导致反应迟缓。</li>
+</ol>
+<p>建议先做“少而稳定”的基线，再逐步加维度。</p>
+<h2 id="一个实用的调参顺序">一个实用的调参顺序</h2>
+<p>当结果不理想时，建议按这个顺序调：</p>
+<ol>
+<li>先确认 Query 输入是否稳定（第 6 篇会细讲）。</li>
+<li>再调 Trajectory 与 Pose 的大权重比例。</li>
+<li>最后调 Channel 内部细分参数。</li>
+</ol>
+<p>不要一上来同时改多个 Channel 细项，不然很难定位“到底是哪一项导致变化”。</p>
+<h2 id="我常用的对照实验">我常用的对照实验</h2>
+<ol>
+<li>基于同一数据库，制作两个 Schema：
+<ul>
+<li>A：Trajectory 权重高于 Pose</li>
+<li>B：Pose 权重高于 Trajectory</li>
+</ul>
+</li>
+<li>保持输入轨迹一致，重复做急转与急停。</li>
+<li>对比角色是否更“跟路线”还是更“守当前身体姿态”。</li>
+<li>每次只改一个大权重，不同时调整多个 Channel 内参数。</li>
+</ol>
+<p>大多数情况下会看到：<br>
+Trajectory 权重大时转向更激进；Pose 权重大时动作更连贯，但响应会稍慢一点。</p>
+<h2 id="源码里-Schema-是怎么“长出来”的">源码里 Schema 是怎么“长出来”的</h2>
+<p>在 UE5.5（<code>C:\Epic\UE_5.5</code>）里，Schema 的主干路径很清楚：</p>
+<ol>
+<li><code>PoseSearchSchema.cpp</code> 的 <code>UPoseSearchSchema::Finalize()</code><br>
+先做骨骼与 Channel 的合法性检查，再把主 Channel 展开成可执行的 <code>FinalizedChannels</code>。</li>
+<li>同文件 <code>UPoseSearchSchema::BuildQuery(...)</code><br>
+本质是遍历 <code>GetChannels()</code>，逐个调用 <code>Channel-&gt;BuildQuery(SearchContext)</code> 拼向量。</li>
+<li><code>Finalize()</code> 里如果检测到非 <code>UseSampleTime</code> 的 Channel，会自动补 <code>UPoseSearchFeatureChannel_PermutationTime</code>；<br>
+如果你开启了 padding，还会补 <code>UPoseSearchFeatureChannel_Padding</code>，把维度补齐到 16 字节边界。</li>
+</ol>
+<p>这三步说明：Schema 不是“配置数据”，而是带有构建规则的查询协议。</p>
+<h2 id="默认-Channel-的真实细节（UE5-5）">默认 Channel 的真实细节（UE5.5）</h2>
+<p>直接看源码默认构造，比只看面板更有信息量：</p>
+<ol>
+<li><code>PoseSearchFeatureChannel_Trajectory.cpp</code><br>
+默认 <code>Weight = 7.f</code>，并带 4 个时间采样点（<code>-0.4 / 0 / 0.35 / 0.7</code>），并按样本标记拆成 Position / Velocity / Heading 子通道。</li>
+<li><code>PoseSearchFeatureChannel_Pose.cpp</code><br>
+默认 <code>Weight = 1.f</code>，默认骨骼是 <code>foot_l</code>、<code>foot_r</code>，采样 Position + Velocity。</li>
+<li>两者都会在 <code>Finalize(...)</code> 里把子通道权重写成 <code>SampleWeight * ChannelWeight</code>。</li>
+</ol>
+<p>所以你在面板里改的“一个权重”，最后会扩散到很多维度上。</p>
+<h2 id="最小验证（源码版）">最小验证（源码版）</h2>
+<ol>
+<li>保持数据库不变，只改 <code>Trajectory</code> 主权重（比如 <code>7 -&gt; 4</code>）。</li>
+<li>重建索引后跑同一组输入（直跑、急转、急停）。</li>
+<li>对照 <code>a.AnimNode.MotionMatching.DebugDrawQuery</code> 看查询向量走势，同时记切换频率。</li>
+<li>再把 <code>Pose</code> 主权重提高一档，对比“响应速度”和“姿态连续性”哪个在变化。</li>
+</ol>
+<p>这样做你会很快建立一个直觉：权重调的是“系统偏好”，不是“某一段动画看起来顺不顺”。</p>
+<h2 id="最后">最后</h2>
+<p>Schema 不是辅助配置，它就是 Motion Matching 的“目标函数定义”。<br>
+下一篇进入离线索引构建，看看这些定义如何真正落成可检索数据。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-motion-matching/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/10/10/ue-motion-matching-notes/ue-motion-matching-02-system-overview-posesearch-trajectory-chooser-animgraph/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">UE5 Motion Matching 体系总览：PoseSearch、Trajectory、Chooser、AnimGraph 如何协作</strong>
+                </a>
+                
+
+                
+                <a href="/2025/10/24/ue-motion-matching-notes/ue-motion-matching-04-database-indexing-pipeline/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">数据库索引构建主线：动画资产如何离线变成可检索索引</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E7%BB%93%E8%AE%BA%E6%91%86%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">先把结论摆在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E8%AF%84%E5%88%86%E8%AF%AD%E4%B9%89%EF%BC%89"><span class="post-toc-list-text">主线图（评分语义）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Schema-%E7%9A%84%E6%9C%AC%E8%B4%A8%EF%BC%9A%E5%AE%9A%E4%B9%89%E2%80%9C%E4%BB%80%E4%B9%88%E5%8F%AB%E5%83%8F%E2%80%9D"><span class="post-toc-list-text">Schema 的本质：定义“什么叫像”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE-Channel-%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="post-toc-list-text">关键 Channel 怎么理解</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Trajectory-Channel%EF%BC%9A%E8%AE%A9%E7%B3%BB%E7%BB%9F%E8%B7%9F%E7%9D%80%E6%84%8F%E5%9B%BE%E8%B5%B0"><span class="post-toc-list-text">Trajectory Channel：让系统跟着意图走</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Pose-Channel%EF%BC%9A%E8%AE%A9%E7%B3%BB%E7%BB%9F%E8%BA%AB%E4%BD%93%E5%A7%BF%E6%80%81%E6%9B%B4%E8%BF%9E%E7%BB%AD"><span class="post-toc-list-text">Pose Channel：让系统身体姿态更连续</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E6%9D%83%E9%87%8D%E5%8F%98%E5%8C%96-%E8%A7%92%E8%89%B2%E6%80%A7%E6%A0%BC%E5%8F%98%E5%8C%96%E2%80%9D"><span class="post-toc-list-text">为什么“权重变化 &#x3D; 角色性格变化”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%87%87%E6%A0%B7%E8%AE%BE%E8%AE%A1%E9%87%8C%E6%9C%80%E5%B8%B8%E8%A7%81%E7%9A%84%E4%B8%89%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">采样设计里最常见的三个坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%9E%E7%94%A8%E7%9A%84%E8%B0%83%E5%8F%82%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">一个实用的调参顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E5%AF%B9%E7%85%A7%E5%AE%9E%E9%AA%8C"><span class="post-toc-list-text">我常用的对照实验</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E9%87%8C-Schema-%E6%98%AF%E6%80%8E%E4%B9%88%E2%80%9C%E9%95%BF%E5%87%BA%E6%9D%A5%E2%80%9D%E7%9A%84"><span class="post-toc-list-text">源码里 Schema 是怎么“长出来”的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%BB%98%E8%AE%A4-Channel-%E7%9A%84%E7%9C%9F%E5%AE%9E%E7%BB%86%E8%8A%82%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">默认 Channel 的真实细节（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%EF%BC%88%E6%BA%90%E7%A0%81%E7%89%88%EF%BC%89"><span class="post-toc-list-text">最小验证（源码版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

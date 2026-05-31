@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从 PlaySound 到 ActiveSound：播放请求生命周期 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从 PlaySound 到 ActiveSound：播放请求生命周期</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.12.13
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#FActiveSound</span>
+            
+            <span style="color: var(--accent);">#AudioDevice</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 音频系统原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+            <div class="series-meta">
+                <span>第 2 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：UE5.7 Audio Mixer 主线</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 25%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-audio-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%AF%94%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0%E6%9B%B4%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">先给结论：生命周期比入口函数更重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%8B%86%E8%A7%A3%EF%BC%9A%E5%9B%9B%E4%B8%AA%E9%98%B6%E6%AE%B5%E5%90%84%E8%87%AA%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">生命周期拆解：四个阶段各自做什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%88%9B%E5%BB%BA%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%8A%8A%E2%80%9C%E8%B0%83%E7%94%A8%E2%80%9D%E5%8F%98%E6%88%90%E2%80%9C%E5%AE%9E%E4%BD%93%E2%80%9D"><span class="post-toc-list-text">1) 创建阶段：把“调用”变成“实体”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%9B%B4%E6%96%B0%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%AF%8F%E5%B8%A7%E4%BF%AE%E6%AD%A3%E5%BD%93%E5%89%8D%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">2) 更新阶段：每帧修正当前状态</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%81%9C%E6%AD%A2%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%A0%87%E8%AE%B0%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E7%AB%8B%E5%8D%B3%E9%94%80%E6%AF%81"><span class="post-toc-list-text">3) 停止阶段：标记，而不是立即销毁</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%BD%BB%E5%BA%95%E9%80%80%E5%87%BA%E6%B4%BB%E8%B7%83%E6%B1%A0"><span class="post-toc-list-text">4) 回收阶段：彻底退出活跃池</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%AE%9A%E4%BD%8D%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（定位顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 音频系统原理与源码拆解（UE5.7）<br>
+本文主题：播放请求不是“一次函数调用”，而是一个完整生命周期对象</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>很多人会把 <code>PlaySound*</code> 当成一个“瞬时动作”：函数调完，事情就结束了。<br>
+但在引擎内部，真正重要的是它之后发生的事。</p>
+<p>你在项目里听到的一切异常，比如：</p>
+<ul>
+<li>声音触发了但位置不更新</li>
+<li>声音该停没停</li>
+<li>声音切关卡后残留</li>
+</ul>
+<p>几乎都和 <code>FActiveSound</code> 生命周期有关，而不只是入口函数本身。</p>
+<h2 id="本文问题">本文问题</h2>
+<p>为什么 <code>PlaySound*</code> 是 Fire-and-Forget 风格，但声音还能持续更新位置、音量、衰减，最后再被正确回收？<br>
+因为入口只做“建档”，真正每帧运转的是 <code>FActiveSound</code>。</p>
+<h2 id="先给结论：生命周期比入口函数更重要">先给结论：生命周期比入口函数更重要</h2>
+<p>这篇核心结论很直接：</p>
+<p><strong>入口函数决定“要不要开始”，生命周期决定“能不能正确结束”。</strong></p>
+<p>如果只盯入口，很多问题会表现成随机；<br>
+如果从生命周期看，问题通常都能落到固定阶段：创建、更新、停止、回收。</p>
+<h2 id="本文讨论范围">本文讨论范围</h2>
+<p>聚焦主链：</p>
+<ul>
+<li><code>PlaySound*</code> 如何进入 <code>FAudioDevice</code></li>
+<li><code>FActiveSound</code> 如何被持有与更新</li>
+<li>停止请求如何被延迟处理并最终回收</li>
+</ul>
+<p>不展开：</p>
+<ul>
+<li>并发策略细节（第 3 篇）</li>
+<li>缓存与解码阻塞（第 4 篇）</li>
+</ul>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;UGameplayStatics::PlaySound*&quot;] --&gt; B[&quot;FAudioDevice::AddNewActiveSound&quot;]</span><br><span class="line">    B --&gt; C[&quot;ActiveSounds 数组持有&quot;]</span><br><span class="line">    C --&gt; D[&quot;FActiveSound::UpdateWaveInstances (每帧更新)&quot;]</span><br><span class="line">    D --&gt; E[&quot;FAudioDevice::StartSources&quot;]</span><br><span class="line">    E --&gt; F&#123;&quot;是否停止&quot;&#125;</span><br><span class="line">    F --&gt;|是| G[&quot;FAudioDevice::AddSoundToStop&quot;]</span><br><span class="line">    G --&gt; H[&quot;FAudioDevice::RemoveActiveSound&quot;]</span><br><span class="line">    F --&gt;|否| D</span><br></pre></td></tr></table></figure>
+<h2 id="生命周期拆解：四个阶段各自做什么">生命周期拆解：四个阶段各自做什么</h2>
+<h3 id="1-创建阶段：把“调用”变成“实体”">1) 创建阶段：把“调用”变成“实体”</h3>
+<p><code>UGameplayStatics::PlaySound*</code> 进入 <code>FAudioDevice::AddNewActiveSound</code> 后，声音才真正拥有运行时身份。<br>
+这一步没过，后面一切都不会发生。</p>
+<h3 id="2-更新阶段：每帧修正当前状态">2) 更新阶段：每帧修正当前状态</h3>
+<p><code>FActiveSound::UpdateWaveInstances</code> 会持续根据监听器、参数、组件状态更新 <code>FWaveInstance</code>。<br>
+很多“声音方向不更新”“衰减异常”的根因都在这一段。</p>
+<h3 id="3-停止阶段：标记，而不是立即销毁">3) 停止阶段：标记，而不是立即销毁</h3>
+<p>UE5.7 更推荐通过 <code>AddSoundToStop</code> 标记停止，再由后续流程统一处理。<br>
+这样做的目的，是避免跨线程立即硬停带来的竞态和状态不一致。</p>
+<h3 id="4-回收阶段：彻底退出活跃池">4) 回收阶段：彻底退出活跃池</h3>
+<p>最终通过 <code>RemoveActiveSound</code> 离开调度系统。<br>
+这一步如果漏掉，就容易出现“看似停了，实际对象还活着”的长尾问题。</p>
+<h2 id="关键类型">关键类型</h2>
+<ul>
+<li><code>UGameplayStatics::PlaySound2D / PlaySoundAtLocation</code>：提交请求入口。常见误区是把它当“完整播放系统”。</li>
+<li><code>FAudioDevice::AddNewActiveSound</code>：把请求转换为运行时对象，正式进入设备管理域。</li>
+<li><code>FActiveSound::UpdateWaveInstances</code>：生命周期核心。位置、参数、可听性变化都在这里持续推进。</li>
+<li><code>FAudioDevice::AddSoundToStop</code>：标记停止而不是立即硬停，避免跨线程/跨阶段竞态。</li>
+<li><code>FAudioDevice::RemoveActiveSound</code>：真正离开活跃池，生命周期闭环完成。</li>
+</ul>
+<p>我自己排查“声音停不干净”时，第一条搜索链固定是：</p>
+<p><code>UGameplayStatics::PlaySoundAtLocation -&gt; FAudioDevice::AddNewActiveSound -&gt; FActiveSound::UpdateWaveInstances -&gt; FAudioDevice::AddSoundToStop -&gt; FAudioDevice::RemoveActiveSound</code></p>
+<h2 id="我会怎么跟源码（定位顺序）">我会怎么跟源码（定位顺序）</h2>
+<ol>
+<li><code>GameplayStatics.cpp</code>：确认播放入口是否走到对应重载。</li>
+<li><code>AudioDevice.cpp</code>：确认是否创建 ActiveSound，是否被提前拒绝。</li>
+<li><code>ActiveSound.cpp</code>：确认每帧更新是否持续执行。</li>
+<li><code>AudioDevice.cpp</code>：确认停止路径是否走 <code>AddSoundToStop</code>。</li>
+<li><code>AudioDevice.cpp</code>：确认最终是否执行 <code>RemoveActiveSound</code>。</li>
+</ol>
+<p>推荐断点组合：创建点、一次更新点、停止标记点、回收点。<br>
+四点都命中，生命周期闭环通常就健康。</p>
+<h2 id="常见误区">常见误区</h2>
+<ol>
+<li>
+<p>误区：声音“没了”就等于已经回收。<br>
+实际：可能只是被标记停止，尚未离开活跃集合。</p>
+</li>
+<li>
+<p>误区：只要调用 Stop 就一定马上静音。<br>
+实际：在统一停止流程下，可能有一个短暂处理窗口。</p>
+</li>
+<li>
+<p>误区：生命周期问题会在日志里明显报错。<br>
+实际：更多是状态不一致，不一定有显式错误日志。</p>
+</li>
+</ol>
+<h2 id="本篇结论">本篇结论</h2>
+<p><code>PlaySound*</code> 不是终点，只是第一跳。<br>
+只要你把“一条声音”看成一个 <code>FActiveSound</code> 的出生、更新、停机、回收过程，很多看似玄学的问题都会变得可解释。</p>
+<p>后面讲并发、衰减、空间化时，我们都继续以 ActiveSound 为主语追链路。<br>
+这是音频源码阅读里最省心的一条主线。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-audio-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/12/06/ue-audio-source-notes/ue-audio-source-01-overview-threads-modules/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 1 篇</span>
+                    <strong class="series-nav-title">UE5.7 音频架构总览：线程与模块边界</strong>
+                </a>
+                
+
+                
+                <a href="/2025/12/20/ue-audio-source-notes/ue-audio-source-03-voice-concurrency-virtualization/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">Voice 分配、并发与虚拟化：为什么有些声音听不见</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%AF%94%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0%E6%9B%B4%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">先给结论：生命周期比入口函数更重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%8B%86%E8%A7%A3%EF%BC%9A%E5%9B%9B%E4%B8%AA%E9%98%B6%E6%AE%B5%E5%90%84%E8%87%AA%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">生命周期拆解：四个阶段各自做什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%88%9B%E5%BB%BA%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%8A%8A%E2%80%9C%E8%B0%83%E7%94%A8%E2%80%9D%E5%8F%98%E6%88%90%E2%80%9C%E5%AE%9E%E4%BD%93%E2%80%9D"><span class="post-toc-list-text">1) 创建阶段：把“调用”变成“实体”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%9B%B4%E6%96%B0%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%AF%8F%E5%B8%A7%E4%BF%AE%E6%AD%A3%E5%BD%93%E5%89%8D%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">2) 更新阶段：每帧修正当前状态</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E5%81%9C%E6%AD%A2%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%A0%87%E8%AE%B0%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E7%AB%8B%E5%8D%B3%E9%94%80%E6%AF%81"><span class="post-toc-list-text">3) 停止阶段：标记，而不是立即销毁</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%BD%BB%E5%BA%95%E9%80%80%E5%87%BA%E6%B4%BB%E8%B7%83%E6%B1%A0"><span class="post-toc-list-text">4) 回收阶段：彻底退出活跃池</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%AE%9A%E4%BD%8D%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（定位顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

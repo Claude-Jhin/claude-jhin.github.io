@@ -1,0 +1,363 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>复杂状态同步：子对象复制、FastArraySerializer 与高频容器变更策略 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">复杂状态同步：子对象复制、FastArraySerializer 与高频容器变更策略</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2023.06.11
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Networking</span>
+            
+            <span style="color: var(--accent);">#FastArraySerializer</span>
+            
+            <span style="color: var(--accent);">#Subobject Replication</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 网络同步源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
+            <div class="series-meta">
+                <span>第 4 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：5.5 主线梳理</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 50%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-network-sync/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这篇解决什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%86%B3%E5%AE%9A%E2%80%9C%E5%AF%B9%E8%B1%A1%E8%BE%B9%E7%95%8C%E2%80%9D%E5%86%8D%E5%86%99%E5%90%8C%E6%AD%A5"><span class="post-toc-list-text">先决定“对象边界”再写同步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%E4%B8%8E-FastArray-%E7%9A%84%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">子对象复制与 FastArray 的分工</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%EF%BC%88Subobject%EF%BC%89"><span class="post-toc-list-text">子对象复制（Subobject）</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FastArray"><span class="post-toc-list-text">FastArray</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%A4%E4%B8%AA%E6%A0%87%E8%AE%B0%E4%B8%80%E5%AE%9A%E8%A6%81%E5%BD%A2%E6%88%90%E5%9B%A2%E9%98%9F%E7%BA%AA%E5%BE%8B"><span class="post-toc-list-text">这两个标记一定要形成团队纪律</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkItemDirty"><span class="post-toc-list-text">MarkItemDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkArrayDirty"><span class="post-toc-list-text">MarkArrayDirty</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-1%EF%BC%9A%E6%8B%BF%E6%99%AE%E9%80%9A-TArray-%E5%A4%8D%E5%88%B6%E9%AB%98%E9%A2%91%E5%88%97%E8%A1%A8"><span class="post-toc-list-text">误区 1：拿普通 TArray 复制高频列表</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-2%EF%BC%9A%E6%8A%8A%E2%80%9C%E5%AD%97%E6%AE%B5%E6%9B%B4%E6%96%B0%E2%80%9D%E5%92%8C%E2%80%9C%E7%BB%93%E6%9E%84%E6%9B%B4%E6%96%B0%E2%80%9D%E6%B7%B7%E6%88%90%E4%B8%80%E4%B8%AA%E6%A0%87%E8%AE%B0"><span class="post-toc-list-text">误区 2：把“字段更新”和“结构更新”混成一个标记</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-3%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%9B%9E%E8%B0%83%E5%8F%AA%E5%A4%84%E7%90%86%E6%96%B0%E5%A2%9E%EF%BC%8C%E4%B8%8D%E5%A4%84%E7%90%86%E5%88%A0%E9%99%A4"><span class="post-toc-list-text">误区 3：客户端回调只处理新增，不处理删除</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%A4%8D%E6%9D%82%E7%8A%B6%E6%80%81%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（复杂状态排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E5%BB%BA%E6%A8%A1%E6%B8%85%E5%8D%95%EF%BC%88%E8%BF%99%E7%AF%87%E8%A6%81%E6%B2%89%E6%B7%80%E7%9A%84%E4%B8%9C%E8%A5%BF%EF%BC%89"><span class="post-toc-list-text">数据建模清单（这篇要沉淀的东西）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 网络同步源码拆解（5.5）<br>
+本文主题：解决多人项目最“难调又高频”的那类问题：容器型状态同步</p>
+</blockquote>
+<h2 id="这篇解决什么">这篇解决什么</h2>
+<p>前面两篇讲的是基础机制。<br>
+到了真正的项目里，你很快会遇到更麻烦的数据形态：</p>
+<ul>
+<li>背包列表</li>
+<li>Buff 列表</li>
+<li>技能槽/冷却队列</li>
+<li>可增删改的运行时对象集合</li>
+</ul>
+<p>这类数据最大的特点是：</p>
+<ul>
+<li>变化频率高</li>
+<li>结构会变化（增删重排）</li>
+<li>业务回调链长（UI、动画、数值系统）</li>
+</ul>
+<p>如果还按“普通属性复制”思路硬上，基本都会在带宽或一致性上吃亏。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;服务器修改容器或子对象&quot;] --&gt; B[&quot;MarkItemDirty / MarkArrayDirty&quot;]</span><br><span class="line">    B --&gt; C[&quot;FastArrayDeltaSerialize 计算增量&quot;]</span><br><span class="line">    C --&gt; D[&quot;UActorChannel 发送变更片段&quot;]</span><br><span class="line">    D --&gt; E[&quot;客户端按新增/更新/删除应用&quot;]</span><br><span class="line">    E --&gt; F[&quot;UI 与玩法系统回调刷新&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ul>
+<li><code>AActor::AddReplicatedSubObject</code>：注册可复制子对象。</li>
+<li><code>AActor::ReplicateSubobjects</code>：子对象复制扩展入口。</li>
+<li><code>FFastArraySerializer::MarkItemDirty</code>：元素级脏标记。</li>
+<li><code>FFastArraySerializer::MarkArrayDirty</code>：结构级脏标记。</li>
+<li><code>FFastArraySerializer::FastArrayDeltaSerialize</code>：增量序列化核心。</li>
+</ul>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\ActorReplication.cpp:569</code><br>
+<code>AActor::ReplicateSubobjects(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\ActorReplication.cpp:695</code><br>
+<code>AActor::AddReplicatedSubObject(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\DataChannel.cpp:3882</code><br>
+<code>Actor-&gt;ReplicateSubobjects(this, &amp;Bunch, &amp;OutRepFlags);</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Engine\Private\Components\ActorComponent.cpp:2331</code><br>
+<code>UActorComponent::ReplicateSubobjects(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Net\Core\Classes\Net\Serialization\FastArraySerializer.h:443</code><br>
+<code>MarkItemDirty(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Net\Core\Classes\Net\Serialization\FastArraySerializer.h:459</code><br>
+<code>MarkArrayDirty()</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Source\Runtime\Net\Core\Classes\Net\Serialization\FastArraySerializer.h:1188</code><br>
+<code>FastArrayDeltaSerialize(...)</code></li>
+</ul>
+<h2 id="先决定“对象边界”再写同步">先决定“对象边界”再写同步</h2>
+<p>我建议先做一个建模动作：</p>
+<ol>
+<li>哪些是“对象级状态”（适合子对象）</li>
+<li>哪些是“集合级状态”（适合 FastArray）</li>
+<li>哪些是“可推导表现”（不要复制）</li>
+</ol>
+<p>如果这个边界没定清楚，后面会出现两个典型后果：</p>
+<ul>
+<li>同步过多：带宽吃紧</li>
+<li>同步不足：客户端逻辑拼不出正确状态</li>
+</ul>
+<h2 id="子对象复制与-FastArray-的分工">子对象复制与 FastArray 的分工</h2>
+<h3 id="子对象复制（Subobject）">子对象复制（Subobject）</h3>
+<p>解决“生命周期与职责域”：</p>
+<ul>
+<li>某一类逻辑状态属于哪个组件/子系统</li>
+<li>该子系统是否独立复制、何时复制</li>
+</ul>
+<h3 id="FastArray">FastArray</h3>
+<p>解决“集合增量”：</p>
+<ul>
+<li>新增/删除/更新的最小粒度</li>
+<li>高频变更不走全量</li>
+<li>客户端可以按变更类型响应</li>
+</ul>
+<p>推荐组合形态：</p>
+<ul>
+<li>外层：<code>UInventoryComponent</code>（可复制子对象）</li>
+<li>内层：<code>FInventoryList : FFastArraySerializer</code></li>
+<li>元素：<code>FInventoryItem : FFastArraySerializerItem</code></li>
+</ul>
+<h2 id="这两个标记一定要形成团队纪律">这两个标记一定要形成团队纪律</h2>
+<h3 id="MarkItemDirty"><code>MarkItemDirty</code></h3>
+<p>改了某个元素字段，就必须标记。<br>
+漏标记 = 本帧不发 = 客户端暂时不一致。</p>
+<h3 id="MarkArrayDirty"><code>MarkArrayDirty</code></h3>
+<p>删元素、重排、整体结构变化，就必须标记。<br>
+只改容器结构不标记，客户端常会表现成“隔几帧才突然对齐”。</p>
+<p>我的实践建议很直接：</p>
+<ul>
+<li>禁止业务代码直接改底层容器</li>
+<li>统一走封装写接口</li>
+<li>接口内部强制完成脏标记</li>
+</ul>
+<h2 id="常见误区">常见误区</h2>
+<h3 id="误区-1：拿普通-TArray-复制高频列表">误区 1：拿普通 TArray 复制高频列表</h3>
+<p>能跑，但在人数和频率上来后，几乎一定吃亏。</p>
+<h3 id="误区-2：把“字段更新”和“结构更新”混成一个标记">误区 2：把“字段更新”和“结构更新”混成一个标记</h3>
+<p>这会让客户端回调语义不清晰，调试日志也会混乱。</p>
+<h3 id="误区-3：客户端回调只处理新增，不处理删除">误区 3：客户端回调只处理新增，不处理删除</h3>
+<p>最典型后果：UI 残留、状态泄漏、偶发崩溃。</p>
+<h2 id="我会怎么跟源码（复杂状态排障）">我会怎么跟源码（复杂状态排障）</h2>
+<ol>
+<li>写入口打点：确认每次改动是否触发对应 <code>Mark*Dirty</code>。</li>
+<li><code>FastArrayDeltaSerialize</code> 断点：确认变更是否进入增量包。</li>
+<li><code>ReplicateSubobjects</code> 断点：确认所属对象本帧是否参与复制。</li>
+<li>客户端应用回调：确认增删改分支是否齐全。</li>
+<li>UI 刷新链：确认有没有旧缓存覆盖新状态。</li>
+</ol>
+<h2 id="可复现问题案例">可复现问题案例</h2>
+<h3 id="复现步骤">复现步骤</h3>
+<ol>
+<li>Buff 列表使用 FastArray。</li>
+<li>服务器修改某条 Buff 层数，但没有调用 <code>MarkItemDirty</code>。</li>
+<li>在客户端观察 Buff 面板与战斗结算。</li>
+</ol>
+<h3 id="现象">现象</h3>
+<p>服务器状态已更新，客户端某些时刻不更新，直到后续结构变化才突然跳变。</p>
+<h3 id="根因定位">根因定位</h3>
+<p>增量发送依赖脏标记；漏标记就不会进入本帧复制数据。</p>
+<h3 id="最小修复策略">最小修复策略</h3>
+<p>将所有列表写操作收敛到统一 API，API 内部强制标记脏数据并记录日志。</p>
+<h2 id="排查顺序（实战版）">排查顺序（实战版）</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;复杂列表不同步&quot;] --&gt; B&#123;&quot;数据模型边界清晰吗&quot;&#125;</span><br><span class="line">    B --&gt;|否| C[&quot;先重构对象与容器边界&quot;]</span><br><span class="line">    B --&gt;|是| D&#123;&quot;使用 FastArray 增量了吗&quot;&#125;</span><br><span class="line">    D --&gt;|否| E[&quot;评估迁移，避免高频全量复制&quot;]</span><br><span class="line">    D --&gt;|是| F&#123;&quot;写操作是否100%走脏标记&quot;&#125;</span><br><span class="line">    F --&gt;|否| G[&quot;统一写入口并强制 MarkDirty&quot;]</span><br><span class="line">    F --&gt;|是| H&#123;&quot;客户端增删改回调齐全吗&quot;&#125;</span><br><span class="line">    H --&gt;|否| I[&quot;补齐回调分支与回归用例&quot;]</span><br><span class="line">    H --&gt;|是| J[&quot;继续排查 UI 缓存与并发覆盖&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="数据建模清单（这篇要沉淀的东西）">数据建模清单（这篇要沉淀的东西）</h2>
+<ol>
+<li>状态字段和表现字段分离。</li>
+<li>高频集合优先 FastArray。</li>
+<li>写路径唯一化，脏标记强约束。</li>
+<li>客户端回调语义固定为新增/更新/删除三类。</li>
+<li>每次结构改动必须配一条回归用例。</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>复杂状态同步最怕“先写功能，后补规则”。<br>
+规则应该先于功能：边界先定，写入收口，增量明确，回调可审计。</p>
+<p>下一篇进入带宽治理：Relevancy、Priority、频率和 Dormancy 怎么配合，什么时候该上 Replication Graph。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-network-sync/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</strong>
+                </a>
+                
+
+                
+                <a href="/2023/07/30/ue-network-sync-notes/ue-network-sync-05-relevancy-priority-and-bandwidth/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">带宽与可见性治理：Relevancy、Priority、NetUpdateFrequency、Dormancy 与 Replication Graph</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这篇解决什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%86%B3%E5%AE%9A%E2%80%9C%E5%AF%B9%E8%B1%A1%E8%BE%B9%E7%95%8C%E2%80%9D%E5%86%8D%E5%86%99%E5%90%8C%E6%AD%A5"><span class="post-toc-list-text">先决定“对象边界”再写同步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%E4%B8%8E-FastArray-%E7%9A%84%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">子对象复制与 FastArray 的分工</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%EF%BC%88Subobject%EF%BC%89"><span class="post-toc-list-text">子对象复制（Subobject）</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FastArray"><span class="post-toc-list-text">FastArray</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%A4%E4%B8%AA%E6%A0%87%E8%AE%B0%E4%B8%80%E5%AE%9A%E8%A6%81%E5%BD%A2%E6%88%90%E5%9B%A2%E9%98%9F%E7%BA%AA%E5%BE%8B"><span class="post-toc-list-text">这两个标记一定要形成团队纪律</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkItemDirty"><span class="post-toc-list-text">MarkItemDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkArrayDirty"><span class="post-toc-list-text">MarkArrayDirty</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-1%EF%BC%9A%E6%8B%BF%E6%99%AE%E9%80%9A-TArray-%E5%A4%8D%E5%88%B6%E9%AB%98%E9%A2%91%E5%88%97%E8%A1%A8"><span class="post-toc-list-text">误区 1：拿普通 TArray 复制高频列表</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-2%EF%BC%9A%E6%8A%8A%E2%80%9C%E5%AD%97%E6%AE%B5%E6%9B%B4%E6%96%B0%E2%80%9D%E5%92%8C%E2%80%9C%E7%BB%93%E6%9E%84%E6%9B%B4%E6%96%B0%E2%80%9D%E6%B7%B7%E6%88%90%E4%B8%80%E4%B8%AA%E6%A0%87%E8%AE%B0"><span class="post-toc-list-text">误区 2：把“字段更新”和“结构更新”混成一个标记</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-3%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%9B%9E%E8%B0%83%E5%8F%AA%E5%A4%84%E7%90%86%E6%96%B0%E5%A2%9E%EF%BC%8C%E4%B8%8D%E5%A4%84%E7%90%86%E5%88%A0%E9%99%A4"><span class="post-toc-list-text">误区 3：客户端回调只处理新增，不处理删除</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%A4%8D%E6%9D%82%E7%8A%B6%E6%80%81%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（复杂状态排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E5%BB%BA%E6%A8%A1%E6%B8%85%E5%8D%95%EF%BC%88%E8%BF%99%E7%AF%87%E8%A6%81%E6%B2%89%E6%B7%80%E7%9A%84%E4%B8%9C%E8%A5%BF%EF%BC%89"><span class="post-toc-list-text">数据建模清单（这篇要沉淀的东西）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
