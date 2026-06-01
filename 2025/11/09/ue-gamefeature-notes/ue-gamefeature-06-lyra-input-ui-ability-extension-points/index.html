@@ -1,0 +1,397 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.11.09
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#GAS</span>
+            
+            <span style="color: var(--accent);">#GameFeature</span>
+            
+            <span style="color: var(--accent);">#Lyra</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <div class="series-meta">
+                <span>第 6 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 75%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%AE%9A%E4%B8%80%E4%B8%AA%E5%B7%A5%E7%A8%8B%E7%9B%AE%E6%A0%87"><span class="post-toc-list-text">先定一个工程目标</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">这篇最重要的设计建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-6%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 6）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E4%B8%89%E7%B1%BB%E6%89%A9%E5%B1%95%E7%9A%84%E2%80%9C%E5%8F%A5%E6%9F%84%E5%8C%96%E5%9B%9E%E6%94%B6%E2%80%9D"><span class="post-toc-list-text">原理下钻：三类扩展的“句柄化回收”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E8%BE%93%E5%85%A5-UI-GAS%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（输入&#x2F;UI&#x2F;GAS）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%A8%E8%8D%90%E7%9A%84-Action-%E8%AE%BE%E8%AE%A1%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">推荐的 Action 设计模板</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C%EF%BC%88%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">调试手册（建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%8A%E2%80%9C%E4%BD%93%E9%AA%8C%E5%B1%82%E6%89%A9%E5%B1%95%E2%80%9D%E5%81%9A%E7%A8%B3%E7%9A%84%E5%85%B3%E9%94%AE%EF%BC%9A%E6%8B%86%E6%88%90%E4%B8%89%E6%9D%A1%E7%8B%AC%E7%AB%8B%E5%9B%9E%E8%B7%AF"><span class="post-toc-list-text">把“体验层扩展”做稳的关键：拆成三条独立回路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%A8%E8%8D%90%E7%9A%84%E5%8F%A5%E6%9F%84%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">推荐的句柄结构</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%9A%E4%B8%93%E6%B2%BB%E2%80%9C%E5%81%9C%E7%94%A8%E5%90%8E%E8%BF%98%E6%AE%8B%E7%95%99%E2%80%9D"><span class="post-toc-list-text">断点剧本：专治“停用后还残留”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E5%81%9A%E4%B8%80%E5%A5%97%E2%80%9C%E8%B7%A8%E5%B1%80%E4%BC%9A%E8%AF%9D%E5%9B%9E%E6%94%B6%E6%B5%8B%E8%AF%95%E2%80%9D"><span class="post-toc-list-text">进阶练习：做一套“跨局会话回收测试”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E8%83%BD%E5%8A%9B%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9D%83%E5%A8%81%E8%BE%B9%E7%95%8C%E6%8F%90%E9%86%92"><span class="post-toc-list-text">附录：能力回收的权威边界提醒</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E5%BB%BA%E8%AE%AE%E4%BF%9D%E7%95%99%E7%9A%84%E8%BF%90%E8%A1%8C%E6%97%B6%E6%97%A5%E5%BF%97%E5%AD%97%E6%AE%B5"><span class="post-toc-list-text">附录：建议保留的运行时日志字段</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h2 id="先定一个工程目标">先定一个工程目标</h2>
+<p>我们希望某个玩法包激活后：</p>
+<ol>
+<li>输入映射生效</li>
+<li>对应 UI 面板出现</li>
+<li>能力集被授予</li>
+</ol>
+<p>停用后则完整反向收敛。<br>
+这就是 Lyra 风格 GameFeature 扩展的核心体验。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;Feature Activating&quot;] --&gt; B[&quot;OnGameFeatureActivating(Context)&quot;]</span><br><span class="line">    B --&gt; C[&quot;Action 扩展：输入/UI/能力&quot;]</span><br><span class="line">    C --&gt; D[&quot;绑定到体验层对象(角色/控制器/UI Root)&quot;]</span><br><span class="line">    D --&gt; E[&quot;Feature Deactivating&quot;]</span><br><span class="line">    E --&gt; F[&quot;解绑映射/移除UI/撤销能力&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureAction.h:34</code><br>
+<code>OnGameFeatureActivating(FGameFeatureActivatingContext&amp;)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureAction.h:43</code><br>
+<code>OnGameFeatureDeactivating(FGameFeatureDeactivatingContext&amp;)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1108</code><br>
+<code>UGameFeaturesSubsystem::OnGameFeatureActivating(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1146</code><br>
+<code>UGameFeaturesSubsystem::OnGameFeatureDeactivating(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureStateChangeObserver.h:77</code><br>
+<code>OnGameFeatureDeactivating(...)</code> 观察者扩展点</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Private\Components\GameFrameworkComponentManager.cpp:445</code><br>
+<code>SendExtensionEvent(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameplayAbilities\Source\GameplayAbilities\Private\Abilities\GameplayAbilitySet.cpp:22</code><br>
+<code>UGameplayAbilitySet::GiveAbilities(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\CommonUI\Source\CommonUI\Private\Widgets\CommonActivatableWidgetContainer.cpp:176</code><br>
+<code>AddWidgetInternal(...)</code></li>
+</ul>
+<h2 id="这篇最重要的设计建议">这篇最重要的设计建议</h2>
+<p>不要把输入/UI/能力三件事写在同一个 Action 里。<br>
+建议拆成三个独立 Action（或至少三个清晰的子模块），因为它们的失败与回滚语义不同：</p>
+<ol>
+<li>输入映射失败通常可降级继续运行。</li>
+<li>UI 挂载失败可能只影响表现，不该拖垮核心功能。</li>
+<li>能力授予失败通常是硬失败，需要强提示和回滚。</li>
+</ol>
+<h2 id="Lyra-最小复现（实验-6）">Lyra 最小复现（实验 6）</h2>
+<p>目标：在 Lyra 工程复现“同一 Feature 管理三类扩展”。</p>
+<ol>
+<li>自定义一个 <code>UGameFeatureAction</code> 派生类（或按 Lyra 现有扩展 Action 拆分）。</li>
+<li>激活时执行：
+<ul>
+<li>给本地玩家添加输入映射</li>
+<li>向 UI 容器添加功能页签</li>
+<li>给 ASC 授予一组能力</li>
+</ul>
+</li>
+<li>停用时执行反向操作，确保重复激活不累积脏状态。</li>
+<li>在日志里区分三类扩展的成功/失败，避免“只看总成功”。</li>
+</ol>
+<h2 id="常见坑与检查项">常见坑与检查项</h2>
+<ol>
+<li>只实现激活，不实现停用，测试环境看不出问题，长局游戏必炸。</li>
+<li>输入/UI 放在服务器路径执行，结果 Dedicated Server 无意义报错。</li>
+<li>能力授予不做去重，重复激活后同能力被多次授予。</li>
+</ol>
+<h2 id="原理下钻：三类扩展的“句柄化回收”">原理下钻：三类扩展的“句柄化回收”</h2>
+<p>要把这篇真正写成长文，最关键是统一“句柄/引用追踪”思路：</p>
+<ol>
+<li>输入映射：记录 <code>MappingContext + Priority</code>，停用时精确移除。</li>
+<li>UI 挂载：记录创建的 Widget 实例或容器句柄，停用时销毁或出栈。</li>
+<li>能力授予：记录 <code>FGameplayAbilitySpecHandle</code>，停用时按句柄撤销。</li>
+</ol>
+<p>这三个系统都支持“增加”很容易，但“正确回收”才是难点。</p>
+<h2 id="更细源码锚点（输入-UI-GAS）">更细源码锚点（输入/UI/GAS）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\EnhancedInput\Source\EnhancedInput\Public\EnhancedInputSubsystems.h:19</code><br>
+<code>UEnhancedInputLocalPlayerSubsystem</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\EnhancedInput\Source\EnhancedInput\Public\EnhancedInputSubsystemInterface.h:255</code><br>
+<code>AddMappingContext(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\EnhancedInput\Source\EnhancedInput\Public\EnhancedInputSubsystemInterface.h:264</code><br>
+<code>RemoveMappingContext(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\EnhancedInput\Source\EnhancedInput\Private\EnhancedInputSubsystemInterface.cpp:232</code><br>
+<code>AddMappingContext</code> 实现</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\EnhancedInput\Source\EnhancedInput\Private\EnhancedInputSubsystemInterface.cpp:257</code><br>
+<code>RemoveMappingContext</code> 实现</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\CommonUI\Source\CommonUI\Private\Widgets\CommonActivatableWidgetContainer.cpp:176</code><br>
+<code>AddWidgetInternal(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameplayAbilities\Source\GameplayAbilities\Public\AbilitySystemComponent.h:975</code><br>
+<code>GiveAbility(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameplayAbilities\Source\GameplayAbilities\Public\AbilitySystemComponent.h:1028</code><br>
+<code>ClearAbility(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameplayAbilities\Source\GameplayAbilities\Private\AbilitySystemComponent_Abilities.cpp:268</code><br>
+<code>GiveAbility</code> 实现</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameplayAbilities\Source\GameplayAbilities\Private\AbilitySystemComponent_Abilities.cpp:471</code><br>
+<code>ClearAbility</code> 实现</li>
+</ul>
+<h2 id="推荐的-Action-设计模板">推荐的 Action 设计模板</h2>
+<p>长文里建议给出一个统一模板，读者可以直接套：</p>
+<ol>
+<li><code>OnGameFeatureActivating(Context)</code><br>
+收集目标对象 -&gt; 执行输入/UI/能力注入 -&gt; 保存回收句柄。</li>
+<li><code>OnGameFeatureDeactivating(Context)</code><br>
+按逆序回收：先 UI，再输入，再能力（或按你的依赖顺序）。</li>
+<li>失败策略<br>
+每步记录成功/失败，确保部分失败时仍可进入可恢复状态。</li>
+</ol>
+<h2 id="调试手册（建议）">调试手册（建议）</h2>
+<ol>
+<li>输入：观察 <code>RequestRebuildControlMappings</code> 是否被触发。</li>
+<li>UI：记录 Widget 创建与销毁数量，检查长局是否泄漏。</li>
+<li>能力：核对 <code>GiveAbility</code> 与 <code>ClearAbility</code> 句柄集合是否一一对应。</li>
+<li>多次激活/停用循环 10 次，看是否有累积副作用。</li>
+</ol>
+<h2 id="进阶练习">进阶练习</h2>
+<p>在 Lyra 工程里做一个“事件模式 Feature”：</p>
+<ol>
+<li>激活时新增一套输入、一个活动面板、两项能力。</li>
+<li>停用后所有输入/UI/能力完全回滚。</li>
+<li>中途切换 Pawn、切换地图后再次激活，验证句柄追踪仍正确。</li>
+</ol>
+<h2 id="本篇结论">本篇结论</h2>
+<p>Lyra 风格扩展的关键不是“会加功能”，而是“会回收功能”。<br>
+下一篇我们把这个问题搬到多人：同样的 Feature，为什么在客户端和服务端会出现不一致。</p>
+<h2 id="把“体验层扩展”做稳的关键：拆成三条独立回路">把“体验层扩展”做稳的关键：拆成三条独立回路</h2>
+<p>输入、UI、能力三件事看起来都在“激活时新增”，但回收条件完全不同：</p>
+<ol>
+<li>输入回路：依赖本地玩家上下文，切 Pawn 时最容易出错。</li>
+<li>UI 回路：依赖视图层容器，切界面层级时容易残留。</li>
+<li>能力回路：依赖权威与复制语义，最怕重复授予或越权清理。</li>
+</ol>
+<p>如果你把它们混在一个大 Action 里，线上问题几乎必然“互相污染”。</p>
+<h2 id="推荐的句柄结构">推荐的句柄结构</h2>
+<p>你可以在 Action 内维护一个按玩家分组的上下文表：</p>
+<ol>
+<li><code>InputHandles</code>：记录已添加的 MappingContext 与优先级。</li>
+<li><code>WidgetHandles</code>：记录创建的 UI 实例或容器槽位。</li>
+<li><code>AbilityHandles</code>：记录能力授予返回的 SpecHandle。</li>
+</ol>
+<p>停用时按组回收，比“全局清空”安全太多。</p>
+<h2 id="断点剧本：专治“停用后还残留”">断点剧本：专治“停用后还残留”</h2>
+<ol>
+<li>输入：断 <code>RemoveMappingContext</code>，确认每个 Add 都有对应 Remove。</li>
+<li>UI：断容器移除逻辑，确认对象销毁和引用释放。</li>
+<li>能力：断 <code>ClearAbility</code>，确认句柄来自当前 Feature 而不是其他系统。</li>
+<li>最后做一轮二次激活，确认不存在重复项。</li>
+</ol>
+<h2 id="进阶练习：做一套“跨局会话回收测试”">进阶练习：做一套“跨局会话回收测试”</h2>
+<ol>
+<li>激活 Feature，执行输入/UI/能力注入。</li>
+<li>不停用，直接切图、重生、切 Pawn。</li>
+<li>再停用 Feature，核对三类句柄是否仍可正确回收。</li>
+<li>回到主菜单再进局，重复一次。</li>
+</ol>
+<p>这组测试最能提前发现长会话下的隐性泄漏。</p>
+<h2 id="附录：能力回收的权威边界提醒">附录：能力回收的权威边界提醒</h2>
+<p>很多项目在这里翻车：<br>
+客户端本地把能力加上去了，停用时又在客户端直接清，结果和服务器状态打架。</p>
+<p>建议明确规则：</p>
+<ol>
+<li>能力授予与清理由权威端控制。</li>
+<li>客户端只做表现与输入侧处理，不直接越权改能力集。</li>
+<li>任何本地预测都必须有被权威覆盖的路径。</li>
+</ol>
+<p>这三条不写进规范，迟早会出现“某些玩家技能栏永远不干净”的问题。</p>
+<h2 id="附录：建议保留的运行时日志字段">附录：建议保留的运行时日志字段</h2>
+<p>为了后续复盘，建议每次注入都打这些字段：</p>
+<ol>
+<li><code>FeatureName</code></li>
+<li><code>PlayerId</code></li>
+<li><code>ActionType(Input/UI/Ability)</code></li>
+<li><code>HandleId</code></li>
+<li><code>ActivateOrDeactivate</code></li>
+<li><code>WorldContext</code></li>
+</ol>
+<p>日志字段统一后，排障时能迅速把三条回路串起来。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/10/19/ue-gamefeature-notes/ue-gamefeature-05-addcomponents-and-modulargameplay-bridge/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接</strong>
+                </a>
+                
+
+                
+                <a href="/2025/11/30/ue-gamefeature-notes/ue-gamefeature-07-multiplayer-authority-consistency-and-replication-boundary/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">多人网络边界（Lyra 案例 3）：激活权威、客户端一致性与复制约束</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%AE%9A%E4%B8%80%E4%B8%AA%E5%B7%A5%E7%A8%8B%E7%9B%AE%E6%A0%87"><span class="post-toc-list-text">先定一个工程目标</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">这篇最重要的设计建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-6%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 6）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E4%B8%89%E7%B1%BB%E6%89%A9%E5%B1%95%E7%9A%84%E2%80%9C%E5%8F%A5%E6%9F%84%E5%8C%96%E5%9B%9E%E6%94%B6%E2%80%9D"><span class="post-toc-list-text">原理下钻：三类扩展的“句柄化回收”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E8%BE%93%E5%85%A5-UI-GAS%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（输入&#x2F;UI&#x2F;GAS）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%A8%E8%8D%90%E7%9A%84-Action-%E8%AE%BE%E8%AE%A1%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">推荐的 Action 设计模板</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C%EF%BC%88%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">调试手册（建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%8A%E2%80%9C%E4%BD%93%E9%AA%8C%E5%B1%82%E6%89%A9%E5%B1%95%E2%80%9D%E5%81%9A%E7%A8%B3%E7%9A%84%E5%85%B3%E9%94%AE%EF%BC%9A%E6%8B%86%E6%88%90%E4%B8%89%E6%9D%A1%E7%8B%AC%E7%AB%8B%E5%9B%9E%E8%B7%AF"><span class="post-toc-list-text">把“体验层扩展”做稳的关键：拆成三条独立回路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%A8%E8%8D%90%E7%9A%84%E5%8F%A5%E6%9F%84%E7%BB%93%E6%9E%84"><span class="post-toc-list-text">推荐的句柄结构</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%9A%E4%B8%93%E6%B2%BB%E2%80%9C%E5%81%9C%E7%94%A8%E5%90%8E%E8%BF%98%E6%AE%8B%E7%95%99%E2%80%9D"><span class="post-toc-list-text">断点剧本：专治“停用后还残留”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E5%81%9A%E4%B8%80%E5%A5%97%E2%80%9C%E8%B7%A8%E5%B1%80%E4%BC%9A%E8%AF%9D%E5%9B%9E%E6%94%B6%E6%B5%8B%E8%AF%95%E2%80%9D"><span class="post-toc-list-text">进阶练习：做一套“跨局会话回收测试”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E8%83%BD%E5%8A%9B%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9D%83%E5%A8%81%E8%BE%B9%E7%95%8C%E6%8F%90%E9%86%92"><span class="post-toc-list-text">附录：能力回收的权威边界提醒</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E5%BB%BA%E8%AE%AE%E4%BF%9D%E7%95%99%E7%9A%84%E8%BF%90%E8%A1%8C%E6%97%B6%E6%97%A5%E5%BF%97%E5%AD%97%E6%AE%B5"><span class="post-toc-list-text">附录：建议保留的运行时日志字段</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

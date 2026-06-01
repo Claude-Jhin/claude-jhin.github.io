@@ -1,0 +1,396 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.12.21
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#GameFeature</span>
+            
+            <span style="color: var(--accent);">#Lyra</span>
+            
+            <span style="color: var(--accent);">#AssetManager</span>
+            
+            <span style="color: var(--accent);">#Hotfix</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <div class="series-meta">
+                <span>第 8 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%80%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">这篇为什么最重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E7%B1%BB%E6%95%85%E9%9A%9C%E7%9A%84%E6%8E%92%E9%9A%9C%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">四类故障的排障路径</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%BF%80%E6%B4%BB%E5%A4%B1%E8%B4%A5"><span class="post-toc-list-text">1. 激活失败</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%BE%9D%E8%B5%96%E7%BC%BA%E5%A4%B1"><span class="post-toc-list-text">2. 依赖缺失</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%89%93%E5%8C%85%E5%90%8E%E8%B5%84%E6%BA%90%E7%BC%BA%E5%A4%B1"><span class="post-toc-list-text">3. 打包后资源缺失</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%A4%9A%E4%BA%BA%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="post-toc-list-text">4. 多人不一致</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-8%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 8）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E7%BA%BF%E5%89%8D%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">上线前检查清单（建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9ACook-%E9%93%BE%E8%B7%AF%E9%87%8C%E7%9A%84%E2%80%9C%E6%94%B6%E9%9B%86%E2%80%9D%E5%92%8C%E2%80%9C%E8%BF%87%E6%BB%A4%E2%80%9D%E6%98%AF%E4%B8%A4%E6%AD%A5"><span class="post-toc-list-text">原理下钻：Cook 链路里的“收集”和“过滤”是两步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E4%B8%8A%E7%BA%BF%E9%93%BE%E8%B7%AF%E8%A1%A5%E5%85%85%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（上线链路补充）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%83%AD%E6%9B%B4%E6%B2%BB%E7%90%86%E5%BB%BA%E8%AE%AE%EF%BC%88InstallBundle-%E8%A7%86%E8%A7%92%EF%BC%89"><span class="post-toc-list-text">热更治理建议（InstallBundle 视角）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E9%9A%9C%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%BB%BA%E8%AE%AE%E5%9B%BA%E5%8C%96%E6%88%90-Runbook%EF%BC%89"><span class="post-toc-list-text">排障执行顺序（建议固化成 Runbook）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9E%E5%BD%92%E5%9F%BA%E7%BA%BF%E5%BB%BA%E8%AE%AE%EF%BC%88%E9%87%8F%E5%8C%96%EF%BC%89"><span class="post-toc-list-text">回归基线建议（量化）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%B3%BB%E5%88%97%E6%94%B6%E6%9D%9F"><span class="post-toc-list-text">本系列收束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%97%E8%88%B0%E6%96%87%E5%B0%BE%E5%A3%B0%EF%BC%9A%E6%8A%8A%E6%8E%92%E9%9A%9C%E4%BB%8E%E2%80%9C%E4%B8%AA%E4%BA%BA%E7%BB%8F%E9%AA%8C%E2%80%9D%E5%8F%98%E6%88%90%E2%80%9C%E5%9B%A2%E9%98%9F%E8%B5%84%E4%BA%A7%E2%80%9D"><span class="post-toc-list-text">旗舰文尾声：把排障从“个人经验”变成“团队资产”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%9C%B0%E7%9A%84%E5%9B%9E%E5%BD%92%E8%8A%82%E5%A5%8F"><span class="post-toc-list-text">可直接落地的回归节奏</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E8%83%BD%E5%A4%8D%E7%94%A8%E7%9A%84%E6%95%85%E9%9A%9C%E5%A4%8D%E7%9B%98%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">一套能复用的故障复盘模板</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h2 id="这篇为什么最重要">这篇为什么最重要</h2>
+<p>前 7 篇解决“怎么工作”。<br>
+第 8 篇解决“为什么线上会坏，以及如何不再反复坏”。</p>
+<p>你真正要守住的是四类问题：</p>
+<ol>
+<li>激活失败</li>
+<li>依赖缺失</li>
+<li>打包后资源缺失</li>
+<li>多人不一致</li>
+</ol>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;构建前配置&quot;] --&gt; B[&quot;GetPluginsToCook / 资源过滤&quot;]</span><br><span class="line">    B --&gt; C[&quot;Cook + Chunk + InstallBundle&quot;]</span><br><span class="line">    C --&gt; D[&quot;运行时激活与状态观测&quot;]</span><br><span class="line">    D --&gt; E[&quot;日志/命令排障&quot;]</span><br><span class="line">    E --&gt; F[&quot;回归基线与上线检查清单&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesSubsystem.h:656</code><br>
+<code>GetPluginsToCook(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3585</code><br>
+<code>UGameFeaturesSubsystem::GetPluginsToCook(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2269</code><br>
+<code>GetLoadedGameFeaturePluginFilenamesForCooking(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3470</code><br>
+<code>FilterInactivePluginAssets(TArray&lt;FAssetIdentifier&gt;&amp;)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3478</code><br>
+<code>FilterInactivePluginAssets(TArray&lt;FAssetData&gt;&amp;)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureData.cpp:749</code><br>
+<code>UGameFeatureData::GetInstallBundleName(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureData.cpp:767</code><br>
+<code>UGameFeatureData::GetOptionalInstallBundleName(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3214</code><br>
+<code>ListGameFeaturePlugins(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2407</code><br>
+插件描述读取失败日志</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2415</code><br>
+插件描述 JSON 非法日志</li>
+</ul>
+<h2 id="四类故障的排障路径">四类故障的排障路径</h2>
+<h3 id="1-激活失败">1. 激活失败</h3>
+<ol>
+<li>看 <code>LogGameFeatures</code> 错误日志，确认停在哪个状态。</li>
+<li>用 <code>ListGameFeaturePlugins</code> 检查当前状态与目标状态区间是否一致。</li>
+<li>确认该 Feature 的依赖是否已到可激活状态。</li>
+</ol>
+<h3 id="2-依赖缺失">2. 依赖缺失</h3>
+<ol>
+<li>先验证插件描述可读，排除 descriptor 读取/解析错误。</li>
+<li>检查依赖名与 URL 解析是否一致。</li>
+<li>关注策略过滤是否把依赖错误排除。</li>
+</ol>
+<h3 id="3-打包后资源缺失">3. 打包后资源缺失</h3>
+<ol>
+<li>检查 <code>GetPluginsToCook</code> 结果是否包含目标 Feature。</li>
+<li>检查 <code>FilterInactivePluginAssets</code> 是否误过滤资产。</li>
+<li>确认 InstallBundle 名称（主包/可选包）与分发配置一致。</li>
+</ol>
+<h3 id="4-多人不一致">4. 多人不一致</h3>
+<ol>
+<li>核对 Client/Server 加载模式是否对齐（见第 7 篇）。</li>
+<li>检查 Action 是否按 World Context 正确过滤。</li>
+<li>区分“Feature 激活状态一致”与“业务复制状态一致”两层问题。</li>
+</ol>
+<h2 id="Lyra-最小复现（实验-8）">Lyra 最小复现（实验 8）</h2>
+<p>目标：形成一份可重复的上线前回归脚本。</p>
+<ol>
+<li>选择一个 Lyra 风格玩法 Feature（含组件、输入、UI、能力）。</li>
+<li>在三种环境跑一遍：Editor PIE、Standalone、Dedicated Server + 2 Clients。</li>
+<li>每种环境执行一次激活、停用、再激活。</li>
+<li>固定产出三类证据：状态快照、关键日志、表现录屏。</li>
+<li>把结果写入回归表，每次版本更新跑同一脚本。</li>
+</ol>
+<h2 id="上线前检查清单（建议）">上线前检查清单（建议）</h2>
+<ol>
+<li><code>ListGameFeaturePlugins</code> 快照保存。</li>
+<li>关键 Feature 的状态切换日志可追溯。</li>
+<li>Cook 产物里已确认目标 Feature 资源存在。</li>
+<li>Client/Server 双端加载模式已验证。</li>
+<li>停用路径和二次激活路径均通过。</li>
+</ol>
+<h2 id="原理下钻：Cook-链路里的“收集”和“过滤”是两步">原理下钻：Cook 链路里的“收集”和“过滤”是两步</h2>
+<p>很多线上问题都来自把这两步混为一谈：</p>
+<ol>
+<li>收集：哪些 GameFeature 插件/资产应进入构建候选集。</li>
+<li>过滤：在当前状态与策略下，哪些资产应从候选集中剔除。</li>
+</ol>
+<p>只有先收集再过滤，你才能解释“编辑器能跑、打包丢资源”的根因。</p>
+<h2 id="更细源码锚点（上线链路补充）">更细源码锚点（上线链路补充）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2320</code><br>
+<code>IsValidGameFeaturePlugin(...)</code> 与描述文件合法性判断</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2361</code><br>
+<code>GetGameFeaturePluginDetailsInternal(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2407</code><br>
+描述文件读取失败</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2415</code><br>
+JSON 解析失败</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3214</code><br>
+控制台命令 <code>ListGameFeaturePlugins</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3470</code><br>
+按活动状态过滤 <code>FAssetIdentifier</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3478</code><br>
+按活动状态过滤 <code>FAssetData</code></li>
+</ul>
+<h2 id="热更治理建议（InstallBundle-视角）">热更治理建议（InstallBundle 视角）</h2>
+<ol>
+<li>主包和可选包命名要稳定（<code>GetInstallBundleName</code> / <code>GetOptionalInstallBundleName</code>）。</li>
+<li>版本升级时优先保证依赖 Feature 的包一致性，再做单包增量。</li>
+<li>失败重试策略要与状态机取消语义一致，避免“包层重试成功但状态机已终止”。</li>
+</ol>
+<h2 id="排障执行顺序（建议固化成-Runbook）">排障执行顺序（建议固化成 Runbook）</h2>
+<ol>
+<li>描述文件合法性（能否读、能否解析）</li>
+<li>插件候选集（是否被识别为有效 GameFeature）</li>
+<li>构建候选集（是否进入 Cook）</li>
+<li>运行时状态（是否到达目标状态区间）</li>
+<li>业务表现（是否完成多人一致）</li>
+</ol>
+<p>把顺序固定下来，团队就不会在第 5 步发现问题时直接跳回改业务代码。</p>
+<h2 id="回归基线建议（量化）">回归基线建议（量化）</h2>
+<ol>
+<li>状态指标：激活成功率、停用成功率、平均激活耗时。</li>
+<li>资源指标：Feature 相关资产缺失率、包体增量波动。</li>
+<li>多人指标：晚加入一致性通过率、跨地图一致性通过率。</li>
+<li>稳定性指标：连续 20 次激活/停用循环无泄漏。</li>
+</ol>
+<h2 id="本系列收束">本系列收束</h2>
+<p>到这里，GameFeature 专栏闭环已经形成：</p>
+<ol>
+<li>为什么需要它</li>
+<li>如何被发现和加载</li>
+<li>状态机如何转移与回滚</li>
+<li>Action 如何执行与收敛</li>
+<li>如何注入组件与上层功能</li>
+<li>如何在多人和上线链路里保持可控</li>
+</ol>
+<p>后续扩展建议：<br>
+可以继续写 5.7 对照篇，重点补状态机细节变化、可选包治理、以及大规模 Feature 并发加载策略。</p>
+<h2 id="旗舰文尾声：把排障从“个人经验”变成“团队资产”">旗舰文尾声：把排障从“个人经验”变成“团队资产”</h2>
+<p>这一篇真正想解决的不是“这次怎么修”，而是“下次别再同样地坏”。<br>
+建议你把下面四份资产固化到仓库而不是口头传承：</p>
+<ol>
+<li><code>GameFeature 调试 Runbook</code></li>
+<li><code>Cook/Chunk 校验脚本</code></li>
+<li><code>多人一致性回归脚本</code></li>
+<li><code>上线前检查清单模板</code></li>
+</ol>
+<p>只要这四份资产在，团队迭代速度和稳定性都会明显提升。</p>
+<h2 id="可直接落地的回归节奏">可直接落地的回归节奏</h2>
+<p>如果你们每两周发一次版本，可以这样排：</p>
+<ol>
+<li><code>T-10</code> 天：跑 Feature 状态机回归（激活/停用/重入/依赖）。</li>
+<li><code>T-7</code> 天：跑资源回归（Cook、Chunk、包体差异、缺失资产）。</li>
+<li><code>T-5</code> 天：跑多人一致性回归（晚加入、切图、重连）。</li>
+<li><code>T-2</code> 天：跑压力回归（高频启停、长会话、并发玩法切换）。</li>
+<li><code>T-1</code> 天：冻结策略配置，导出最终状态快照。</li>
+</ol>
+<p>把节奏固定下来之后，你会发现“线上突发回滚”频率会明显下降。</p>
+<h2 id="一套能复用的故障复盘模板">一套能复用的故障复盘模板</h2>
+<p>每次故障复盘都坚持填下面 6 项：</p>
+<ol>
+<li>触发条件（操作序列 + 环境）</li>
+<li>Feature 状态轨迹</li>
+<li>业务状态轨迹</li>
+<li>资源状态轨迹（包、资产、依赖）</li>
+<li>修复方案与验证范围</li>
+<li>防再发措施（脚本、规则、监控、测试）</li>
+</ol>
+<p>复盘模板的价值在于“可累计”，三个月后你会得到非常真实的风险地图。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/11/30/ue-gamefeature-notes/ue-gamefeature-07-multiplayer-authority-consistency-and-replication-boundary/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">多人网络边界（Lyra 案例 3）：激活权威、客户端一致性与复制约束</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%80%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">这篇为什么最重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E7%B1%BB%E6%95%85%E9%9A%9C%E7%9A%84%E6%8E%92%E9%9A%9C%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">四类故障的排障路径</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E6%BF%80%E6%B4%BB%E5%A4%B1%E8%B4%A5"><span class="post-toc-list-text">1. 激活失败</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E4%BE%9D%E8%B5%96%E7%BC%BA%E5%A4%B1"><span class="post-toc-list-text">2. 依赖缺失</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%89%93%E5%8C%85%E5%90%8E%E8%B5%84%E6%BA%90%E7%BC%BA%E5%A4%B1"><span class="post-toc-list-text">3. 打包后资源缺失</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E5%A4%9A%E4%BA%BA%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="post-toc-list-text">4. 多人不一致</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-8%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 8）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E7%BA%BF%E5%89%8D%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">上线前检查清单（建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9ACook-%E9%93%BE%E8%B7%AF%E9%87%8C%E7%9A%84%E2%80%9C%E6%94%B6%E9%9B%86%E2%80%9D%E5%92%8C%E2%80%9C%E8%BF%87%E6%BB%A4%E2%80%9D%E6%98%AF%E4%B8%A4%E6%AD%A5"><span class="post-toc-list-text">原理下钻：Cook 链路里的“收集”和“过滤”是两步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E4%B8%8A%E7%BA%BF%E9%93%BE%E8%B7%AF%E8%A1%A5%E5%85%85%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（上线链路补充）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%83%AD%E6%9B%B4%E6%B2%BB%E7%90%86%E5%BB%BA%E8%AE%AE%EF%BC%88InstallBundle-%E8%A7%86%E8%A7%92%EF%BC%89"><span class="post-toc-list-text">热更治理建议（InstallBundle 视角）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E9%9A%9C%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%BB%BA%E8%AE%AE%E5%9B%BA%E5%8C%96%E6%88%90-Runbook%EF%BC%89"><span class="post-toc-list-text">排障执行顺序（建议固化成 Runbook）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9E%E5%BD%92%E5%9F%BA%E7%BA%BF%E5%BB%BA%E8%AE%AE%EF%BC%88%E9%87%8F%E5%8C%96%EF%BC%89"><span class="post-toc-list-text">回归基线建议（量化）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%B3%BB%E5%88%97%E6%94%B6%E6%9D%9F"><span class="post-toc-list-text">本系列收束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%97%E8%88%B0%E6%96%87%E5%B0%BE%E5%A3%B0%EF%BC%9A%E6%8A%8A%E6%8E%92%E9%9A%9C%E4%BB%8E%E2%80%9C%E4%B8%AA%E4%BA%BA%E7%BB%8F%E9%AA%8C%E2%80%9D%E5%8F%98%E6%88%90%E2%80%9C%E5%9B%A2%E9%98%9F%E8%B5%84%E4%BA%A7%E2%80%9D"><span class="post-toc-list-text">旗舰文尾声：把排障从“个人经验”变成“团队资产”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%9C%B0%E7%9A%84%E5%9B%9E%E5%BD%92%E8%8A%82%E5%A5%8F"><span class="post-toc-list-text">可直接落地的回归节奏</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E8%83%BD%E5%A4%8D%E7%94%A8%E7%9A%84%E6%95%85%E9%9A%9C%E5%A4%8D%E7%9B%98%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">一套能复用的故障复盘模板</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

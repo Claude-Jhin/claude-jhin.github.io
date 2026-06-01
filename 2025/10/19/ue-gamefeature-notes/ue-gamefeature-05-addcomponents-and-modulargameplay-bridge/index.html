@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.10.19
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#GameFeature</span>
+            
+            <span style="color: var(--accent);">#Lyra</span>
+            
+            <span style="color: var(--accent);">#ModularGameplay</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 63%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B2%E4%B8%80%E4%B8%AA%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">先讲一个误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%9C%BA%E5%88%B6%EF%BC%9A%E8%AF%B7%E6%B1%82%E5%8F%A5%E6%9F%84%E8%80%8C%E4%B8%8D%E6%98%AF%E8%A3%B8%E7%BB%84%E4%BB%B6"><span class="post-toc-list-text">关键机制：请求句柄而不是裸组件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-5%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AAddComponents-%E7%9A%84%E5%85%B3%E9%94%AE%E4%B8%8D%E6%98%AF-Add%EF%BC%8C%E8%80%8C%E6%98%AF-Request"><span class="post-toc-list-text">原理下钻：AddComponents 的关键不是 Add，而是 Request</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E7%BB%84%E4%BB%B6%E6%A1%A5%E6%8E%A5%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（组件桥接）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">数据结构与生命周期建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C"><span class="post-toc-list-text">调试手册</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Receiver-%E5%8D%8F%E8%AE%AE%E5%AE%9E%E7%8E%B0%E5%BB%BA%E8%AE%AE%EF%BC%88%E9%95%BF%E6%96%87%E9%87%8D%E7%82%B9%EF%BC%89"><span class="post-toc-list-text">Receiver 协议实现建议（长文重点）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AB%9E%E6%80%81%E4%B8%8E%E5%B9%82%E7%AD%89"><span class="post-toc-list-text">竞态与幂等</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E4%BC%9A%E8%B8%A9%E5%9D%91%E7%9A%84%E7%BB%86%E8%8A%82%EF%BC%9AActor-%E7%94%9F%E6%88%90%E6%97%B6%E6%9C%BA%E4%B8%8E%E6%B3%A8%E5%85%A5%E6%97%B6%E6%9C%BA%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="post-toc-list-text">一次会踩坑的细节：Actor 生成时机与注入时机不一致</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A8%B3%E5%AE%9A%E8%90%BD%E5%9C%B0%E7%9A%84%E4%B8%89%E6%9D%A1%E7%BA%A6%E6%9D%9F"><span class="post-toc-list-text">稳定落地的三条约束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%82%E6%B5%8B%E6%8C%87%E6%A0%87%EF%BC%88%E5%BB%BA%E8%AE%AE%E5%9C%A8%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E9%87%8C%E5%B8%B8%E9%A9%BB%EF%BC%89"><span class="post-toc-list-text">观测指标（建议在调试工具里常驻）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BA%BF%E4%B8%8A%E4%BA%8B%E6%95%85%E9%A2%84%E9%98%B2%E6%9D%A1%E6%AC%BE%EF%BC%88%E7%BB%84%E4%BB%B6%E6%B3%A8%E5%85%A5%E4%B8%93%E9%A1%B9%EF%BC%89"><span class="post-toc-list-text">附录：线上事故预防条款（组件注入专项）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BB%99%E6%96%B0%E5%90%8C%E5%AD%A6%E7%9A%84%E4%B8%89%E5%A4%A9%E4%B8%8A%E6%89%8B%E4%BB%BB%E5%8A%A1"><span class="post-toc-list-text">附录：给新同学的三天上手任务</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h2 id="先讲一个误区">先讲一个误区</h2>
+<p>不少同学以为 <code>Add Components</code> 是“找到 Actor 然后 NewComponent”。<br>
+实际上它走的是 <code>GameFeatureAction_AddComponents -&gt; GameFrameworkComponentManager</code> 的请求式桥接。</p>
+<p>这套桥接的重点不是“加上组件”，而是：</p>
+<ol>
+<li>可在激活/停用时统一增删请求</li>
+<li>可按 Actor 类集中管理扩展</li>
+<li>可让接收端通过 Receiver 协议参与生命周期</li>
+</ol>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;GameFeature Active&quot;] --&gt; B[&quot;UGameFeatureAction_AddComponents::OnGameFeatureActivating&quot;]</span><br><span class="line">    B --&gt; C[&quot;AddToWorld&quot;]</span><br><span class="line">    C --&gt; D[&quot;UGameFrameworkComponentManager::AddComponentRequest&quot;]</span><br><span class="line">    D --&gt; E[&quot;Receiver Actor 获取组件注入&quot;]</span><br><span class="line">    E --&gt; F[&quot;GameFeature Deactivate -&gt; 请求句柄释放&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureAction_AddComponents.h:59</code><br>
+<code>class UGameFeatureAction_AddComponents</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:30</code><br>
+<code>OnGameFeatureActivating(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:106</code><br>
+<code>AddToWorld(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:132</code><br>
+<code>GFCM-&gt;AddComponentRequest(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:145</code><br>
+<code>HandleGameInstanceStart(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Public\Components\GameFrameworkComponentManager.h:88</code><br>
+<code>class UGameFrameworkComponentManager</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Private\Components\GameFrameworkComponentManager.cpp:154</code><br>
+<code>AddReceiver(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Private\Components\GameFrameworkComponentManager.cpp:246</code><br>
+<code>AddComponentRequest(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Private\Components\GameFrameworkComponentManager.cpp:575</code><br>
+<code>AddGameFrameworkComponentReceiver(...)</code></li>
+</ul>
+<h2 id="关键机制：请求句柄而不是裸组件">关键机制：请求句柄而不是裸组件</h2>
+<p><code>AddComponentRequest</code> 返回的是请求句柄。<br>
+这意味着停用阶段可以通过句柄撤销注入请求，而不是到处扫描并手工清理组件。</p>
+<p>工程上这非常关键：</p>
+<ol>
+<li>你能明确“是谁加的组件”。</li>
+<li>多个 Feature 注入同类组件时，回收逻辑可追踪。</li>
+<li>复活/切模式场景里不容易出现幽灵组件。</li>
+</ol>
+<h2 id="Lyra-最小复现（实验-5）">Lyra 最小复现（实验 5）</h2>
+<p>目标：模拟 Lyra 里“按玩法包注入能力组件”的最小闭环。</p>
+<ol>
+<li>建一个 <code>GF_ShooterAbility</code>，在 <code>GameFeatureData</code> 里加 <code>Add Components</code>。</li>
+<li>目标 Actor 类选 Lyra 角色基类（或你的派生类）。</li>
+<li>注入一个 <code>UActorComponent</code>，在 <code>BeginPlay</code> 和 <code>EndPlay</code> 打日志。</li>
+<li>切换 Feature 到 <code>Active</code>，确认组件注入发生。</li>
+<li>切回 <code>Loaded</code>，确认句柄释放后组件不再新增且行为收敛。</li>
+</ol>
+<h2 id="常见坑与检查项">常见坑与检查项</h2>
+<ol>
+<li>接收端 Actor 未正确走 Receiver 协议，导致请求存在但注入不发生。</li>
+<li>组件逻辑强依赖“永远存在”，停用后出现空指针访问。</li>
+<li>忽略 <code>HandleGameInstanceStart</code> 路径，导致运行中创建的世界没有补注入。</li>
+</ol>
+<h2 id="原理下钻：AddComponents-的关键不是-Add，而是-Request">原理下钻：<code>AddComponents</code> 的关键不是 Add，而是 Request</h2>
+<p><code>UGameFeatureAction_AddComponents</code> 做的不是“立刻遍历所有 Actor 并创建组件”，而是向 <code>UGameFrameworkComponentManager</code> 注册请求。<br>
+这让注入行为具备了生命周期可管理性：</p>
+<ol>
+<li>请求可持有句柄并在停用时回收。</li>
+<li>后续新生成 Actor 能在 Receiver 流程里自动补齐组件。</li>
+<li>多个 Feature 可叠加同类请求而不互相覆盖。</li>
+</ol>
+<h2 id="更细源码锚点（组件桥接）">更细源码锚点（组件桥接）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:44</code><br>
+激活时遍历世界调用 <code>AddToWorld</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:49</code><br>
+停用回收逻辑入口</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:154</code><br>
+<code>HandleGameInstanceStart</code> 的补注入路径</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Public\Components\GameFrameworkComponentManager.h:83</code><br>
+Receiver 协议说明</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Private\Components\GameFrameworkComponentManager.cpp:171</code><br>
+<code>AddReceiverInternal(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\ModularGameplay\Source\ModularGameplay\Private\Components\GameFrameworkComponentManager.cpp:285</code><br>
+对未注册 Receiver 的防御检查</li>
+</ul>
+<h2 id="数据结构与生命周期建议">数据结构与生命周期建议</h2>
+<p>对长文读者，建议明确这一点：<br>
+组件注入并不等价于“组件永远存在”，它是“Feature 生命周期绑定资源”。</p>
+<p>实践建议：</p>
+<ol>
+<li>在注入组件内把业务状态做成可热插拔（支持动态启停）。</li>
+<li>不在构造期假设依赖永远可用，使用懒初始化或扩展事件触发。</li>
+<li>对每个请求句柄建立追踪日志（Feature 名、ActorClass、ComponentClass）。</li>
+</ol>
+<h2 id="调试手册">调试手册</h2>
+<ol>
+<li>断在 <code>AddComponentRequest</code>，确认请求是否成功入管理器。</li>
+<li>断在 <code>AddReceiverInternal</code>，确认目标 Actor 是否进入 Receiver 集合。</li>
+<li>停用时确认句柄释放后不再产生新注入。</li>
+<li>运行中切图/切模式后，验证 <code>HandleGameInstanceStart</code> 补注入路径。</li>
+</ol>
+<h2 id="Receiver-协议实现建议（长文重点）">Receiver 协议实现建议（长文重点）</h2>
+<p>为了让注入真正稳定，建议读者在接收端类里固定实现两条：</p>
+<ol>
+<li>生命周期对称：在合适时机调用 <code>AddGameFrameworkComponentReceiver</code>，结束时调用对应移除。</li>
+<li>扩展事件分层：把“组件初始化完成”与“业务可交互”分成不同事件，避免时序竞态。</li>
+</ol>
+<p>这能显著减少“偶现注入失败”问题。</p>
+<h2 id="竞态与幂等">竞态与幂等</h2>
+<p>当 Feature 在短时间内反复启停时，同一 Actor 可能经历：</p>
+<ol>
+<li>请求刚注册，Actor 还未进入 Receiver。</li>
+<li>Actor 已进入 Receiver，Feature 又被停用。</li>
+<li>世界切换触发补注入流程。</li>
+</ol>
+<p>所以组件注入逻辑必须是幂等的：<br>
+重复执行初始化不会破坏状态，重复回收不会误删他人资源。</p>
+<h2 id="进阶练习">进阶练习</h2>
+<ol>
+<li>同时激活两个 Feature，向同一 ActorClass 注入不同组件。</li>
+<li>分别停用其中一个 Feature，确认另一个 Feature 的组件不受影响。</li>
+<li>记录句柄回收日志，验证“谁加的谁删”的一致性。</li>
+</ol>
+<h2 id="本篇结论">本篇结论</h2>
+<p><code>AddComponents</code> 不是“方便按钮”，而是 <code>GameFeature</code> 与 <code>ModularGameplay</code> 的桥接核心。<br>
+下一篇我们基于这个桥接继续上层：输入、UI、能力注入如何在 Lyra 风格架构下收敛。</p>
+<h2 id="一次会踩坑的细节：Actor-生成时机与注入时机不一致">一次会踩坑的细节：Actor 生成时机与注入时机不一致</h2>
+<p>最容易让人误判的问题是：<br>
+你看到 Feature 已经 Active，但某些 Actor 没拿到组件。</p>
+<p>根因通常不是“AddComponents 失效”，而是 Actor 的生成时机在请求注册之前或之后产生分歧。<br>
+所以你要同时盯两条线：</p>
+<ol>
+<li>请求何时注册到 <code>GameFrameworkComponentManager</code>。</li>
+<li>目标 Actor 何时进入 Receiver 流程。</li>
+</ol>
+<p>只看其中一条线，很容易得出错误结论。</p>
+<h2 id="稳定落地的三条约束">稳定落地的三条约束</h2>
+<ol>
+<li>接收端类统一封装 Receiver 接入，不要每个子类自己手写。</li>
+<li>组件内避免在构造期访问外部依赖，改为延迟初始化。</li>
+<li>停用时只回收“自己发出的请求句柄”，不做全局扫描式清理。</li>
+</ol>
+<p>这三条是“多人长线项目里不会把自己绊倒”的最低配置。</p>
+<h2 id="观测指标（建议在调试工具里常驻）">观测指标（建议在调试工具里常驻）</h2>
+<ol>
+<li>当前激活 Feature 数量。</li>
+<li>每个 Feature 的组件请求句柄数量。</li>
+<li>Receiver Actor 总数与按类分布。</li>
+<li>每次停用后未释放句柄数量。</li>
+</ol>
+<p>如果第 4 项长期不为零，后面一定会演化成内存或行为泄漏问题。</p>
+<h2 id="附录：线上事故预防条款（组件注入专项）">附录：线上事故预防条款（组件注入专项）</h2>
+<p>这组条款很“土”，但很实用：</p>
+<ol>
+<li>没有句柄追踪的组件注入，一律不允许上线。</li>
+<li>停用路径没做压测（至少 20 次启停循环），一律不允许上线。</li>
+<li>晚加入玩家没验证组件一致性，一律不允许上线。</li>
+<li>接收端没统一 Receiver 封装，一律不允许大规模复制写法。</li>
+</ol>
+<p>这些规则会让开发初期略慢，但会换来后期排障成本的断崖下降。</p>
+<h2 id="附录：给新同学的三天上手任务">附录：给新同学的三天上手任务</h2>
+<ol>
+<li>第一天：把 <code>AddComponents</code> 全链路断点跑通并画图。</li>
+<li>第二天：实现一个最小注入组件，完成激活与停用回收。</li>
+<li>第三天：在多人环境验证晚加入与切图后的一致性。</li>
+</ol>
+<p>完成这三天任务后，新同学通常就能独立接手中等复杂度的 Feature 注入工作。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/09/21/ue-gamefeature-notes/ue-gamefeature-04-gamefeaturedata-and-action-framework/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制</strong>
+                </a>
+                
+
+                
+                <a href="/2025/11/09/ue-gamefeature-notes/ue-gamefeature-06-lyra-input-ui-ability-extension-points/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B2%E4%B8%80%E4%B8%AA%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">先讲一个误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%9C%BA%E5%88%B6%EF%BC%9A%E8%AF%B7%E6%B1%82%E5%8F%A5%E6%9F%84%E8%80%8C%E4%B8%8D%E6%98%AF%E8%A3%B8%E7%BB%84%E4%BB%B6"><span class="post-toc-list-text">关键机制：请求句柄而不是裸组件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-5%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AAddComponents-%E7%9A%84%E5%85%B3%E9%94%AE%E4%B8%8D%E6%98%AF-Add%EF%BC%8C%E8%80%8C%E6%98%AF-Request"><span class="post-toc-list-text">原理下钻：AddComponents 的关键不是 Add，而是 Request</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E7%BB%84%E4%BB%B6%E6%A1%A5%E6%8E%A5%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（组件桥接）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">数据结构与生命周期建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C"><span class="post-toc-list-text">调试手册</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Receiver-%E5%8D%8F%E8%AE%AE%E5%AE%9E%E7%8E%B0%E5%BB%BA%E8%AE%AE%EF%BC%88%E9%95%BF%E6%96%87%E9%87%8D%E7%82%B9%EF%BC%89"><span class="post-toc-list-text">Receiver 协议实现建议（长文重点）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AB%9E%E6%80%81%E4%B8%8E%E5%B9%82%E7%AD%89"><span class="post-toc-list-text">竞态与幂等</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E4%BC%9A%E8%B8%A9%E5%9D%91%E7%9A%84%E7%BB%86%E8%8A%82%EF%BC%9AActor-%E7%94%9F%E6%88%90%E6%97%B6%E6%9C%BA%E4%B8%8E%E6%B3%A8%E5%85%A5%E6%97%B6%E6%9C%BA%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="post-toc-list-text">一次会踩坑的细节：Actor 生成时机与注入时机不一致</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A8%B3%E5%AE%9A%E8%90%BD%E5%9C%B0%E7%9A%84%E4%B8%89%E6%9D%A1%E7%BA%A6%E6%9D%9F"><span class="post-toc-list-text">稳定落地的三条约束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%82%E6%B5%8B%E6%8C%87%E6%A0%87%EF%BC%88%E5%BB%BA%E8%AE%AE%E5%9C%A8%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E9%87%8C%E5%B8%B8%E9%A9%BB%EF%BC%89"><span class="post-toc-list-text">观测指标（建议在调试工具里常驻）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BA%BF%E4%B8%8A%E4%BA%8B%E6%95%85%E9%A2%84%E9%98%B2%E6%9D%A1%E6%AC%BE%EF%BC%88%E7%BB%84%E4%BB%B6%E6%B3%A8%E5%85%A5%E4%B8%93%E9%A1%B9%EF%BC%89"><span class="post-toc-list-text">附录：线上事故预防条款（组件注入专项）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BB%99%E6%96%B0%E5%90%8C%E5%AD%A6%E7%9A%84%E4%B8%89%E5%A4%A9%E4%B8%8A%E6%89%8B%E4%BB%BB%E5%8A%A1"><span class="post-toc-list-text">附录：给新同学的三天上手任务</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

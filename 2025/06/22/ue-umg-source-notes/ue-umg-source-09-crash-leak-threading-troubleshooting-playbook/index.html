@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>工程收官：UMG 常见崩溃/泄漏/线程越界排障总手册 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">工程收官：UMG 常见崩溃/泄漏/线程越界排障总手册</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.06.22
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UMG</span>
+            
+            <span style="color: var(--accent);">#排障</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 UMG 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 UMG/Slate 体系，从创建、实例化、输入路由、生命周期、布局、渲染、池化到崩溃排障，形成一条可复用的源码学习与工程落地主线。</p>
+            <div class="series-meta">
+                <span>第 9 篇</span>
+                <span>已发布 9 / 9</span>
+                
+                <span>阶段：2025.03 - 2025.06 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 100%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-umg-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E6%8E%92%E9%9A%9C%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把排障主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E5%85%88%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">我会先盯的源码入口（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%9C%80%E5%B8%B8%E8%A7%81%E7%9A%84%E4%B8%89%E7%A7%8D%E4%BA%8B%E6%95%85"><span class="post-toc-list-text">现场最常见的三种事故</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%B4%A9%E6%BA%83%E7%B1%BB%EF%BC%9A%E8%AE%BF%E9%97%AE%E7%A9%BA%E5%AF%B9%E8%B1%A1%E3%80%81%E9%9D%9E%E6%B3%95%E9%87%8D%E5%85%A5%E3%80%81%E9%93%BE%E8%B7%AF%E6%97%B6%E5%BA%8F%E9%94%99"><span class="post-toc-list-text">1. 崩溃类：访问空对象、非法重入、链路时序错</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B3%84%E6%BC%8F%E7%B1%BB%EF%BC%9A%E5%AF%B9%E8%B1%A1%E5%9B%9E%E6%94%B6%E4%B8%8D%E6%8E%89%E3%80%81%E5%BC%95%E7%94%A8%E7%8E%AF"><span class="post-toc-list-text">2. 泄漏类：对象回收不掉、引用环</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%BA%BF%E7%A8%8B%E8%B6%8A%E7%95%8C%E7%B1%BB%EF%BC%9A%E9%9D%9E-Game-Slate-%E7%BA%BF%E7%A8%8B%E8%AE%BF%E9%97%AE-UI"><span class="post-toc-list-text">3. 线程越界类：非 Game&#x2F;Slate 线程访问 UI</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E7%BA%BF%E7%A8%8B%E8%B6%8A%E7%95%8C%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0"><span class="post-toc-list-text">实验 A：线程越界最小复现</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9A%E5%8F%AA%E8%A6%81%E7%9C%8B%E5%B4%A9%E6%BA%83%E6%9C%80%E5%90%8E%E4%B8%80%E5%B8%A7%E5%B0%B1%E8%83%BD%E5%AE%9A%E4%BD%8D%E6%A0%B9%E5%9B%A0"><span class="post-toc-list-text">坑 1：只要看崩溃最后一帧就能定位根因</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%B3%84%E6%BC%8F%E5%B0%B1%E6%98%AF%E6%B2%A1-RemoveFromParent"><span class="post-toc-list-text">坑 2：泄漏就是没 RemoveFromParent</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9A%E4%BF%AE%E5%A4%8D%E4%B8%80%E6%AC%A1%E5%B4%A9%E6%BA%83%E5%B0%B1%E7%AE%97%E5%AE%8C%E7%BB%93"><span class="post-toc-list-text">坑 3：修复一次崩溃就算完结</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%8F%AF%E7%9B%B4%E6%8E%A5%E8%B4%B4%E5%88%B0%E9%A1%B9%E7%9B%AE-Wiki%EF%BC%89"><span class="post-toc-list-text">现场排查顺序（可直接贴到项目 Wiki）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>本文主题：把前 8 篇知识收束成可复用故障处理流程<br>
+核心问题：遇到崩溃/泄漏/线程问题时，如何快速定位并给出可回归修复？</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>前 8 篇其实都在做同一件事：把 UMG 问题拆成可解释的链路。<br>
+最后这一篇，我想把这些经验收成一套“现场可执行”的排障手册。</p>
+<p>目标不是多讲概念，而是你遇到线上崩溃时，<br>
+能在十几分钟内选对断点、锁定首错点、给出可回归修复。</p>
+<h2 id="先把排障主线拉直">先把排障主线拉直</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;拿到崩溃堆栈/日志&quot;] --&gt; B[&quot;定位模块层（UMG/Slate/Engine）&quot;]</span><br><span class="line">    B --&gt; C[&quot;按路径归类：创建/输入/布局/渲染/列表&quot;]</span><br><span class="line">    C --&gt; D[&quot;设置函数级断点复现&quot;]</span><br><span class="line">    D --&gt; E[&quot;验证根因假设（反证）&quot;]</span><br><span class="line">    E --&gt; F[&quot;最小修复 + 回归基线&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="我会先盯的源码入口（UE5-5）">我会先盯的源码入口（UE5.5）</h2>
+<ol>
+<li><code>Engine/Source/Runtime/UMG/Private/Components/Widget.cpp</code><br>
+<code>UWidget::TakeWidget_Private</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/Slate/SObjectWidget.cpp</code><br>
+UObject/Slate 桥接生命周期</li>
+<li><code>Engine/Source/Runtime/UMG/Private/UserWidget.cpp</code><br>
+<code>UUserWidget</code> 生命周期主路径</li>
+<li><code>Engine/Source/Runtime/SlateCore/Private/Widgets/SWidget.cpp</code><br>
+<code>SWidget::Paint</code> / <code>SlatePrepass</code></li>
+<li><code>Engine/Source/Runtime/Slate/Private/Framework/Application/SlateApplication.cpp</code><br>
+<code>FSlateApplication::TickAndDrawWidgets</code> / 输入路由</li>
+</ol>
+<h2 id="现场最常见的三种事故">现场最常见的三种事故</h2>
+<h3 id="1-崩溃类：访问空对象、非法重入、链路时序错">1. 崩溃类：访问空对象、非法重入、链路时序错</h3>
+<p>常见入口：</p>
+<ol>
+<li><code>TakeWidget_Private</code></li>
+<li><code>OnWidgetRebuilt</code></li>
+<li><code>SWidget::Paint</code></li>
+</ol>
+<p>处理要点：</p>
+<ol>
+<li>先确认是“对象无效”还是“调用时机错误”。</li>
+<li>复现后记录第一次异常状态，不要只看最终崩溃点。</li>
+</ol>
+<h3 id="2-泄漏类：对象回收不掉、引用环">2. 泄漏类：对象回收不掉、引用环</h3>
+<p>常见入口：</p>
+<ol>
+<li><code>SObjectWidget</code> 持有链</li>
+<li>列表池长期持有活动条目</li>
+<li>外部单例/Subsystem 强引用 UI</li>
+</ol>
+<p>处理要点：</p>
+<ol>
+<li>检查 Release 链是否完整执行。</li>
+<li>检查 <code>UPROPERTY</code> 与 Slate shared 引用是否形成闭环。</li>
+</ol>
+<h3 id="3-线程越界类：非-Game-Slate-线程访问-UI">3. 线程越界类：非 Game/Slate 线程访问 UI</h3>
+<p>常见表现：</p>
+<ol>
+<li>异步回调直接改 UI，触发线程断言。</li>
+</ol>
+<p>处理要点：</p>
+<ol>
+<li>把 UI 写操作统一切回 GameThread。</li>
+<li>异步只做数据准备，不做控件操作。</li>
+</ol>
+<h2 id="最小复现实验（含反证）">最小复现实验（含反证）</h2>
+<h3 id="实验-A：线程越界最小复现">实验 A：线程越界最小复现</h3>
+<ol>
+<li>在异步任务里直接访问 Widget 字段并改值。</li>
+<li>记录断言与堆栈。</li>
+<li>改为切回 GameThread 后再改值，验证问题消失。</li>
+</ol>
+<p>预期：<br>
+越界访问可稳定复现；切回主线程后恢复正常。</p>
+<p>反证：<br>
+若“UI 可跨线程自由访问”成立，则两种实现应表现一致，实际不会。</p>
+<h2 id="我在项目里反复见到的-3-个坑">我在项目里反复见到的 3 个坑</h2>
+<h3 id="坑-1：只要看崩溃最后一帧就能定位根因">坑 1：只要看崩溃最后一帧就能定位根因</h3>
+<ul>
+<li>根因：最后一帧通常只是结果，不是第一处状态污染点。</li>
+<li>修正：回溯到首次异常状态，建立“首错点”断点。</li>
+</ul>
+<h3 id="坑-2：泄漏就是没-RemoveFromParent">坑 2：泄漏就是没 <code>RemoveFromParent</code></h3>
+<ul>
+<li>根因：很多泄漏来自引用环，不是显示层级问题本身。</li>
+<li>修正：同时审计 UObject 引用和 Slate shared 引用链。</li>
+</ul>
+<h3 id="坑-3：修复一次崩溃就算完结">坑 3：修复一次崩溃就算完结</h3>
+<ul>
+<li>根因：没有回归基线，下一次改动会复发。</li>
+<li>修正：每类故障沉淀“复现脚本 + 断点模板 + 指标基线”。</li>
+</ul>
+<h2 id="现场排查顺序（可直接贴到项目-Wiki）">现场排查顺序（可直接贴到项目 Wiki）</h2>
+<ol>
+<li>先归类问题路径：创建 / 输入 / 布局 / 渲染 / 列表 / 线程。</li>
+<li>锁定 1~2 个主函数断点，不要一上来全局撒网。</li>
+<li>记录首错点状态（对象、线程、调用来源、时间戳）。</li>
+<li>修复后执行反证测试，确认不是“偶然不崩”。</li>
+<li>回归：至少覆盖一次相同场景压测与自动化脚本。</li>
+</ol>
+<h2 id="这一篇要带走什么">这一篇要带走什么</h2>
+<p>UMG 排障效率来自“统一方法论”，不是“个人经验记忆”。<br>
+当你能把每次故障都收敛到固定路径与固定断点模板，<br>
+UI 系统的稳定性就会从“靠运气”变成“靠流程”。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-umg-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/06/08/ue-umg-source-notes/ue-umg-source-08-listview-pooling-and-high-density-ui/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 8 篇</span>
+                    <strong class="series-nav-title">高密度列表实战：ListView/TileView、条目复用与池化</strong>
+                </a>
+                
+
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前已经读到系列末尾</span>
+                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
+                </div>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E6%8E%92%E9%9A%9C%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把排障主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E5%85%88%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">我会先盯的源码入口（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%9C%80%E5%B8%B8%E8%A7%81%E7%9A%84%E4%B8%89%E7%A7%8D%E4%BA%8B%E6%95%85"><span class="post-toc-list-text">现场最常见的三种事故</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%B4%A9%E6%BA%83%E7%B1%BB%EF%BC%9A%E8%AE%BF%E9%97%AE%E7%A9%BA%E5%AF%B9%E8%B1%A1%E3%80%81%E9%9D%9E%E6%B3%95%E9%87%8D%E5%85%A5%E3%80%81%E9%93%BE%E8%B7%AF%E6%97%B6%E5%BA%8F%E9%94%99"><span class="post-toc-list-text">1. 崩溃类：访问空对象、非法重入、链路时序错</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E6%B3%84%E6%BC%8F%E7%B1%BB%EF%BC%9A%E5%AF%B9%E8%B1%A1%E5%9B%9E%E6%94%B6%E4%B8%8D%E6%8E%89%E3%80%81%E5%BC%95%E7%94%A8%E7%8E%AF"><span class="post-toc-list-text">2. 泄漏类：对象回收不掉、引用环</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E7%BA%BF%E7%A8%8B%E8%B6%8A%E7%95%8C%E7%B1%BB%EF%BC%9A%E9%9D%9E-Game-Slate-%E7%BA%BF%E7%A8%8B%E8%AE%BF%E9%97%AE-UI"><span class="post-toc-list-text">3. 线程越界类：非 Game&#x2F;Slate 线程访问 UI</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E7%BA%BF%E7%A8%8B%E8%B6%8A%E7%95%8C%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0"><span class="post-toc-list-text">实验 A：线程越界最小复现</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9A%E5%8F%AA%E8%A6%81%E7%9C%8B%E5%B4%A9%E6%BA%83%E6%9C%80%E5%90%8E%E4%B8%80%E5%B8%A7%E5%B0%B1%E8%83%BD%E5%AE%9A%E4%BD%8D%E6%A0%B9%E5%9B%A0"><span class="post-toc-list-text">坑 1：只要看崩溃最后一帧就能定位根因</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%B3%84%E6%BC%8F%E5%B0%B1%E6%98%AF%E6%B2%A1-RemoveFromParent"><span class="post-toc-list-text">坑 2：泄漏就是没 RemoveFromParent</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9A%E4%BF%AE%E5%A4%8D%E4%B8%80%E6%AC%A1%E5%B4%A9%E6%BA%83%E5%B0%B1%E7%AE%97%E5%AE%8C%E7%BB%93"><span class="post-toc-list-text">坑 3：修复一次崩溃就算完结</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%8F%AF%E7%9B%B4%E6%8E%A5%E8%B4%B4%E5%88%B0%E9%A1%B9%E7%9B%AE-Wiki%EF%BC%89"><span class="post-toc-list-text">现场排查顺序（可直接贴到项目 Wiki）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

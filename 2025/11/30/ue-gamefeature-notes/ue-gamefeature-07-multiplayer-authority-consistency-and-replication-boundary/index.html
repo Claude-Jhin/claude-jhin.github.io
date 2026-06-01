@@ -1,0 +1,440 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>多人网络边界（Lyra 案例 3）：激活权威、客户端一致性与复制约束 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">多人网络边界（Lyra 案例 3）：激活权威、客户端一致性与复制约束</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.11.30
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#Networking</span>
+            
+            <span style="color: var(--accent);">#GameFeature</span>
+            
+            <span style="color: var(--accent);">#Lyra</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <div class="series-meta">
+                <span>第 7 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 88%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">先给结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E5%B1%82%E8%BE%B9%E7%95%8C%E6%80%8E%E4%B9%88%E8%90%BD%E5%9C%B0"><span class="post-toc-list-text">三层边界怎么落地</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-7%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 7）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E5%A4%9A%E4%BA%BA%E4%B8%8B%E7%9A%84%E4%B8%89%E5%BC%A0%E7%9F%A9%E9%98%B5"><span class="post-toc-list-text">原理下钻：多人下的三张矩阵</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E5%A4%9A%E4%BA%BA%E8%BE%B9%E7%95%8C%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（多人边界）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9D%83%E5%A8%81%E4%B8%8E%E4%B8%80%E8%87%B4%E6%80%A7%E7%9A%84%E5%AE%9E%E6%93%8D%E8%A7%84%E5%88%99"><span class="post-toc-list-text">权威与一致性的实操规则</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C%EF%BC%88%E5%A4%9A%E4%BA%BA%E4%B8%93%E9%A1%B9%EF%BC%89"><span class="post-toc-list-text">调试手册（多人专项）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9D%83%E5%A8%81%E7%9F%A9%E9%98%B5%E7%A4%BA%E4%BE%8B%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%94%BE%E5%88%B0%E9%95%BF%E6%96%87%E4%B8%AD%EF%BC%89"><span class="post-toc-list-text">权威矩阵示例（建议放到长文中）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B8%E5%9E%8B%E4%BA%8B%E6%95%85%E5%A4%8D%E7%9B%98%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">典型事故复盘模板</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%95%BF%E6%96%87%E5%8A%A0%E9%A4%90%EF%BC%9A%E4%B8%80%E5%BC%A0%E2%80%9C%E7%97%87%E7%8A%B6%E5%88%B0%E5%B1%82%E7%BA%A7%E2%80%9D%E7%9A%84%E9%80%9F%E6%9F%A5%E8%A1%A8"><span class="post-toc-list-text">长文加餐：一张“症状到层级”的速查表</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%A4%9A%E4%BA%BA%E8%B0%83%E8%AF%95%E7%9A%84%E4%B8%80%E6%9D%A1%E9%93%81%E5%BE%8B"><span class="post-toc-list-text">多人调试的一条铁律</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9D%83%E5%A8%81%E4%B8%8B%E7%9A%84%E5%AE%9E%E8%B7%B5%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">服务器权威下的实践建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E6%99%9A%E5%8A%A0%E5%85%A5%E4%B8%80%E8%87%B4%E6%80%A7%E5%8E%8B%E6%B5%8B"><span class="post-toc-list-text">进阶练习：晚加入一致性压测</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E5%A4%9A%E4%BA%BA%E8%81%94%E8%B0%83%E5%BD%93%E5%A4%A9%E7%9A%84%E6%9C%80%E5%B0%8F%E8%AE%B0%E5%BD%95%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">附录：多人联调当天的最小记录模板</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h2 id="先给结论">先给结论</h2>
+<p>GameFeature 在多人里最常见的问题不是“没加载”，而是“加载边界不一致”。</p>
+<p>典型现象：</p>
+<ol>
+<li>服务器激活了，客户端没表现。</li>
+<li>本地玩家看见 UI，其他客户端没有。</li>
+<li>Dedicated Server 报一堆本应只在客户端执行的逻辑。</li>
+</ol>
+<p>根因往往是三类边界没对齐：加载模式边界、世界上下文边界、复制边界。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;ProjectPolicies 选择 Client/Server 负载&quot;] --&gt; B[&quot;GameFeature 状态切换&quot;]</span><br><span class="line">    B --&gt; C[&quot;Context 过滤 World&quot;]</span><br><span class="line">    C --&gt; D[&quot;Action 作用到正确世界&quot;]</span><br><span class="line">    D --&gt; E[&quot;业务层复制/表现层渲染&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesProjectPolicies.cpp:28</code><br>
+<code>GetGameFeatureLoadingMode(bool&amp; bLoadClientData, bool&amp; bLoadServerData)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesProjectPolicies.cpp:31</code><br>
+<code>bLoadClientData = !IsRunningDedicatedServer();</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesProjectPolicies.cpp:32</code><br>
+<code>bLoadServerData = !IsRunningClientOnly();</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesSubsystemSettings.h:18</code><br>
+<code>LoadStateClient</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesSubsystemSettings.h:21</code><br>
+<code>LoadStateServer</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:255</code><br>
+<code>ShouldApplyToWorldContext(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:268</code><br>
+<code>ShouldApplyUsingOtherContext(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1483</code><br>
+<code>ChangeGameFeatureTargetState(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction_AddComponents.cpp:106</code><br>
+<code>AddToWorld(...)</code></li>
+</ul>
+<h2 id="三层边界怎么落地">三层边界怎么落地</h2>
+<ol>
+<li>加载模式边界：<br>
+在 Policy 层决定哪些数据在 Client/Server 载入，不要把环境判断分散在每个 Action。</li>
+<li>世界上下文边界：<br>
+使用 <code>FGameFeatureStateChangeContext</code> 限定作用域，避免多世界或错误 World 污染。</li>
+<li>复制边界：<br>
+Feature 激活只负责“是否生效”，业务状态一致性仍由你的 Replication/RPC 设计保证。</li>
+</ol>
+<h2 id="Lyra-最小复现（实验-7）">Lyra 最小复现（实验 7）</h2>
+<p>目标：复现并修复“本地有表现，远端无表现”。</p>
+<ol>
+<li>在一个 Feature 里同时放输入/UI/组件注入逻辑。</li>
+<li>双客户端 + Dedicated Server 运行，激活 Feature。</li>
+<li>人为把加载模式配置错（例如服务端不加载必要数据），观察差异。</li>
+<li>再通过 Policy + Context 边界修正，确认行为收敛。</li>
+</ol>
+<p>这个实验会非常直观地暴露“激活成功不等于多人一致”。</p>
+<h2 id="常见坑与检查项">常见坑与检查项</h2>
+<ol>
+<li>把“是否激活”当作“是否同步”，忽略复制链路设计。</li>
+<li>客户端专属逻辑未隔离，导致 Server 路径报错或空操作。</li>
+<li>Feature 停用后未撤销本地表现，产生“幽灵 UI/输入映射”。</li>
+</ol>
+<h2 id="原理下钻：多人下的三张矩阵">原理下钻：多人下的三张矩阵</h2>
+<p>建议在长文中明确画出三张矩阵，避免语义混淆：</p>
+<ol>
+<li>加载矩阵：哪些 Feature 在 Client/Server 加载。</li>
+<li>激活矩阵：哪些 Feature 由谁触发状态改变。</li>
+<li>表现矩阵：哪些行为是本地表现，哪些需要网络一致性。</li>
+</ol>
+<p>如果三张矩阵没有独立定义，线上排障会不断把“加载问题”误判为“复制问题”。</p>
+<h2 id="更细源码锚点（多人边界）">更细源码锚点（多人边界）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesProjectPolicies.cpp:39</code><br>
+读取加载模式后组装 <code>FeatureBundles</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1171</code><br>
+<code>PauseChanged</code> 观察者回调</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3260</code><br>
+<code>CallbackObservers</code> 多阶段通知汇总</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3381</code><br>
+<code>Activating</code> 观察者分发</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3399</code><br>
+<code>Deactivating</code> 观察者分发</li>
+</ul>
+<h2 id="权威与一致性的实操规则">权威与一致性的实操规则</h2>
+<ol>
+<li>权威规则：状态改变请求由服务端判定，客户端只发意图。</li>
+<li>表现规则：本地可预测表现要能被权威结果覆盖与回收。</li>
+<li>数据规则：Feature 激活不替代业务复制协议，状态一致性仍由 Replication/RPC 负责。</li>
+</ol>
+<h2 id="调试手册（多人专项）">调试手册（多人专项）</h2>
+<ol>
+<li>先记录三端日志（Server / ClientA / ClientB）中的 Feature 状态轨迹。</li>
+<li>再记录业务状态轨迹（例如技能可用标记、组件启停标记）。</li>
+<li>对比两条轨迹是否同步：<br>
+“Feature 同步但业务不同步”通常是复制层问题；<br>
+“Feature 不同步”才是 GameFeature 层问题。</li>
+</ol>
+<h2 id="进阶练习">进阶练习</h2>
+<ol>
+<li>在 Dedicated Server 模式下激活一个带 UI 与能力注入的 Feature。</li>
+<li>验证服务端仅走服务端必要逻辑，客户端走表现与输入逻辑。</li>
+<li>故意制造客户端晚加入，确认其 Feature 状态与业务状态都能收敛。</li>
+</ol>
+<h2 id="权威矩阵示例（建议放到长文中）">权威矩阵示例（建议放到长文中）</h2>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>Feature 状态改变发起方</th>
+<th>业务状态最终权威</th>
+<th>客户端本地可预测</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>技能系统扩展开关</td>
+<td>Server</td>
+<td>Server</td>
+<td>可（需回收）</td>
+</tr>
+<tr>
+<td>活动 UI 展示</td>
+<td>Client（受控）</td>
+<td>N/A（表现层）</td>
+<td>可</td>
+</tr>
+<tr>
+<td>角色组件注入</td>
+<td>Server 或策略统一调度</td>
+<td>Server</td>
+<td>部分可</td>
+</tr>
+</tbody>
+</table>
+<p>这张表能帮读者区分“状态控制权”和“表现自主权”。</p>
+<h2 id="典型事故复盘模板">典型事故复盘模板</h2>
+<p>建议每次多人问题都按同一模板记录：</p>
+<ol>
+<li>当时三端 Feature 状态（Server/ClientA/ClientB）</li>
+<li>当时业务关键状态（能力列表、组件列表、UI 列表）</li>
+<li>触发操作序列（谁先激活、谁后加入、是否切图）</li>
+<li>最终归因层级（加载策略 / 上下文过滤 / 复制协议）</li>
+</ol>
+<p>把模板固化后，排障速度会显著提升。</p>
+<h2 id="本篇结论">本篇结论</h2>
+<p>多人里的 GameFeature，本质上是“加载策略 + 上下文过滤 + 复制语义”三件事的交集。<br>
+下一篇我们收束到上线链路：Cook、Chunk、热更和排障闭环。</p>
+<h2 id="长文加餐：一张“症状到层级”的速查表">长文加餐：一张“症状到层级”的速查表</h2>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>最可能层级</th>
+<th>第一检查点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>服务器有能力，客户端没有</td>
+<td>复制层 / 授予路径</td>
+<td>能力句柄是否复制到位</td>
+</tr>
+<tr>
+<td>本地 UI 有，其他人没有</td>
+<td>表现层 / 本地逻辑误入网络语义</td>
+<td>UI 是否被当作全局状态</td>
+</tr>
+<tr>
+<td>Dedicated Server 报输入错误</td>
+<td>加载模式或上下文过滤</td>
+<td>是否错误执行客户端专属逻辑</td>
+</tr>
+<tr>
+<td>激活成功但部分玩家无组件</td>
+<td>Receiver/世界上下文与时序</td>
+<td>是否覆盖晚加入与切图路径</td>
+</tr>
+</tbody>
+</table>
+<p>这张表的作用是：<br>
+先锁层，再动代码，减少盲目试错。</p>
+<h2 id="多人调试的一条铁律">多人调试的一条铁律</h2>
+<p>永远把“状态一致”拆成两句话去验证：</p>
+<ol>
+<li>Feature 状态一致了吗？</li>
+<li>业务状态一致了吗？</li>
+</ol>
+<p>很多复盘失败，就是因为这两句混在一起。<br>
+Feature 一致不代表业务就一致；业务不一致也不一定是 Feature 的锅。</p>
+<h2 id="服务器权威下的实践建议">服务器权威下的实践建议</h2>
+<ol>
+<li>Feature 的目标状态改变由服务器控制，客户端只请求。</li>
+<li>客户端可做本地预表现，但必须有可撤销路径。</li>
+<li>所有可见状态最终以权威结果收敛。</li>
+<li>晚加入玩家要验证“状态重建”而不是只看实时广播。</li>
+</ol>
+<h2 id="进阶练习：晚加入一致性压测">进阶练习：晚加入一致性压测</h2>
+<ol>
+<li>先让房间运行 5 分钟，期间多次启停 Feature。</li>
+<li>第 6 分钟让新玩家加入。</li>
+<li>记录新玩家收到的 Feature 状态、能力状态、组件状态、UI 状态。</li>
+<li>对比已有玩家，检查是否存在“历史状态未补齐”问题。</li>
+</ol>
+<p>这组测试非常适合作为上线前必跑项。</p>
+<h2 id="附录：多人联调当天的最小记录模板">附录：多人联调当天的最小记录模板</h2>
+<p>建议联调时每个人都按同一模板报问题：</p>
+<ol>
+<li><code>时间戳</code></li>
+<li><code>服务器状态</code></li>
+<li><code>客户端状态</code></li>
+<li><code>触发操作</code></li>
+<li><code>预期结果</code></li>
+<li><code>实际结果</code></li>
+</ol>
+<p>不要省略时间戳。<br>
+没有时间戳，后续对日志和回放几乎无法精确对齐。</p>
+<p>这个模板看似基础，但在多人问题里是效率乘数。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/11/09/ue-gamefeature-notes/ue-gamefeature-06-lyra-input-ui-ability-extension-points/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层</strong>
+                </a>
+                
+
+                
+                <a href="/2025/12/21/ue-gamefeature-notes/ue-gamefeature-08-cook-hotfix-troubleshooting-and-regression-checklist/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 8 篇</span>
+                    <strong class="series-nav-title">打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">先给结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E5%B1%82%E8%BE%B9%E7%95%8C%E6%80%8E%E4%B9%88%E8%90%BD%E5%9C%B0"><span class="post-toc-list-text">三层边界怎么落地</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-7%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 7）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E5%A4%9A%E4%BA%BA%E4%B8%8B%E7%9A%84%E4%B8%89%E5%BC%A0%E7%9F%A9%E9%98%B5"><span class="post-toc-list-text">原理下钻：多人下的三张矩阵</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E5%A4%9A%E4%BA%BA%E8%BE%B9%E7%95%8C%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（多人边界）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9D%83%E5%A8%81%E4%B8%8E%E4%B8%80%E8%87%B4%E6%80%A7%E7%9A%84%E5%AE%9E%E6%93%8D%E8%A7%84%E5%88%99"><span class="post-toc-list-text">权威与一致性的实操规则</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C%EF%BC%88%E5%A4%9A%E4%BA%BA%E4%B8%93%E9%A1%B9%EF%BC%89"><span class="post-toc-list-text">调试手册（多人专项）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9D%83%E5%A8%81%E7%9F%A9%E9%98%B5%E7%A4%BA%E4%BE%8B%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%94%BE%E5%88%B0%E9%95%BF%E6%96%87%E4%B8%AD%EF%BC%89"><span class="post-toc-list-text">权威矩阵示例（建议放到长文中）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B8%E5%9E%8B%E4%BA%8B%E6%95%85%E5%A4%8D%E7%9B%98%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">典型事故复盘模板</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%95%BF%E6%96%87%E5%8A%A0%E9%A4%90%EF%BC%9A%E4%B8%80%E5%BC%A0%E2%80%9C%E7%97%87%E7%8A%B6%E5%88%B0%E5%B1%82%E7%BA%A7%E2%80%9D%E7%9A%84%E9%80%9F%E6%9F%A5%E8%A1%A8"><span class="post-toc-list-text">长文加餐：一张“症状到层级”的速查表</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%A4%9A%E4%BA%BA%E8%B0%83%E8%AF%95%E7%9A%84%E4%B8%80%E6%9D%A1%E9%93%81%E5%BE%8B"><span class="post-toc-list-text">多人调试的一条铁律</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9D%83%E5%A8%81%E4%B8%8B%E7%9A%84%E5%AE%9E%E8%B7%B5%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">服务器权威下的实践建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E6%99%9A%E5%8A%A0%E5%85%A5%E4%B8%80%E8%87%B4%E6%80%A7%E5%8E%8B%E6%B5%8B"><span class="post-toc-list-text">进阶练习：晚加入一致性压测</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E5%A4%9A%E4%BA%BA%E8%81%94%E8%B0%83%E5%BD%93%E5%A4%A9%E7%9A%84%E6%9C%80%E5%B0%8F%E8%AE%B0%E5%BD%95%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">附录：多人联调当天的最小记录模板</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

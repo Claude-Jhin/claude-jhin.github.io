@@ -1,0 +1,396 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>为什么是 GameFeature：模块化边界、运行时装配与对象关系图 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">为什么是 GameFeature：模块化边界、运行时装配与对象关系图</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.07.06
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#GameFeature</span>
+            
+            <span style="color: var(--accent);">#Lyra</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <div class="series-meta">
+                <span>第 1 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 13%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%88%E8%AE%B2%E2%80%9C%E8%BE%B9%E7%95%8C%E2%80%9D"><span class="post-toc-list-text">为什么先讲“边界”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8E%E4%BC%A0%E7%BB%9F%E6%A8%A1%E5%9D%97-%E5%AD%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E5%B7%A5%E5%B7%AE%E5%BC%82"><span class="post-toc-list-text">与传统模块&#x2F;子系统的分工差异</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-1%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 1）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E5%9B%9B%E7%B1%BB%E5%AF%B9%E8%B1%A1%E5%A6%82%E4%BD%95%E5%88%86%E5%B1%82%E5%8D%8F%E4%BD%9C"><span class="post-toc-list-text">原理下钻：四类对象如何分层协作</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E7%BA%BF%EF%BC%88%E9%95%BF%E6%96%87%E9%98%85%E8%AF%BB%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">源码主线（长文阅读顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%BF%83%E6%99%BA%E6%A8%A1%E5%9E%8B%EF%BC%88%E4%BC%AA%E4%BB%A3%E7%A0%81%EF%BC%89"><span class="post-toc-list-text">工程化心智模型（伪代码）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E5%AE%9E%E5%BD%95%EF%BC%9A%E6%88%91%E4%BB%AC%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%86%B3%E5%AE%9A%E6%8A%8A%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%B0-GameFeature"><span class="post-toc-list-text">项目实录：我们什么时候决定把功能拆到 GameFeature</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E8%90%BD%E5%9C%B0%E7%9A%84%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%86%E6%B3%95"><span class="post-toc-list-text">一套可落地的功能拆分法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%97%E8%88%B0%E6%96%87%E9%98%85%E8%AF%BB%E4%BB%BB%E5%8A%A1%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%8C%89%E9%A1%BA%E5%BA%8F%E5%81%9A%EF%BC%89"><span class="post-toc-list-text">旗舰文阅读任务（建议按顺序做）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%88%E5%85%A5%E9%97%A8%E4%BD%86%E5%BE%88%E5%AE%9E%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">断点剧本（入门但很实用）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E8%BF%99%E7%AF%87%E7%9A%84%E4%BA%A4%E4%BB%98%E6%A0%87%E5%87%86%EF%BC%88%E7%BB%99%E5%9B%A2%E9%98%9F%E5%86%85%E9%83%A8%E5%AF%B9%E9%BD%90%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">附录：这篇的交付标准（给团队内部对齐用）</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h2 id="为什么先讲“边界”">为什么先讲“边界”</h2>
+<p>很多团队第一次接触 GameFeature，会把它理解成“可热更新插件”或“高级插件开关”。<br>
+这两个说法都不算错，但都不够工程化。</p>
+<p><code>GameFeature</code> 的核心价值，是把“功能上线/下线”做成一个可观察、可回滚、可编排的运行时流程。<br>
+它不是单个 API，而是一组协作对象：</p>
+<ol>
+<li><code>UGameFeaturesSubsystem</code>：总调度器</li>
+<li><code>UGameFeatureData</code>：功能清单与资产入口</li>
+<li><code>UGameFeatureAction</code>：激活/停用时真正执行的动作</li>
+<li><code>UGameFeaturePluginStateMachine</code>：状态流转与失败收敛</li>
+</ol>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;Plugin URL / Built-in Plugin&quot;] --&gt; B[&quot;UGameFeaturesSubsystem&quot;]</span><br><span class="line">    B --&gt; C[&quot;State Machine\nInstalled-&gt;Registered-&gt;Loaded-&gt;Active&quot;]</span><br><span class="line">    C --&gt; D[&quot;Load UGameFeatureData&quot;]</span><br><span class="line">    D --&gt; E[&quot;Iterate UGameFeatureAction[]&quot;]</span><br><span class="line">    E --&gt; F[&quot;OnGameFeatureActivating / Deactivating&quot;]</span><br><span class="line">    F --&gt; G[&quot;World/Actor level effect\n(components/input/ui/ability/data...)&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="与传统模块-子系统的分工差异">与传统模块/子系统的分工差异</h2>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>擅长问题</th>
+<th>典型限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Module</code></td>
+<td>启动时静态装配、编译期组织</td>
+<td>运行时按玩法粒度启停成本高</td>
+</tr>
+<tr>
+<td><code>Subsystem</code></td>
+<td>生命周期稳定的全局服务</td>
+<td>不擅长“按功能包动态装配资源与行为”</td>
+</tr>
+<tr>
+<td><code>GameFeature</code></td>
+<td>功能包的运行时启停、依赖编排、失败回滚</td>
+<td>需要更严格的资源与状态治理</td>
+</tr>
+</tbody>
+</table>
+<p>一句话：<code>Subsystem</code> 更像常驻基础设施，<code>GameFeature</code> 更像可编排的功能交付单元。</p>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesSubsystem.h:400</code><br>
+<code>class UGameFeaturesSubsystem</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureData.h:18</code><br>
+<code>class UGameFeatureData : public UPrimaryDataAsset</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureAction.h:14</code><br>
+<code>class UGameFeatureAction : public UObject</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureTypes.h:58</code><br>
+<code>enum EGameFeaturePluginState : uint8</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureData.h:85</code><br>
+<code>const TArray&lt;UGameFeatureAction*&gt;&amp; GetActions() const</code></li>
+</ul>
+<h2 id="Lyra-最小复现（实验-1）">Lyra 最小复现（实验 1）</h2>
+<p>目标：先验证“激活即注入，停用即回收”的行为闭环。</p>
+<ol>
+<li>在项目里新建一个 GameFeature 插件（例如 <code>GF_WeaponDebug</code>）。</li>
+<li>创建 <code>GameFeatureData</code>，加入 <code>Add Components</code> Action。</li>
+<li>将目标 Actor 类指向你的 Lyra 角色类（或其派生类），注入一个只做日志的调试组件。</li>
+<li>通过 GameFeature 状态切换到 <code>Active</code>，观察角色是否在运行时拿到新组件。</li>
+<li>切回 <code>Loaded/Registered</code>，确认组件请求被移除。</li>
+</ol>
+<p>你要验证的不是“组件是否存在”，而是“状态变化是否严格驱动行为变化”。</p>
+<h2 id="常见坑与检查项">常见坑与检查项</h2>
+<ol>
+<li>把 GameFeature 当成“仅编辑器配置”，忽略运行时状态机语义。</li>
+<li>只测激活，不测停用，导致线上回收路径失效。</li>
+<li>功能边界过粗，一个 GameFeature 承载过多不相关行为，后续无法独立回滚。</li>
+</ol>
+<h2 id="原理下钻：四类对象如何分层协作">原理下钻：四类对象如何分层协作</h2>
+<p>在工程上，你可以把 GameFeature 栈分成四层：</p>
+<ol>
+<li>调度层：<code>UGameFeaturesSubsystem</code>，接收目标状态请求并驱动状态机。</li>
+<li>状态层：<code>UGameFeaturePluginStateMachine</code>，处理转移、取消、依赖、失败收敛。</li>
+<li>声明层：<code>UGameFeatureData</code>，声明该功能包包含哪些 Action 和资产扫描规则。</li>
+<li>执行层：<code>UGameFeatureAction</code>，真正把行为注入到世界对象上。</li>
+</ol>
+<p>这四层的边界一旦混乱，就会出现两类典型技术债：</p>
+<ol>
+<li>逻辑散落在 Action 里，状态机层无法统一回滚。</li>
+<li>调度层塞业务条件，导致后续无法复用到其他玩法包。</li>
+</ol>
+<h2 id="源码主线（长文阅读顺序）">源码主线（长文阅读顺序）</h2>
+<p>建议按下面顺序读，避免“先钻细节后丢全局”：</p>
+<ol>
+<li>读 <code>GameFeaturesSubsystem.h/.cpp</code>，先看入口能力面。</li>
+<li>读 <code>GameFeatureTypes.h</code>，统一状态名语义。</li>
+<li>读 <code>GameFeaturePluginStateMachine.h/.cpp</code>，理解状态迁移机制。</li>
+<li>回到 <code>GameFeatureData.h/.cpp</code> 与 <code>GameFeatureAction.h/.cpp</code>，落到执行层。</li>
+</ol>
+<p>建议补充断点：</p>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1043</code><br>
+<code>OnGameFeatureRegistering(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1076</code><br>
+<code>OnGameFeatureLoading(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1108</code><br>
+<code>OnGameFeatureActivating(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1146</code><br>
+<code>OnGameFeatureDeactivating(...)</code></li>
+</ul>
+<h2 id="工程化心智模型（伪代码）">工程化心智模型（伪代码）</h2>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 只表达分层关系，不是可编译代码</span></span><br><span class="line">Subsystem::<span class="built_in">ChangeTargetState</span>(URL, Target)</span><br><span class="line">&#123;</span><br><span class="line">    Machine = <span class="built_in">FindOrCreateMachine</span>(URL);</span><br><span class="line">    Machine-&gt;<span class="built_in">SetDestination</span>(<span class="built_in">TargetRange</span>(Target));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">StateMachine::<span class="built_in">OnReachLoaded</span>()</span><br><span class="line">&#123;</span><br><span class="line">    Data = <span class="built_in">LoadGameFeatureData</span>();</span><br><span class="line">    <span class="keyword">for</span> (Action in Data-&gt;Actions)</span><br><span class="line">    &#123;</span><br><span class="line">        Action-&gt;<span class="built_in">OnGameFeatureActivating</span>(Context);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个模型的重点是：业务行为只在 Action 层发生，状态收敛只在状态机层发生。</p>
+<h2 id="本篇结论">本篇结论</h2>
+<p>在 UE5.5 里，GameFeature 不是“插件换皮”，而是“功能编排系统”。<br>
+后续 2~4 篇我们会把它拆成三条硬链路：入口发现、状态机、Action 执行。</p>
+<h2 id="项目实录：我们什么时候决定把功能拆到-GameFeature">项目实录：我们什么时候决定把功能拆到 GameFeature</h2>
+<p>这个决策通常不是在架构评审会上做出来的，而是在一次次线上故障里被“逼出来”的。<br>
+下面这组现象，在多人项目里非常典型：</p>
+<ol>
+<li>节日玩法下线后，主线玩法还残留事件 Buff。</li>
+<li>一个活动 UI 关闭了，但输入映射没撤，热键冲突。</li>
+<li>临时回滚活动包时，不知道该改哪个模块、删哪段注册代码。</li>
+</ol>
+<p>当这些问题反复出现，说明你缺的是“可编排的功能边界”，不是“再多一个 if”。<br>
+GameFeature 的价值就在这里：把功能上线、停用、回滚做成显式状态，而不是散落在各个子系统里靠约定执行。</p>
+<h2 id="一套可落地的功能拆分法">一套可落地的功能拆分法</h2>
+<p>如果你准备把现有大模块拆成 GameFeature，我建议先按“功能和生命周期”而不是按“代码目录”拆：</p>
+<ol>
+<li>把“必须常驻”的能力留在基础模块（例如账号、匹配、核心战斗循环）。</li>
+<li>把“可启停”的玩法做成独立 Feature（例如限时模式、活动机制、联动内容）。</li>
+<li>把“只影响表现”的内容（UI、音效、局部输入）单独作为可降级层。</li>
+</ol>
+<p>拆分时做两个硬约束：</p>
+<ol>
+<li>每个 Feature 必须能独立停用并收敛，不影响主循环。</li>
+<li>任何跨 Feature 依赖都要显式记录，不允许“隐式全局单例”。</li>
+</ol>
+<h2 id="旗舰文阅读任务（建议按顺序做）">旗舰文阅读任务（建议按顺序做）</h2>
+<p>把这篇当成后续 7 篇的导读，不只是概念介绍。你可以照这个任务单走：</p>
+<ol>
+<li>在引擎源码里建立 GameFeatures 书签组：Subsystem、StateMachine、Data、Action。</li>
+<li>在你自己的项目里选一个“历史上最容易回滚失败”的玩法，尝试映射到 GameFeature 分层。</li>
+<li>画一张你团队自己的“功能边界图”：<br>
+常驻系统 / 可启停系统 / 纯表现扩展。</li>
+<li>用这张图反推过去三个月线上问题，看问题集中在哪一层。</li>
+</ol>
+<p>如果第四步做完，通常你会发现：<br>
+真正的故障热点大多在“可启停功能却没有状态机约束”的灰色区域。</p>
+<h2 id="断点剧本（入门但很实用）">断点剧本（入门但很实用）</h2>
+<p>这套剧本适合你第一次跟进 Feature 激活链路：</p>
+<ol>
+<li>断在 <code>OnGameFeatureRegistering</code>，确认插件是否真的进入注册阶段。</li>
+<li>断在 <code>OnGameFeatureLoading</code>，确认 Data 是否可读。</li>
+<li>断在 <code>OnGameFeatureActivating</code>，确认 Action 是否开始执行。</li>
+<li>断在 <code>OnGameFeatureDeactivating</code>，确认回收链路是否完整走完。</li>
+</ol>
+<p>每一步都记录三件事：</p>
+<ol>
+<li>插件 URL</li>
+<li>当前状态与目标状态</li>
+<li>当前世界上下文</li>
+</ol>
+<p>坚持记录两周后，你的排障速度会明显提高，因为你不再靠“猜是哪层坏了”。</p>
+<h2 id="附录：这篇的交付标准（给团队内部对齐用）">附录：这篇的交付标准（给团队内部对齐用）</h2>
+<p>如果你要把这篇真的转成团队执行标准，建议要求读者交三样东西：</p>
+<ol>
+<li>一张你项目的 GameFeature 边界图（模块、子系统、Feature 的责任线）。</li>
+<li>一份“可启停功能清单”（哪些内容允许热启停，哪些绝不能动）。</li>
+<li>一条完整激活链路录屏（从请求到 Action 生效再到停用收敛）。</li>
+</ol>
+<p>验收时不要只看“能不能跑通”，而要看“能不能解释清楚”：</p>
+<ol>
+<li>为什么这个功能该放在 Feature 而不是常驻模块。</li>
+<li>失败后会回到哪个稳定状态。</li>
+<li>回滚时会影响哪些玩家对象和世界对象。</li>
+</ol>
+<p>当团队成员都能把这三点说清楚，后面的章节学习速度会非常快。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前是本专栏的起点</span>
+                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
+                </div>
+                
+
+                
+                <a href="/2025/07/27/ue-gamefeature-notes/ue-gamefeature-02-discovery-policies-and-subsystem-bootstrap/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">入口与发现链路：插件描述、Project Policies、Subsystem 启动路径</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%88%E8%AE%B2%E2%80%9C%E8%BE%B9%E7%95%8C%E2%80%9D"><span class="post-toc-list-text">为什么先讲“边界”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8E%E4%BC%A0%E7%BB%9F%E6%A8%A1%E5%9D%97-%E5%AD%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E5%B7%A5%E5%B7%AE%E5%BC%82"><span class="post-toc-list-text">与传统模块&#x2F;子系统的分工差异</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-1%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 1）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E5%9B%9B%E7%B1%BB%E5%AF%B9%E8%B1%A1%E5%A6%82%E4%BD%95%E5%88%86%E5%B1%82%E5%8D%8F%E4%BD%9C"><span class="post-toc-list-text">原理下钻：四类对象如何分层协作</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E7%BA%BF%EF%BC%88%E9%95%BF%E6%96%87%E9%98%85%E8%AF%BB%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">源码主线（长文阅读顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%BF%83%E6%99%BA%E6%A8%A1%E5%9E%8B%EF%BC%88%E4%BC%AA%E4%BB%A3%E7%A0%81%EF%BC%89"><span class="post-toc-list-text">工程化心智模型（伪代码）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E5%AE%9E%E5%BD%95%EF%BC%9A%E6%88%91%E4%BB%AC%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%86%B3%E5%AE%9A%E6%8A%8A%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%B0-GameFeature"><span class="post-toc-list-text">项目实录：我们什么时候决定把功能拆到 GameFeature</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E8%90%BD%E5%9C%B0%E7%9A%84%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%86%E6%B3%95"><span class="post-toc-list-text">一套可落地的功能拆分法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%97%E8%88%B0%E6%96%87%E9%98%85%E8%AF%BB%E4%BB%BB%E5%8A%A1%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%8C%89%E9%A1%BA%E5%BA%8F%E5%81%9A%EF%BC%89"><span class="post-toc-list-text">旗舰文阅读任务（建议按顺序做）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%88%E5%85%A5%E9%97%A8%E4%BD%86%E5%BE%88%E5%AE%9E%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">断点剧本（入门但很实用）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E8%BF%99%E7%AF%87%E7%9A%84%E4%BA%A4%E4%BB%98%E6%A0%87%E5%87%86%EF%BC%88%E7%BB%99%E5%9B%A2%E9%98%9F%E5%86%85%E9%83%A8%E5%AF%B9%E9%BD%90%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">附录：这篇的交付标准（给团队内部对齐用）</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

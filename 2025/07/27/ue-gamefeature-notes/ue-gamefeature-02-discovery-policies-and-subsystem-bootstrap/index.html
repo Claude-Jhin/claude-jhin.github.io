@@ -1,0 +1,382 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>入口与发现链路：插件描述、Project Policies、Subsystem 启动路径 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">入口与发现链路：插件描述、Project Policies、Subsystem 启动路径</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.07.27
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#GameFeature</span>
+            
+            <span style="color: var(--accent);">#Lyra</span>
+            
+            <span style="color: var(--accent);">#ProjectPolicy</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <div class="series-meta">
+                <span>第 2 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 25%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%9B%9E%E7%AD%94%E4%B8%80%E4%B8%AA%E9%AB%98%E9%A2%91%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">先回答一个高频问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%9D%A1%E9%93%BE%E8%B7%AF%E7%9A%84%E5%B7%A5%E7%A8%8B%E6%84%8F%E4%B9%89"><span class="post-toc-list-text">这条链路的工程意义</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-2%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 2）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AURL-%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%8F%92%E4%BB%B6%E5%8F%91%E7%8E%B0%E4%B8%8D%E6%98%AF%E4%B8%80%E4%BB%B6%E4%BA%8B"><span class="post-toc-list-text">原理下钻：URL 协议与插件发现不是一件事</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E5%85%A5%E5%8F%A3%E9%93%BE%E8%B7%AF%E8%A1%A5%E5%85%85%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（入口链路补充）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%90%AF%E5%8A%A8%E9%A1%BA%E5%BA%8F%E4%B8%AD%E7%9A%84%E5%85%B3%E9%94%AE%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">启动顺序中的关键细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E7%AD%96%E7%95%A5%EF%BC%88%E6%8E%A8%E8%8D%90%E6%96%AD%E7%82%B9%E5%BA%8F%E5%88%97%EF%BC%89"><span class="post-toc-list-text">调试策略（推荐断点序列）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BC%AA%E4%BB%A3%E7%A0%81%E8%BF%98%E5%8E%9F%EF%BC%9A%E5%85%A5%E5%8F%A3%E5%88%B0%E5%87%86%E5%85%A5"><span class="post-toc-list-text">伪代码还原：入口到准入</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E7%9C%9F%E5%AE%9E%E6%8E%92%E9%9A%9C%EF%BC%9A%E6%8F%92%E4%BB%B6%E6%98%8E%E6%98%8E%E5%9C%A8%E7%9B%AE%E5%BD%95%E9%87%8C%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E5%B0%B1%E6%98%AF%E4%B8%8D%E5%8A%A0%E8%BD%BD"><span class="post-toc-list-text">一次真实排障：插件明明在目录里，为什么就是不加载</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Policy-%E8%AE%BE%E8%AE%A1%E5%BB%BA%E8%AE%AE%EF%BC%9A%E4%B8%8D%E8%A6%81%E6%8A%8A%E4%B8%9A%E5%8A%A1%E5%88%A4%E6%96%AD%E5%86%99%E6%AD%BB%E5%9C%A8-Action-%E9%87%8C"><span class="post-toc-list-text">Policy 设计建议：不要把业务判断写死在 Action 里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#URL-%E5%8D%8F%E8%AE%AE%E5%B1%82%E7%9A%84%E5%9D%91%E4%BD%8D%E6%B8%85%E5%8D%95"><span class="post-toc-list-text">URL 协议层的坑位清单</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5%E8%B4%B4%E5%88%B0%E9%A1%B9%E7%9B%AE-Wiki%EF%BC%89"><span class="post-toc-list-text">调试清单（建议直接贴到项目 Wiki）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E5%81%9A%E4%B8%80%E6%AC%A1%E2%80%9C%E7%AD%96%E7%95%A5%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E2%80%9D"><span class="post-toc-list-text">进阶练习：做一次“策略灰度发布”</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h2 id="先回答一个高频问题">先回答一个高频问题</h2>
+<p>“为什么同一份 GameFeature，在 A 项目自动加载，在 B 项目不加载？”</p>
+<p>答案通常不在 <code>GameFeatureData</code> 本身，而在 <code>Project Policies</code>。<br>
+UE 在 Subsystem 初始化时，会把“要不要加载、加载客户端还是服务端数据、何时加载”交给策略对象决定。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;UEngineSubsystem Init&quot;] --&gt; B[&quot;UGameFeaturesSubsystem 初始化&quot;]</span><br><span class="line">    B --&gt; C[&quot;创建/初始化 Project Policies&quot;]</span><br><span class="line">    C --&gt; D[&quot;InitGameFeatureManager()&quot;]</span><br><span class="line">    D --&gt; E[&quot;LoadBuiltInGameFeaturePlugins()&quot;]</span><br><span class="line">    E --&gt; F[&quot;按策略筛选 Built-in GameFeature&quot;]</span><br><span class="line">    F --&gt; G[&quot;创建状态机并进入目标状态区间&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="关键函数定位">关键函数定位</h2>
+<ol>
+<li><code>UGameFeaturesSubsystem</code> 初始化期间会绑定调试命令与策略初始化。</li>
+<li><code>UGameFeaturesProjectPolicies</code> 决定加载模式（Client/Server）。</li>
+<li><code>LoadBuiltInGameFeaturePlugins</code> 负责批量扫描并驱动加载。</li>
+</ol>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:351</code><br>
+<code>Initializing game features subsystem</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:375</code><br>
+注册控制台命令 <code>ListGameFeaturePlugins</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:496</code><br>
+调用 <code>InitGameFeatureManager()</code> 前设置策略初始化标记</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2119</code><br>
+<code>LoadBuiltInGameFeaturePlugins(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesProjectPolicies.h:15</code><br>
+<code>class UGameFeaturesProjectPolicies</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesProjectPolicies.cpp:10</code><br>
+<code>UDefaultGameFeaturesProjectPolicies::InitGameFeatureManager()</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesProjectPolicies.cpp:28</code><br>
+<code>GetGameFeatureLoadingMode(bool&amp; bLoadClientData, bool&amp; bLoadServerData)</code></li>
+</ul>
+<h2 id="这条链路的工程意义">这条链路的工程意义</h2>
+<p>入口链路决定了三件大事：</p>
+<ol>
+<li>哪些插件会被发现并进入候选集。</li>
+<li>哪些环境（Client/DedicatedServer）真正加载对应数据。</li>
+<li>你的项目是否有机会在最前面做“禁用、降级、灰度”。</li>
+</ol>
+<p>如果你要做线上热更治理，第一刀应该切在 Policy，而不是在 Action 里打补丁。</p>
+<h2 id="Lyra-最小复现（实验-2）">Lyra 最小复现（实验 2）</h2>
+<p>目标：验证“策略优先级高于内容配置”。</p>
+<ol>
+<li>准备两个 GameFeature：<code>GF_CombatCore</code>、<code>GF_EventMode</code>。</li>
+<li>在自定义 Project Policies 里临时过滤 <code>GF_EventMode</code>。</li>
+<li>启动项目后执行 <code>ListGameFeaturePlugins</code>，确认它未进入预期激活路径。</li>
+<li>放开过滤规则，再次启动并比对状态变化。</li>
+</ol>
+<p>这个实验可以直接套在 Lyra 项目分支上，效果最直观。</p>
+<h2 id="常见坑与检查项">常见坑与检查项</h2>
+<ol>
+<li>忽略 <code>GetGameFeatureLoadingMode</code>，导致 Dedicated Server 加载了不需要的 Client 资源。</li>
+<li>把环境差异放在 Action 里硬判断，长期维护成本高。</li>
+<li>缺少统一 <code>ListGameFeaturePlugins</code> 快照，排障时无法证明“到底有没有被加载器看见”。</li>
+</ol>
+<h2 id="原理下钻：URL-协议与插件发现不是一件事">原理下钻：URL 协议与插件发现不是一件事</h2>
+<p>很多文章会把“插件发现”写成单一步骤，但在 UE5.5 里至少分两段：</p>
+<ol>
+<li>解析 URL 协议（<code>file:</code> / <code>installbundle:</code>）并提取路径与选项。</li>
+<li>根据策略过滤和当前环境决定是否创建状态机并驱动目标状态。</li>
+</ol>
+<p>你可以把它理解成“寻址 + 准入”两层：</p>
+<ol>
+<li>寻址层回答“它是谁、在哪里”。</li>
+<li>准入层回答“现在应不应该让它进入加载流程”。</li>
+</ol>
+<h2 id="更细源码锚点（入口链路补充）">更细源码锚点（入口链路补充）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesSubsystem.h:473</code><br>
+<code>GetPluginURLProtocol(FStringView PluginURL)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesSubsystem.h:479</code><br>
+<code>ParsePluginURL(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeaturesSubsystem.h:482</code><br>
+<code>ParsePluginURLOptions(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:775</code><br>
+<code>GetPluginURLProtocol(...)</code> 实现</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:792</code><br>
+<code>ParsePluginURL(...)</code> 实现</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:935</code><br>
+<code>ParsePluginURLOptions(...)</code> 实现</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:2895</code><br>
+<code>FindOrCreateGameFeaturePluginStateMachine(...)</code></li>
+</ul>
+<h2 id="启动顺序中的关键细节">启动顺序中的关键细节</h2>
+<p><code>InitGameFeatureManager()</code> 在策略层执行，这意味着你可以在“任何 Feature 进入状态机之前”统一做项目级治理：</p>
+<ol>
+<li>版本闸门（黑白名单）</li>
+<li>环境闸门（Client/Server）</li>
+<li>灰度闸门（分平台、分构建）</li>
+</ol>
+<p>这比在 Action 层做 if/else 更稳定，因为 Action 运行时很多副作用已经发生。</p>
+<h2 id="调试策略（推荐断点序列）">调试策略（推荐断点序列）</h2>
+<ol>
+<li>断在 <code>ParsePluginURL</code>，确认 URL 和选项解析是否符合预期。</li>
+<li>断在 <code>GetGameFeatureLoadingMode</code>，确认 Client/Server 加载模式。</li>
+<li>断在 <code>LoadBuiltInGameFeaturePlugins</code>，确认候选集合规模。</li>
+<li>断在 <code>FindOrCreateGameFeaturePluginStateMachine</code>，确认最终准入结果。</li>
+</ol>
+<p>如果 1~3 都正确而 4 没被命中，问题通常是策略过滤或插件合法性检查。</p>
+<h2 id="伪代码还原：入口到准入">伪代码还原：入口到准入</h2>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 只表达关键步骤</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">InitGameFeatureManager</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Policy-&gt;<span class="built_in">InitGameFeatureManager</span>();</span><br><span class="line">    <span class="comment">// Policy 内通常会触发 LoadBuiltInGameFeaturePlugins</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">LoadBuiltInGameFeaturePlugins</span><span class="params">(...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (Plugin : BuiltInPlugins)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">PolicyAllows</span>(Plugin)) <span class="keyword">continue</span>;</span><br><span class="line">        URL = <span class="built_in">BuildPluginURL</span>(Plugin);</span><br><span class="line">        Machine = <span class="built_in">FindOrCreateMachine</span>(URL);</span><br><span class="line">        <span class="built_in">ChangeDestination</span>(Machine, DesiredRange);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段伪代码强调一件事：<br>
+真正的“准入”点在 <code>PolicyAllows + FindOrCreateMachine</code>，不是插件文件是否存在。</p>
+<h2 id="本篇结论">本篇结论</h2>
+<p>GameFeature 的“入口治理”是项目级能力，不是单个插件能力。<br>
+下一篇我们进入状态机内核，看 <code>Installed/Registered/Loaded/Active</code> 到底如何被驱动和回滚。</p>
+<h2 id="一次真实排障：插件明明在目录里，为什么就是不加载">一次真实排障：插件明明在目录里，为什么就是不加载</h2>
+<p>这类问题在团队里非常高发，排查顺序如果不固定，很容易花一下午还没有结果。<br>
+我通常按下面四步查：</p>
+<ol>
+<li>URL 是否被正确构造（<code>file:</code> 还是 <code>installbundle:</code>）。</li>
+<li>Policy 是否放行（环境、平台、构建配置）。</li>
+<li>Descriptor 是否被识别为合法 GameFeature 插件。</li>
+<li>是否真正创建了状态机并开始转移。</li>
+</ol>
+<p>只有四步都过了，才值得去看后面的 Action 逻辑。<br>
+否则你会在执行层绕圈子，越查越乱。</p>
+<h2 id="Policy-设计建议：不要把业务判断写死在-Action-里">Policy 设计建议：不要把业务判断写死在 Action 里</h2>
+<p>更稳妥的实践是把“准入条件”尽量前置到 Policy：</p>
+<ol>
+<li>客户端是否加载某类活动资源。</li>
+<li>Dedicated Server 是否跳过纯表现 Feature。</li>
+<li>特定平台是否禁用某组 Feature。</li>
+</ol>
+<p>这么做的好处是：</p>
+<ol>
+<li>策略可集中审计。</li>
+<li>线上开关更可控。</li>
+<li>业务 Action 更纯粹，减少条件分叉。</li>
+</ol>
+<h2 id="URL-协议层的坑位清单">URL 协议层的坑位清单</h2>
+<p>这一段建议你放进长文，读者会很有共鸣：</p>
+<ol>
+<li><code>file:</code> URL 路径转义问题（空格、大小写、相对路径）。</li>
+<li><code>installbundle:</code> 选项缺失导致无法解析 Bundles。</li>
+<li>额外选项键名不一致，解析成功但语义失效。</li>
+<li>插件名称和描述文件名称不一致，后续依赖解析异常。</li>
+</ol>
+<p>上面任何一个都会表现成“看起来像加载器坏了”，实际上是输入不规范。</p>
+<h2 id="调试清单（建议直接贴到项目-Wiki）">调试清单（建议直接贴到项目 Wiki）</h2>
+<ol>
+<li>启动前：记录当前平台、运行模式、构建配置。</li>
+<li>启动中：抓 <code>ListGameFeaturePlugins</code> 快照。</li>
+<li>启动后：记录每个候选插件是否进入状态机。</li>
+<li>失败时：保存 URL、Policy 判定结果、Descriptor 解析日志。</li>
+</ol>
+<p>这份清单越早固化，团队后期越省时间。</p>
+<h2 id="进阶练习：做一次“策略灰度发布”">进阶练习：做一次“策略灰度发布”</h2>
+<p>练习目标：不改业务 Action，仅靠 Policy 完成灰度。</p>
+<ol>
+<li>选择一个低风险 Feature，先在本地与测试服放行。</li>
+<li>对正式服保持过滤，验证行为隔离。</li>
+<li>再逐步放量，期间只改 Policy，不改 Action。</li>
+<li>观察日志与状态机轨迹，确认灰度路径可回滚。</li>
+</ol>
+<p>这个练习做完后，你就会真正理解“入口治理”为什么比“执行层修补”重要。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/07/06/ue-gamefeature-notes/ue-gamefeature-01-why-gamefeature-and-module-boundary/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 1 篇</span>
+                    <strong class="series-nav-title">为什么是 GameFeature：模块化边界、运行时装配与对象关系图</strong>
+                </a>
+                
+
+                
+                <a href="/2025/08/24/ue-gamefeature-notes/ue-gamefeature-03-state-machine-installed-registered-loaded-active/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">状态机内核：Installed / Registered / Loaded / Active 与回滚语义</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%9B%9E%E7%AD%94%E4%B8%80%E4%B8%AA%E9%AB%98%E9%A2%91%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">先回答一个高频问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%9D%A1%E9%93%BE%E8%B7%AF%E7%9A%84%E5%B7%A5%E7%A8%8B%E6%84%8F%E4%B9%89"><span class="post-toc-list-text">这条链路的工程意义</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-2%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 2）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AURL-%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%8F%92%E4%BB%B6%E5%8F%91%E7%8E%B0%E4%B8%8D%E6%98%AF%E4%B8%80%E4%BB%B6%E4%BA%8B"><span class="post-toc-list-text">原理下钻：URL 协议与插件发现不是一件事</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E5%85%A5%E5%8F%A3%E9%93%BE%E8%B7%AF%E8%A1%A5%E5%85%85%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（入口链路补充）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%90%AF%E5%8A%A8%E9%A1%BA%E5%BA%8F%E4%B8%AD%E7%9A%84%E5%85%B3%E9%94%AE%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">启动顺序中的关键细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E7%AD%96%E7%95%A5%EF%BC%88%E6%8E%A8%E8%8D%90%E6%96%AD%E7%82%B9%E5%BA%8F%E5%88%97%EF%BC%89"><span class="post-toc-list-text">调试策略（推荐断点序列）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BC%AA%E4%BB%A3%E7%A0%81%E8%BF%98%E5%8E%9F%EF%BC%9A%E5%85%A5%E5%8F%A3%E5%88%B0%E5%87%86%E5%85%A5"><span class="post-toc-list-text">伪代码还原：入口到准入</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E7%9C%9F%E5%AE%9E%E6%8E%92%E9%9A%9C%EF%BC%9A%E6%8F%92%E4%BB%B6%E6%98%8E%E6%98%8E%E5%9C%A8%E7%9B%AE%E5%BD%95%E9%87%8C%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E5%B0%B1%E6%98%AF%E4%B8%8D%E5%8A%A0%E8%BD%BD"><span class="post-toc-list-text">一次真实排障：插件明明在目录里，为什么就是不加载</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Policy-%E8%AE%BE%E8%AE%A1%E5%BB%BA%E8%AE%AE%EF%BC%9A%E4%B8%8D%E8%A6%81%E6%8A%8A%E4%B8%9A%E5%8A%A1%E5%88%A4%E6%96%AD%E5%86%99%E6%AD%BB%E5%9C%A8-Action-%E9%87%8C"><span class="post-toc-list-text">Policy 设计建议：不要把业务判断写死在 Action 里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#URL-%E5%8D%8F%E8%AE%AE%E5%B1%82%E7%9A%84%E5%9D%91%E4%BD%8D%E6%B8%85%E5%8D%95"><span class="post-toc-list-text">URL 协议层的坑位清单</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%B8%85%E5%8D%95%EF%BC%88%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5%E8%B4%B4%E5%88%B0%E9%A1%B9%E7%9B%AE-Wiki%EF%BC%89"><span class="post-toc-list-text">调试清单（建议直接贴到项目 Wiki）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E5%81%9A%E4%B8%80%E6%AC%A1%E2%80%9C%E7%AD%96%E7%95%A5%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E2%80%9D"><span class="post-toc-list-text">进阶练习：做一次“策略灰度发布”</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

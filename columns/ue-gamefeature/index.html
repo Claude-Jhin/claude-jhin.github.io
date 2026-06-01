@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE5 GameFeature 原理与源码拆解 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/columns" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回专栏
+    </a>
+</div>
+
+<article class="post-container module column-shell">
+    
+    <header class="column-hero">
+        <div class="column-hero-top">
+            <div>
+                <p class="columns-kicker">系列内容</p>
+                <h1 class="columns-title">UE5 GameFeature 原理与源码拆解</h1>
+            </div>
+            <span class="column-badge is-complete">已完结</span>
+        </div>
+
+        <p class="columns-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+
+        <div class="column-overview-meta">
+            <span>当前阶段：2025.07 - 2025.12 旗舰连载</span>
+            <span>已发布 8 / 8</span>
+        </div>
+
+        <div class="column-progress large" aria-hidden="true">
+            <span style="width: 100%"></span>
+        </div>
+    </header>
+
+    
+    <section class="column-section">
+        <h2 class="column-section-title">这一栏想解决什么</h2>
+        <ul class="column-goals">
+            
+            <li>建立 UGameFeaturesSubsystem、UGameFeatureData、UGameFeatureAction 与状态机之间的统一心智模型</li>
+            
+            <li>用 Lyra 风格的最小复现实验串联组件注入、输入/UI/能力扩展的工程做法</li>
+            
+            <li>形成覆盖激活失败、依赖缺失、Cook 丢资源与多人不一致的排障闭环</li>
+            
+        </ul>
+    </section>
+    
+
+    
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">系列大纲</h2>
+            <p class="column-section-note">后续文章会沿着这条路线持续补齐。</p>
+        </div>
+
+        <div class="column-outline">
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">1</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">为什么是 GameFeature：模块化边界、运行时装配与对象关系图</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">讲清 GameFeature 解决的问题域，以及它与传统模块、子系统扩展方式的职责分界。</p>
+                    
+                    <a class="column-outline-link" href="/2025/07/06/ue-gamefeature-notes/ue-gamefeature-01-why-gamefeature-and-module-boundary/">为什么是 GameFeature：模块化边界、运行时装配与对象关系图 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">2</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">入口与发现链路：插件描述、Project Policies、Subsystem 启动路径</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">追踪 GameFeature 从引擎启动到内置插件扫描、策略过滤与批量加载的完整入口链路。</p>
+                    
+                    <a class="column-outline-link" href="/2025/07/27/ue-gamefeature-notes/ue-gamefeature-02-discovery-policies-and-subsystem-bootstrap/">入口与发现链路：插件描述、Project Policies、Subsystem 启动路径 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">3</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">状态机内核：Installed / Registered / Loaded / Active 与回滚语义</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">拆解状态机目标区间、取消重入、依赖联动与失败收敛，解释为什么“切状态”不是一次函数调用。</p>
+                    
+                    <a class="column-outline-link" href="/2025/08/24/ue-gamefeature-notes/ue-gamefeature-03-state-machine-installed-registered-loaded-active/">状态机内核：Installed / Registered / Loaded / Active 与回滚语义 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">4</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">读通 Action 生命周期、上下文过滤、资产束补充与依赖影响，把配置驱动的执行链条读透。</p>
+                    
+                    <a class="column-outline-link" href="/2025/09/21/ue-gamefeature-notes/ue-gamefeature-04-gamefeaturedata-and-action-framework/">GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">5</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">还原 AddComponents 如何借助 GameFrameworkComponentManager 把组件请求注入到目标 Actor 类。</p>
+                    
+                    <a class="column-outline-link" href="/2025/10/19/ue-gamefeature-notes/ue-gamefeature-05-addcomponents-and-modulargameplay-bridge/">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">6</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">以 Lyra 风格扩展为参照，讲清输入映射、界面挂载与能力授予在激活/停用时的收敛策略。</p>
+                    
+                    <a class="column-outline-link" href="/2025/11/09/ue-gamefeature-notes/ue-gamefeature-06-lyra-input-ui-ability-extension-points/">输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">7</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">多人网络边界（Lyra 案例 3）：激活权威、客户端一致性与复制约束</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">聚焦 Client/Server 负载模式、激活时序与复制边界，避免多人下“有人生效有人失效”。</p>
+                    
+                    <a class="column-outline-link" href="/2025/11/30/ue-gamefeature-notes/ue-gamefeature-07-multiplayer-authority-consistency-and-replication-boundary/">多人网络边界（Lyra 案例 3）：激活权威、客户端一致性与复制约束 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">8</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">把上线链路中的资源收集、安装包分发、日志观测与回归基线沉淀成可执行清单。</p>
+                    
+                    <a class="column-outline-link" href="/2025/12/21/ue-gamefeature-notes/ue-gamefeature-08-cook-hotfix-troubleshooting-and-regression-checklist/">打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单 -></a>
+                    
+                </div>
+            </article>
+            
+        </div>
+    </section>
+    
+
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">已发布文章</h2>
+            <p class="column-section-note">按专栏顺序排列，适合从上往下连续阅读。</p>
+        </div>
+
+        
+        <div class="archive-list column-post-list">
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 1 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/07/06/ue-gamefeature-notes/ue-gamefeature-01-why-gamefeature-and-module-boundary/">为什么是 GameFeature：模块化边界、运行时装配与对象关系图</a>
+                    <span class="post-meta">2025.07.06</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 2 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/07/27/ue-gamefeature-notes/ue-gamefeature-02-discovery-policies-and-subsystem-bootstrap/">入口与发现链路：插件描述、Project Policies、Subsystem 启动路径</a>
+                    <span class="post-meta">2025.07.27</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 3 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/08/24/ue-gamefeature-notes/ue-gamefeature-03-state-machine-installed-registered-loaded-active/">状态机内核：Installed / Registered / Loaded / Active 与回滚语义</a>
+                    <span class="post-meta">2025.08.24</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 4 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/09/21/ue-gamefeature-notes/ue-gamefeature-04-gamefeaturedata-and-action-framework/">GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制</a>
+                    <span class="post-meta">2025.09.21</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 5 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/10/19/ue-gamefeature-notes/ue-gamefeature-05-addcomponents-and-modulargameplay-bridge/">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接</a>
+                    <span class="post-meta">2025.10.19</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 6 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/11/09/ue-gamefeature-notes/ue-gamefeature-06-lyra-input-ui-ability-extension-points/">输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层</a>
+                    <span class="post-meta">2025.11.09</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 7 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/11/30/ue-gamefeature-notes/ue-gamefeature-07-multiplayer-authority-consistency-and-replication-boundary/">多人网络边界（Lyra 案例 3）：激活权威、客户端一致性与复制约束</a>
+                    <span class="post-meta">2025.11.30</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 8 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/12/21/ue-gamefeature-notes/ue-gamefeature-08-cook-hotfix-troubleshooting-and-regression-checklist/">打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单</a>
+                    <span class="post-meta">2025.12.21</span>
+                </div>
+            </div>
+            
+        </div>
+        
+    </section>
+    
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

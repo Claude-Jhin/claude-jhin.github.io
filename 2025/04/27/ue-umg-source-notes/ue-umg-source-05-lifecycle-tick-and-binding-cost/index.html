@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>生命周期与绑定成本：Initialize/Construct/Tick/Binding 真相 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">生命周期与绑定成本：Initialize/Construct/Tick/Binding 真相</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.04.27
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UMG</span>
+            
+            <span style="color: var(--accent);">#生命周期</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 UMG 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 UMG/Slate 体系，从创建、实例化、输入路由、生命周期、布局、渲染、池化到崩溃排障，形成一条可复用的源码学习与工程落地主线。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 9 / 9</span>
+                
+                <span>阶段：2025.03 - 2025.06 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 56%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-umg-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E7%BB%91%E5%AE%9A%E6%94%B9%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E5%89%8D%E5%90%8E%E5%AF%B9%E6%AF%94"><span class="post-toc-list-text">实验 A：绑定改事件驱动前后对比</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9AConstruct-%E9%87%8C%E5%86%99%E4%B8%80%E6%AC%A1%E6%80%A7%E5%88%9D%E5%A7%8B%E5%8C%96%E6%9C%80%E7%A8%B3"><span class="post-toc-list-text">坑 1：Construct 里写一次性初始化最稳</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%89%80%E6%9C%89%E6%98%BE%E7%A4%BA%E5%AD%97%E6%AE%B5%E9%83%BD%E7%94%A8-Binding-%E6%9C%80%E4%BC%98%E9%9B%85"><span class="post-toc-list-text">坑 2：所有显示字段都用 Binding 最优雅</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9AUI-Tick-%E5%BC%80%E7%9D%80%E4%B9%9F%E6%B2%A1%E4%BA%8B%EF%BC%8C%E5%8F%8D%E6%AD%A3%E9%80%BB%E8%BE%91%E5%BE%88%E8%BD%BB"><span class="post-toc-list-text">坑 3：UI Tick 开着也没事，反正逻辑很轻</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>本文主题：哪些回调只跑一次，哪些逻辑是每帧持续成本<br>
+核心问题：为什么“只是绑了几个值”就把 UI 帧时间吃掉了？</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>有一阵子我看 stat slate 总觉得不对：UI 没多复杂，帧时间却很实在地往上涨。<br>
+最后拆出来看，问题不在控件数量，而在生命周期边界和绑定策略。</p>
+<p>这篇会把 Initialize/Construct/Tick/Binding 的职责线重新画一遍，<br>
+让“该一次做完的事”和“不得不每帧做的事”彻底分家。</p>
+<h2 id="先把主线拉直">先把主线拉直</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;UUserWidget::Initialize&quot;] --&gt; B[&quot;UWidgetBlueprintGeneratedClass::InitializeWidget&quot;]</span><br><span class="line">    B --&gt; C[&quot;OnInitialized / NativeOnInitialized&quot;]</span><br><span class="line">    C --&gt; D[&quot;Construct / NativeConstruct&quot;]</span><br><span class="line">    D --&gt; E[&quot;Tick / NativeTick（按条件）&quot;]</span><br><span class="line">    E --&gt; F[&quot;PropertyBinding 执行与刷新&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="本篇我会盯的源码位置（UE5-5）">本篇我会盯的源码位置（UE5.5）</h2>
+<ol>
+<li><code>Engine/Source/Runtime/UMG/Private/UserWidget.cpp</code><br>
+<code>UUserWidget::Initialize</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/UserWidget.cpp</code><br>
+<code>UUserWidget::UpdateCanTick</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/WidgetBlueprintGeneratedClass.cpp</code><br>
+<code>UWidgetBlueprintGeneratedClass::InitializeWidget</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/Binding/PropertyBinding.cpp</code><br>
+<code>UPropertyBinding::Bind</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/Binding/FloatBinding.cpp</code><br>
+数值绑定典型路径</li>
+</ol>
+<h2 id="我常用的断点走法">我常用的断点走法</h2>
+<ol>
+<li>在 <code>Initialize</code> 下断，确认是否只执行一次。</li>
+<li>在 <code>NativeConstruct</code> 下断，确认是否有重复构建导致的多次触发。</li>
+<li>在 <code>UpdateCanTick</code> 下断，确认 Widget 是否被意外开启 Tick。</li>
+<li>在 <code>UPropertyBinding::Bind</code> 下断，核对绑定对象和访问路径。</li>
+</ol>
+<h2 id="先看这一段源码">先看这一段源码</h2>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// UserWidget.h（语义）</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">Initialize</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UpdateCanTick</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<p>理解这篇的关键结论：</p>
+<ol>
+<li>一次性初始化逻辑应该集中在 <code>Initialize/OnInitialized</code>。</li>
+<li><code>Construct</code> 更接近 Slate 生命周期，不等于只执行一次。</li>
+<li>高频数据刷新应事件驱动，避免不必要的绑定轮询。</li>
+</ol>
+<h2 id="最小复现实验（含反证）">最小复现实验（含反证）</h2>
+<h3 id="实验-A：绑定改事件驱动前后对比">实验 A：绑定改事件驱动前后对比</h3>
+<ol>
+<li>准备 100 个条目控件，每个条目含 2~3 个绑定字段。</li>
+<li>记录基线：原始绑定方案的 UI 帧耗时。</li>
+<li>把其中一半改为事件推送（属性变化时主动更新）。</li>
+<li>对比 <code>stat slate</code> 或 Insights 里的 UI 开销变化。</li>
+</ol>
+<p>预期：<br>
+事件驱动方案在数据稳定帧的成本明显低于轮询绑定方案。</p>
+<p>反证：<br>
+若“绑定零成本”成立，改写前后 UI 线程数据不应有可观差异。</p>
+<h2 id="我在项目里反复见到的-3-个坑">我在项目里反复见到的 3 个坑</h2>
+<h3 id="坑-1：Construct-里写一次性初始化最稳">坑 1：<code>Construct</code> 里写一次性初始化最稳</h3>
+<ul>
+<li>根因：忽略 Construct 可能多次发生（重建/复用路径）。</li>
+<li>修正：一次性逻辑放 <code>OnInitialized</code>，Construct 只做展示态装配。</li>
+</ul>
+<h3 id="坑-2：所有显示字段都用-Binding-最优雅">坑 2：所有显示字段都用 Binding 最优雅</h3>
+<ul>
+<li>根因：Binding 用多了会形成稳定的每帧开销。</li>
+<li>修正：静态或低频字段改为事件更新；高频字段集中批量推送。</li>
+</ul>
+<h3 id="坑-3：UI-Tick-开着也没事，反正逻辑很轻">坑 3：UI Tick 开着也没事，反正逻辑很轻</h3>
+<ul>
+<li>根因：单个 Tick 轻，不代表规模化后还轻。</li>
+<li>修正：审计 <code>UpdateCanTick</code>，默认关 Tick，必要控件局部开。</li>
+</ul>
+<h2 id="现场排查顺序">现场排查顺序</h2>
+<ol>
+<li>检查一次性逻辑是否误放在 Construct/Tick。</li>
+<li>检查是否存在大量无效 Binding。</li>
+<li>检查 <code>NativeTick</code> 是否在意料之外开启。</li>
+<li>检查条目类控件是否重复绑定同一数据源。</li>
+<li>检查刷新链是否可改为事件驱动。</li>
+</ol>
+<h2 id="这一篇要带走什么">这一篇要带走什么</h2>
+<p>UMG 性能的第一分水岭不是“控件数量”，而是“生命周期边界是否清晰”。<br>
+把初始化、构建、每帧刷新拆干净，再谈优化，效率会高很多。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-umg-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/04/13/ue-umg-source-notes/ue-umg-source-04-input-routing-and-focus-system/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">输入路由与焦点系统：事件如何到达 UMG</strong>
+                </a>
+                
+
+                
+                <a href="/2025/05/11/ue-umg-source-notes/ue-umg-source-06-layout-prepass-geometry-dpi/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">布局内核：Prepass、DesiredSize、Geometry、DPI 缩放</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E7%BB%91%E5%AE%9A%E6%94%B9%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E5%89%8D%E5%90%8E%E5%AF%B9%E6%AF%94"><span class="post-toc-list-text">实验 A：绑定改事件驱动前后对比</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9AConstruct-%E9%87%8C%E5%86%99%E4%B8%80%E6%AC%A1%E6%80%A7%E5%88%9D%E5%A7%8B%E5%8C%96%E6%9C%80%E7%A8%B3"><span class="post-toc-list-text">坑 1：Construct 里写一次性初始化最稳</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%89%80%E6%9C%89%E6%98%BE%E7%A4%BA%E5%AD%97%E6%AE%B5%E9%83%BD%E7%94%A8-Binding-%E6%9C%80%E4%BC%98%E9%9B%85"><span class="post-toc-list-text">坑 2：所有显示字段都用 Binding 最优雅</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9AUI-Tick-%E5%BC%80%E7%9D%80%E4%B9%9F%E6%B2%A1%E4%BA%8B%EF%BC%8C%E5%8F%8D%E6%AD%A3%E9%80%BB%E8%BE%91%E5%BE%88%E8%BD%BB"><span class="post-toc-list-text">坑 3：UI Tick 开着也没事，反正逻辑很轻</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

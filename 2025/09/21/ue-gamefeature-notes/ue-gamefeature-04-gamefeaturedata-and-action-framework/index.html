@@ -1,0 +1,415 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.09.21
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UE5</span>
+            
+            <span style="color: var(--accent);">#GameFeature</span>
+            
+            <span style="color: var(--accent);">#Lyra</span>
+            
+            <span style="color: var(--accent);">#AssetManager</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <div class="series-meta">
+                <span>第 4 篇</span>
+                <span>已发布 8 / 8</span>
+                
+                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 50%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8B%86%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">先拆角色</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%BA%E5%BA%8F%E6%8E%A7%E5%88%B6%E7%9A%84%E6%A0%B8%E5%BF%83%E8%A7%82%E7%82%B9"><span class="post-toc-list-text">顺序控制的核心观点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E8%BF%87%E6%BB%A4%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">上下文过滤为什么关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-4%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 4）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AAction-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%8D%E5%8F%AA-Activating-Deactivating"><span class="post-toc-list-text">原理下钻：Action 生命周期不只 Activating&#x2F;Deactivating</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F%E4%B8%8E%E5%A4%B1%E8%B4%A5%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">执行顺序与失败策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%AD%E4%B9%89%EF%BC%9A%E5%A4%9A%E4%B8%96%E7%95%8C%E4%B8%8B%E7%9A%84%E5%86%B3%E5%AE%9A%E6%80%A7%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">上下文语义：多世界下的决定性边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E7%AD%96%E7%95%A5%EF%BC%88%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">调试策略（建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%80%E7%AF%87%E6%98%AF%E2%80%9C%E5%B7%A5%E7%A8%8B%E5%88%86%E6%B0%B4%E5%B2%AD%E2%80%9D"><span class="post-toc-list-text">为什么这一篇是“工程分水岭”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Action-%E7%BC%96%E6%8E%92%E7%9A%84%E5%AE%9E%E7%94%A8%E8%A7%84%E5%88%99%EF%BC%88%E4%B8%8D%E6%98%AF%E6%95%99%E6%9D%A1%EF%BC%89"><span class="post-toc-list-text">Action 编排的实用规则（不是教条）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E8%A1%A8%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%94%BE%E6%AD%A3%E6%96%87%EF%BC%89"><span class="post-toc-list-text">生命周期表（建议放正文）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%9A%E5%AE%9A%E4%BD%8D%E2%80%9C%E9%87%8D%E5%A4%8D%E6%BF%80%E6%B4%BB%E5%90%8E%E8%B6%8A%E8%B7%91%E8%B6%8A%E4%B9%B1%E2%80%9D"><span class="post-toc-list-text">断点剧本：定位“重复激活后越跑越乱”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E5%86%99%E4%B8%80%E4%B8%AA%E2%80%9C%E6%95%85%E6%84%8F%E5%A4%B1%E8%B4%A5%E2%80%9D%E7%9A%84-Action"><span class="post-toc-list-text">进阶练习：写一个“故意失败”的 Action</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9AAction-%E4%BB%A3%E7%A0%81%E8%AF%84%E5%AE%A1%E6%B8%85%E5%8D%95"><span class="post-toc-list-text">附录：Action 代码评审清单</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <h2 id="先拆角色">先拆角色</h2>
+<p><code>UGameFeatureData</code> 本质上是“功能清单资产”，其中最关键的是 <code>Actions</code> 数组。<br>
+<code>UGameFeatureAction</code> 是“清单项执行器”，在激活和停用阶段分别执行行为。</p>
+<p>如果把状态机看作“调度层”，那么 Data/Action 就是“业务执行层”。</p>
+<h2 id="调用链图">调用链图</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[&quot;状态机进入 Activating&quot;] --&gt; B[&quot;UGameFeaturesSubsystem::OnGameFeatureActivating&quot;]</span><br><span class="line">    B --&gt; C[&quot;读取 UGameFeatureData::Actions&quot;]</span><br><span class="line">    C --&gt; D[&quot;Action.OnGameFeatureActivating(Context)&quot;]</span><br><span class="line">    D --&gt; E[&quot;World/Actor/Asset 层变更&quot;]</span><br><span class="line">    E --&gt; F[&quot;进入 Deactivating 时反向执行回收&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="UE5-5-源码坐标（C-Epic-UE-5-5）">UE5.5 源码坐标（C:\Epic\UE_5.5）</h2>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureData.h:18</code><br>
+<code>class UGameFeatureData : public UPrimaryDataAsset</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureData.h:85</code><br>
+<code>GetActions()</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureData.cpp:85</code><br>
+<code>InitializeBasePluginIniFile(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureAction.h:34</code><br>
+<code>OnGameFeatureActivating(FGameFeatureActivatingContext&amp;)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Public\GameFeatureAction.h:43</code><br>
+<code>OnGameFeatureDeactivating(FGameFeatureDeactivatingContext&amp;)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeatureAction.cpp:21</code><br>
+<code>UGameFeatureAction::OnGameFeatureActivating(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1108</code><br>
+<code>UGameFeaturesSubsystem::OnGameFeatureActivating(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1146</code><br>
+<code>UGameFeaturesSubsystem::OnGameFeatureDeactivating(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:255</code><br>
+<code>FGameFeatureStateChangeContext::ShouldApplyToWorldContext(...)</code></li>
+</ul>
+<h2 id="顺序控制的核心观点">顺序控制的核心观点</h2>
+<p>Action 默认按数组顺序执行。<br>
+这不是“实现细节”，而是架构约束：</p>
+<ol>
+<li>先注入依赖对象，再绑定输入/UI/能力。</li>
+<li>停用时必须考虑反向收敛，不要让后续 Action 依赖前置 Action 的残留状态。</li>
+<li>如果需要跨 Action 协同，优先通过显式数据与上下文，而不是隐式全局单例。</li>
+</ol>
+<h2 id="上下文过滤为什么关键">上下文过滤为什么关键</h2>
+<p><code>FGameFeatureStateChangeContext</code> 决定了 Action 是否作用于当前 World。<br>
+多人、多 PIE、Server/Client 混合场景里，这一步是防止“误作用域”的第一道保险。</p>
+<h2 id="Lyra-最小复现（实验-4）">Lyra 最小复现（实验 4）</h2>
+<p>目标：验证 Action 顺序和停用收敛。</p>
+<ol>
+<li>在同一个 <code>GameFeatureData</code> 放入两个 Action：<br>
+<code>ActionA</code> 注入组件，<code>ActionB</code> 读取组件并注册扩展事件。</li>
+<li>先按 <code>A -&gt; B</code> 执行，确认可用。</li>
+<li>调换为 <code>B -&gt; A</code>，观察激活阶段是否出现空引用或延迟可用问题。</li>
+<li>从 <code>Active -&gt; Loaded</code>，确认 B 的解绑与 A 的移除顺序不会留下脏状态。</li>
+</ol>
+<p>这个实验可以快速暴露“看似可用、停用就坏”的设计问题。</p>
+<h2 id="常见坑与检查项">常见坑与检查项</h2>
+<ol>
+<li>把 Action 当成无序列表使用，结果依赖关系写在注释里而不写在结构里。</li>
+<li>停用阶段只删对象，不做事件解绑，导致二次激活重复注册。</li>
+<li>忽略上下文过滤，在 PIE 多世界下出现“本地生效、联机错乱”的假象。</li>
+</ol>
+<h2 id="原理下钻：Action-生命周期不只-Activating-Deactivating">原理下钻：Action 生命周期不只 Activating/Deactivating</h2>
+<p>很多人只关心 <code>OnGameFeatureActivating/Deactivating</code>，但在 UE5.5 里 Action 还有注册、加载、卸载等阶段回调路径。<br>
+如果你写的是复杂 Action（带缓存、句柄、异步任务），必须明确每个阶段该做什么。</p>
+<p>补充锚点：</p>
+<ul>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1043</code><br>
+<code>OnGameFeatureRegistering(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1056</code><br>
+<code>OnGameFeatureUnregistering(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1076</code><br>
+<code>OnGameFeatureLoading(...)</code></li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:1090</code><br>
+<code>Unloading</code> 观察者回调</li>
+<li><code>C:\Epic\UE_5.5\Engine\Plugins\Runtime\GameFeatures\Source\GameFeatures\Private\GameFeaturesSubsystem.cpp:3260</code><br>
+<code>CallbackObservers(...)</code></li>
+</ul>
+<h2 id="执行顺序与失败策略">执行顺序与失败策略</h2>
+<p>建议你在长文里明确写出两条规则：</p>
+<ol>
+<li>正向执行按 <code>Actions</code> 顺序，反向停用必须保证依赖后置项先收敛。</li>
+<li>对每个 Action 定义失败级别：硬失败（中断激活）/软失败（记录并降级）。</li>
+</ol>
+<p>如果不提前定义失败级别，线上会出现“一个可忽略 UI 错误拖垮整个 Feature 激活”的问题。</p>
+<h2 id="上下文语义：多世界下的决定性边界">上下文语义：多世界下的决定性边界</h2>
+<p><code>FGameFeatureStateChangeContext</code> 不是附属参数，它是执行许可。<br>
+建议在 Action 实现里做到：</p>
+<ol>
+<li>先判断上下文是否适用于当前 <code>WorldContext</code>。</li>
+<li>只在通过时执行副作用逻辑。</li>
+<li>记录上下文键值用于回收阶段配对。</li>
+</ol>
+<h2 id="调试策略（建议）">调试策略（建议）</h2>
+<ol>
+<li>断在 <code>OnGameFeatureActivating</code>，看 Action 实际执行顺序是否符合预期。</li>
+<li>断在 <code>CallbackObservers</code>，确认观察者是否改变了生命周期行为。</li>
+<li>激活与停用都抓一份“句柄集合快照”，验证有没有泄漏。</li>
+</ol>
+<h2 id="进阶练习">进阶练习</h2>
+<p>为一个复杂 Feature 写三种 Action：</p>
+<ol>
+<li>数据注册类 Action</li>
+<li>世界注入类 Action</li>
+<li>表现层 Action</li>
+</ol>
+<p>然后故意让第 3 个 Action 失败，观察状态机是否能安全回到可恢复状态，以及前两个 Action 是否需要手动补偿。</p>
+<h2 id="本篇结论">本篇结论</h2>
+<p><code>GameFeatureData</code> 是声明，<code>Action</code> 是执行，<code>Context</code> 是边界。<br>
+下一篇我们进入最常用的执行器：<code>AddComponents</code> 与 <code>ModularGameplay</code> 的桥接主线。</p>
+<h2 id="为什么这一篇是“工程分水岭”">为什么这一篇是“工程分水岭”</h2>
+<p>前面几篇更多是系统框架。<br>
+到了 Data/Action 这一层，你开始真正面对项目复杂度：</p>
+<ol>
+<li>执行顺序怎么定。</li>
+<li>失败怎么回滚。</li>
+<li>多世界怎么隔离。</li>
+<li>重复激活怎么保持幂等。</li>
+</ol>
+<p>这些问题一旦处理不好，Feature 再漂亮也会在联调和上线阶段失控。</p>
+<h2 id="Action-编排的实用规则（不是教条）">Action 编排的实用规则（不是教条）</h2>
+<p>我在项目里会强制三条规则：</p>
+<ol>
+<li>先基础再表现：先注册数据/组件，再挂 UI/输入。</li>
+<li>有状态就要有句柄：凡是会“新增”的动作，必须能“按来源撤销”。</li>
+<li>动作只做一件事：一个 Action 不要同时做输入、UI、能力三种注入。</li>
+</ol>
+<p>这么做的好处是，排障时能快速定位“到底是哪一段没收敛”。</p>
+<h2 id="生命周期表（建议放正文）">生命周期表（建议放正文）</h2>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>该做什么</th>
+<th>不该做什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Registering</td>
+<td>注册轻量元信息、准备句柄容器</td>
+<td>直接触发重副作用逻辑</td>
+</tr>
+<tr>
+<td>Loading</td>
+<td>读取/校验数据资产</td>
+<td>启动依赖世界对象的逻辑</td>
+</tr>
+<tr>
+<td>Activating</td>
+<td>注入运行时行为</td>
+<td>隐式跨世界共享状态</td>
+</tr>
+<tr>
+<td>Deactivating</td>
+<td>逆序回收、解绑事件</td>
+<td>只做“删对象”不做“撤引用”</td>
+</tr>
+<tr>
+<td>Unregistering</td>
+<td>清理残留缓存</td>
+<td>再次新增运行时对象</td>
+</tr>
+</tbody>
+</table>
+<p>有了这张表，团队成员做 Action 时很少再“把阶段写反”。</p>
+<h2 id="断点剧本：定位“重复激活后越跑越乱”">断点剧本：定位“重复激活后越跑越乱”</h2>
+<ol>
+<li>断在 <code>OnGameFeatureActivating</code>，记录每个 Action 实际调用次数。</li>
+<li>断在 <code>OnGameFeatureDeactivating</code>，核对是否一一回收。</li>
+<li>观察 <code>ContextHandles</code> 或等价容器是否持续增长。</li>
+<li>做三轮“激活-停用-激活”循环，确认无残留。</li>
+</ol>
+<p>如果第三轮开始出现异常，通常就是回收不对称或上下文配对失效。</p>
+<h2 id="进阶练习：写一个“故意失败”的-Action">进阶练习：写一个“故意失败”的 Action</h2>
+<p>练习目标是验证回滚链路，而不是验证 happy path。</p>
+<ol>
+<li>在激活中段故意返回失败或抛出可控错误。</li>
+<li>观察前序 Action 是否安全回收。</li>
+<li>再次激活同一 Feature，确认状态可恢复。</li>
+</ol>
+<p>这比单纯写成功路径更能锻炼团队的上线稳定性思维。</p>
+<h2 id="附录：Action-代码评审清单">附录：Action 代码评审清单</h2>
+<p>建议你把下面这份清单直接放进 Code Review 模板：</p>
+<ol>
+<li>这个 Action 只做一件事吗？</li>
+<li>激活新增的对象/句柄是否全部可回收？</li>
+<li>停用逻辑是否考虑了部分激活失败场景？</li>
+<li>是否正确使用了世界上下文过滤？</li>
+<li>是否有跨 Feature 的隐式依赖？</li>
+<li>是否在日志里留下足够的排障信息？</li>
+</ol>
+<p>如果其中任意两项答不上来，建议先不要合并。<br>
+这条规则看起来严格，但能显著减少“联调时才发现难以回收”的问题。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/08/24/ue-gamefeature-notes/ue-gamefeature-03-state-machine-installed-registered-loaded-active/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">状态机内核：Installed / Registered / Loaded / Active 与回滚语义</strong>
+                </a>
+                
+
+                
+                <a href="/2025/10/19/ue-gamefeature-notes/ue-gamefeature-05-addcomponents-and-modulargameplay-bridge/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8B%86%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">先拆角色</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%BA%E5%BA%8F%E6%8E%A7%E5%88%B6%E7%9A%84%E6%A0%B8%E5%BF%83%E8%A7%82%E7%82%B9"><span class="post-toc-list-text">顺序控制的核心观点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E8%BF%87%E6%BB%A4%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%B3%E9%94%AE"><span class="post-toc-list-text">上下文过滤为什么关键</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-4%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 4）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AAction-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%8D%E5%8F%AA-Activating-Deactivating"><span class="post-toc-list-text">原理下钻：Action 生命周期不只 Activating&#x2F;Deactivating</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F%E4%B8%8E%E5%A4%B1%E8%B4%A5%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">执行顺序与失败策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%AD%E4%B9%89%EF%BC%9A%E5%A4%9A%E4%B8%96%E7%95%8C%E4%B8%8B%E7%9A%84%E5%86%B3%E5%AE%9A%E6%80%A7%E8%BE%B9%E7%95%8C"><span class="post-toc-list-text">上下文语义：多世界下的决定性边界</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E7%AD%96%E7%95%A5%EF%BC%88%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="post-toc-list-text">调试策略（建议）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%80%E7%AF%87%E6%98%AF%E2%80%9C%E5%B7%A5%E7%A8%8B%E5%88%86%E6%B0%B4%E5%B2%AD%E2%80%9D"><span class="post-toc-list-text">为什么这一篇是“工程分水岭”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Action-%E7%BC%96%E6%8E%92%E7%9A%84%E5%AE%9E%E7%94%A8%E8%A7%84%E5%88%99%EF%BC%88%E4%B8%8D%E6%98%AF%E6%95%99%E6%9D%A1%EF%BC%89"><span class="post-toc-list-text">Action 编排的实用规则（不是教条）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E8%A1%A8%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%94%BE%E6%AD%A3%E6%96%87%EF%BC%89"><span class="post-toc-list-text">生命周期表（建议放正文）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%9A%E5%AE%9A%E4%BD%8D%E2%80%9C%E9%87%8D%E5%A4%8D%E6%BF%80%E6%B4%BB%E5%90%8E%E8%B6%8A%E8%B7%91%E8%B6%8A%E4%B9%B1%E2%80%9D"><span class="post-toc-list-text">断点剧本：定位“重复激活后越跑越乱”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0%EF%BC%9A%E5%86%99%E4%B8%80%E4%B8%AA%E2%80%9C%E6%95%85%E6%84%8F%E5%A4%B1%E8%B4%A5%E2%80%9D%E7%9A%84-Action"><span class="post-toc-list-text">进阶练习：写一个“故意失败”的 Action</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9AAction-%E4%BB%A3%E7%A0%81%E8%AF%84%E5%AE%A1%E6%B8%85%E5%8D%95"><span class="post-toc-list-text">附录：Action 代码评审清单</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

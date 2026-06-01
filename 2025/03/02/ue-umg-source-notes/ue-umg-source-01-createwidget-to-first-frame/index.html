@@ -1,0 +1,306 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>从 CreateWidget 到首帧上屏：UMG/Slate 桥接总线 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">从 CreateWidget 到首帧上屏：UMG/Slate 桥接总线</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.03.02
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UMG</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 UMG 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 UMG/Slate 体系，从创建、实例化、输入路由、生命周期、布局、渲染、池化到崩溃排障，形成一条可复用的源码学习与工程落地主线。</p>
+            <div class="series-meta">
+                <span>第 1 篇</span>
+                <span>已发布 9 / 9</span>
+                
+                <span>阶段：2025.03 - 2025.06 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 11%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-umg-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E9%AA%8C%E8%AF%81%E2%80%9C%E5%88%9B%E5%BB%BA%E4%B8%8D%E7%AD%89%E4%BA%8E%E4%B8%8A%E5%B1%8F%E2%80%9D"><span class="post-toc-list-text">实验 A：验证“创建不等于上屏”</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9ACreateWidget-%E5%90%8E%E5%B0%B1%E5%8F%AF%E4%BB%A5%E7%AB%8B%E5%88%BB%E6%8B%BF%E5%88%B0%E5%AE%8C%E6%95%B4-Slate-Geometry"><span class="post-toc-list-text">坑 1：CreateWidget 后就可以立刻拿到完整 Slate Geometry</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E5%8F%8D%E5%A4%8D-AddToViewport-RemoveFromParent-%E4%B8%8D%E4%BC%9A%E6%9C%89%E9%A2%9D%E5%A4%96%E6%88%90%E6%9C%AC"><span class="post-toc-list-text">坑 2：反复 AddToViewport&#x2F;RemoveFromParent 不会有额外成本</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9AAddToViewport-%E4%B8%8E-AddToPlayerScreen-%E6%B2%A1%E5%8C%BA%E5%88%AB"><span class="post-toc-list-text">坑 3：AddToViewport 与 AddToPlayerScreen 没区别</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 UMG 原理与源码拆解<br>
+本文目标：回答一个最常见但最容易答错的问题<br>
+<strong><code>CreateWidget</code> 之后，Widget 到底什么时候才真正变成 <code>SWidget</code> 并进入视口层级？</strong></p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>我第一次认真追 CreateWidget 链路，是因为一个很小但很烦的问题：<br>
+日志里明明创建成功了，界面就是不出现，隔一帧又好了。</p>
+<p>后来把断点从业务蓝图一路打到 TakeWidget_Private 才意识到，<br>
+很多人把“对象创建成功”和“Slate 上屏成功”当成了同一件事。<br>
+这一篇就是把这条边界彻底掰开讲清楚。</p>
+<h2 id="先把主线拉直">先把主线拉直</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;CreateWidget&lt;T&gt;()&quot;] --&gt; B[&quot;UUserWidget::CreateWidgetInstance&quot;]</span><br><span class="line">    B --&gt; C[&quot;UUserWidget::CreateInstanceInternal&quot;]</span><br><span class="line">    C --&gt; D[&quot;UUserWidget::Initialize&quot;]</span><br><span class="line">    D --&gt; E[&quot;UWidgetBlueprintGeneratedClass::InitializeWidget&quot;]</span><br><span class="line">    E --&gt; F[&quot;UUserWidget::AddToViewport/AddToPlayerScreen&quot;]</span><br><span class="line">    F --&gt; G[&quot;UWidget::TakeWidget / TakeWidget_Private&quot;]</span><br><span class="line">    G --&gt; H[&quot;UUserWidget::RebuildWidget&quot;]</span><br><span class="line">    H --&gt; I[&quot;SObjectWidget + Root SWidget&quot;]</span><br><span class="line">    I --&gt; J[&quot;UGameViewportClient::AddViewportWidgetContent&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="本篇我会盯的源码位置（UE5-5）">本篇我会盯的源码位置（UE5.5）</h2>
+<ol>
+<li><code>Engine/Source/Runtime/UMG/Private/UserWidget.cpp</code><br>
+<code>UUserWidget::CreateWidgetInstance</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/UserWidget.cpp</code><br>
+<code>UUserWidget::CreateInstanceInternal</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/UserWidget.cpp</code><br>
+<code>UUserWidget::AddToPlayerScreen</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/Components/Widget.cpp</code><br>
+<code>UWidget::TakeWidget</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/Components/Widget.cpp</code><br>
+<code>UWidget::TakeWidget_Private</code></li>
+<li><code>Engine/Source/Runtime/Engine/Private/GameViewportClient.cpp</code><br>
+<code>UGameViewportClient::AddViewportWidgetContent</code></li>
+</ol>
+<h2 id="我常用的断点走法">我常用的断点走法</h2>
+<ol>
+<li>在 <code>CreateWidgetInstance</code> 下断，确认对象创建时 Outer/World/LocalPlayer 是否正确。</li>
+<li>在 <code>Initialize</code> 下断，确认 <code>bInitialized</code> 是否只从 <code>false</code> 变为 <code>true</code> 一次。</li>
+<li>在 <code>AddToPlayerScreen</code> 下断，确认进入的是 Player 层还是全局 Viewport 层。</li>
+<li>在 <code>TakeWidget_Private</code> 下断，确认第一次调用才会触发 <code>RebuildWidget</code>。</li>
+<li>在 <code>AddViewportWidgetContent</code> 下断，确认 <code>SWidget</code> 已进入 <code>ViewportOverlay</code>。</li>
+</ol>
+<h2 id="先看这一段源码">先看这一段源码</h2>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// UUserWidget.cpp</span></span><br><span class="line"><span class="function">UUserWidget* <span class="title">UUserWidget::CreateWidgetInstance</span><span class="params">(...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">CreateInstanceInternal</span>(...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UUserWidget::AddToViewport</span><span class="params">(int32 ZOrder)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">AddToPlayerScreen</span>(ZOrder);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Widget.cpp</span></span><br><span class="line"><span class="function">TSharedRef&lt;SWidget&gt; <span class="title">UWidget::TakeWidget</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">TakeWidget_Private</span>(...);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里最关键的事实是：<br>
+<code>CreateWidget</code> 并不等于“已经上屏”，它先完成 UObject 侧构建；真正触发 Slate 构建的是 <code>TakeWidget</code> 路径。</p>
+<h2 id="最小复现实验（含反证）">最小复现实验（含反证）</h2>
+<h3 id="实验-A：验证“创建不等于上屏”">实验 A：验证“创建不等于上屏”</h3>
+<ol>
+<li><code>BeginPlay</code> 里调用 <code>CreateWidget</code> 但不 <code>AddToViewport</code>。</li>
+<li>打开 Widget Reflector，观察树中是否存在目标 <code>SWidget</code>。</li>
+<li>再调用 <code>AddToViewport</code>，观察 <code>TakeWidget_Private</code> 是否被命中。</li>
+</ol>
+<p>预期：</p>
+<ol>
+<li>仅创建时，可能有 UObject 实例，但不会稳定出现在视口层级。</li>
+<li>进入 <code>AddToViewport</code> 后，<code>TakeWidget</code> 链路触发并可在 Reflector 看到节点。</li>
+</ol>
+<p>反证：<br>
+如果“创建就上屏”这个结论成立，那么在不调用 <code>AddToViewport</code> 时，Reflector 应持续存在该控件。</p>
+<h2 id="我在项目里反复见到的-3-个坑">我在项目里反复见到的 3 个坑</h2>
+<h3 id="坑-1：CreateWidget-后就可以立刻拿到完整-Slate-Geometry">坑 1：<code>CreateWidget</code> 后就可以立刻拿到完整 Slate Geometry</h3>
+<ul>
+<li>根因：Slate 树尚未挂接，布局/几何还没走到稳定阶段。</li>
+<li>修正：在 <code>AddToViewport</code> 之后、并经过至少一帧布局流程再读取几何；必要时 <code>ForceLayoutPrepass</code>。</li>
+</ul>
+<h3 id="坑-2：反复-AddToViewport-RemoveFromParent-不会有额外成本">坑 2：反复 <code>AddToViewport/RemoveFromParent</code> 不会有额外成本</h3>
+<ul>
+<li>根因：频繁触发上树/下树、可能触发重建与状态同步成本。</li>
+<li>修正：高频显隐优先走 <code>SetVisibility</code> 或层级切换，不要把 Add/Remove 当动画开关。</li>
+</ul>
+<h3 id="坑-3：AddToViewport-与-AddToPlayerScreen-没区别">坑 3：<code>AddToViewport</code> 与 <code>AddToPlayerScreen</code> 没区别</h3>
+<ul>
+<li>根因：分屏与本地多玩家场景下，Player Layer 与全局 Layer 显示域不同。</li>
+<li>修正：HUD/玩家私有 UI 用 <code>AddToPlayerScreen</code>，全局覆盖层再考虑 Viewport 全局层。</li>
+</ul>
+<h2 id="现场排查顺序">现场排查顺序</h2>
+<ol>
+<li>检查 Widget 是否真的调用了 <code>AddToViewport/AddToPlayerScreen</code>。</li>
+<li>检查 <code>TakeWidget_Private</code> 是否被触发且只在必要时触发。</li>
+<li>检查 <code>UGameViewportClient</code> 是否有效（PIE 多窗口时尤其容易错）。</li>
+<li>检查创建时使用的 <code>LocalPlayer</code> 是否与目标视口一致。</li>
+<li>检查是否存在“创建了但被立刻移除/隐藏”的逻辑竞争。</li>
+</ol>
+<h2 id="这一篇要带走什么">这一篇要带走什么</h2>
+<p><code>UUserWidget</code> 到 <code>SWidget</code> 的桥接边界，在 <code>TakeWidget</code>。<br>
+<code>SWidget</code> 真正进入可见层级的边界，在 <code>UGameViewportClient::AddViewportWidgetContent</code>（或对应 Player Layer）。<br>
+后续所有布局、输入、渲染问题，本质都建立在这两条边界之上。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-umg-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <div class="series-nav-card is-empty">
+                    <span class="series-nav-direction">当前是本专栏的起点</span>
+                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
+                </div>
+                
+
+                
+                <a href="/2025/03/16/ue-umg-source-notes/ue-umg-source-02-widgetblueprint-generatedclass-and-widgettree/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">WidgetBlueprint 运行时化：UWidgetBlueprintGeneratedClass 与 WidgetTree</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E9%AA%8C%E8%AF%81%E2%80%9C%E5%88%9B%E5%BB%BA%E4%B8%8D%E7%AD%89%E4%BA%8E%E4%B8%8A%E5%B1%8F%E2%80%9D"><span class="post-toc-list-text">实验 A：验证“创建不等于上屏”</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9ACreateWidget-%E5%90%8E%E5%B0%B1%E5%8F%AF%E4%BB%A5%E7%AB%8B%E5%88%BB%E6%8B%BF%E5%88%B0%E5%AE%8C%E6%95%B4-Slate-Geometry"><span class="post-toc-list-text">坑 1：CreateWidget 后就可以立刻拿到完整 Slate Geometry</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E5%8F%8D%E5%A4%8D-AddToViewport-RemoveFromParent-%E4%B8%8D%E4%BC%9A%E6%9C%89%E9%A2%9D%E5%A4%96%E6%88%90%E6%9C%AC"><span class="post-toc-list-text">坑 2：反复 AddToViewport&#x2F;RemoveFromParent 不会有额外成本</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9AAddToViewport-%E4%B8%8E-AddToPlayerScreen-%E6%B2%A1%E5%8C%BA%E5%88%AB"><span class="post-toc-list-text">坑 3：AddToViewport 与 AddToPlayerScreen 没区别</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

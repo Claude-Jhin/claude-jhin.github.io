@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    <div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<article class="post-container module"
+    style="position: relative; margin: 80px auto; transform: none; max-width: 800px; width: 90%; cursor: auto;">
+    <h1 style="font-size: 28px; margin-bottom: 32px;">
+        分类：引擎源码笔记
+    </h1>
+
+    <div class="archive-list">
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2023.03.19
+            </span>
+            <a href="/2023/03/19/ue-animation-system-notes/ue-animation-system-02-animinstance-lifecycle-and-proxy-model/">
+                AnimInstance 生命周期与 Proxy 模型：Initialize / Update / Evaluate 与多线程边界
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2023.03.05
+            </span>
+            <a href="/2023/03/05/ue-network-sync-notes/ue-network-sync-02-property-replication-and-repnotify/">
+                属性复制主线：GetLifetimeReplicatedProps、RepNotify、条件复制与状态一致性
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2023.03.05
+            </span>
+            <a href="/2023/03/05/ue-animation-system-notes/ue-animation-system-01-overview-tick-to-final-pose/">
+                总览与执行主线：从 USkeletalMeshComponent Tick 到最终 Pose 输出
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2023.01.15
+            </span>
+            <a href="/2023/01/15/ue-network-sync-notes/ue-network-sync-01-authority-ownership-and-replication-loop/">
+                网络同步全景与权威模型：服务器权威、Ownership、连接与复制主循环
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2022.10.23
+            </span>
+            <a href="/2022/10/23/ue-gas-notes/ue-gas-06-debug-optimization-troubleshooting-and-changelog/">
+                上线前闭环：调试、优化、排障与版本演进
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2022.10.16
+            </span>
+            <a href="/2022/10/16/ue-movement-notes/ue-movement-06-network-prediction-and-correction/">
+                网络同步与纠偏：SavedMove、客户端预测、服务器校正与平滑
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2022.09.18
+            </span>
+            <a href="/2022/09/18/ue-movement-notes/ue-movement-05-custom-mode-and-physcustom/">
+                自定义移动模式扩展：MOVE_Custom 与 PhysCustom 的可维护实现
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2022.09.18
+            </span>
+            <a href="/2022/09/18/ue-gas-notes/ue-gas-05-gameplaycue-prediction-and-targeting/">
+                表现与网络体验：GameplayCue、Prediction、Targeting
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2022.08.21
+            </span>
+            <a href="/2022/08/21/ue-movement-notes/ue-movement-04-jump-fall-aircontrol/">
+                跳跃与空中控制主线：DoJump、PhysFalling、AirControl 如何协作
+            </a>
+        </div>
+        
+        <div class="archive-item">
+            <span class="post-meta" style="margin-right: 16px; min-width: 80px; display: inline-block;">
+                2022.08.14
+            </span>
+            <a href="/2022/08/14/ue-gas-notes/ue-gas-04-gameplayability-input-task-and-batching/">
+                技能运行时主线：GameplayAbility、输入绑定、AbilityTask 与批处理
+            </a>
+        </div>
+        
+    </div>
+
+    
+    <div class="pagination" style="margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <a class="extend prev" rel="prev" href="/categories/%E5%BC%95%E6%93%8E%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/page/5/">← 上一页</a><a class="page-number" href="/categories/%E5%BC%95%E6%93%8E%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/">1</a><span class="space">&hellip;</span><a class="page-number" href="/categories/%E5%BC%95%E6%93%8E%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/page/4/">4</a><a class="page-number" href="/categories/%E5%BC%95%E6%93%8E%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/categories/%E5%BC%95%E6%93%8E%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/page/7/">7</a><a class="extend next" rel="next" href="/categories/%E5%BC%95%E6%93%8E%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/page/7/">下一页 →</a>
+    </div>
+    
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

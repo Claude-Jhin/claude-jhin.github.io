@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>高密度列表实战：ListView/TileView、条目复用与池化 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">高密度列表实战：ListView/TileView、条目复用与池化</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.06.08
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#UMG</span>
+            
+            <span style="color: var(--accent);">#ListView</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 UMG 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.5 UMG/Slate 体系，从创建、实例化、输入路由、生命周期、布局、渲染、池化到崩溃排障，形成一条可复用的源码学习与工程落地主线。</p>
+            <div class="series-meta">
+                <span>第 8 篇</span>
+                <span>已发布 9 / 9</span>
+                
+                <span>阶段：2025.03 - 2025.06 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 89%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-umg-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A5000-%E6%9D%A1%E6%95%B0%E6%8D%AE%E6%BB%9A%E5%8A%A8%E5%8E%8B%E6%B5%8B"><span class="post-toc-list-text">实验 A：5000 条数据滚动压测</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9AListView-%E5%8D%A1%E9%A1%BF%E4%B8%80%E5%AE%9A%E6%98%AF-Slate-%E6%85%A2"><span class="post-toc-list-text">坑 1：ListView 卡顿一定是 Slate 慢</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%B1%A0%E5%8C%96%E5%BC%80%E5%90%AF%E5%90%8E%E5%B0%B1%E4%B8%8D%E4%BC%9A%E5%86%8D%E8%A7%A6%E5%8F%91-Construct-Destruct"><span class="post-toc-list-text">坑 2：池化开启后就不会再触发 Construct&#x2F;Destruct</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9A%E6%9D%A1%E7%9B%AE-UI-%E7%8A%B6%E6%80%81%E5%8F%AF%E6%B0%B8%E4%B9%85%E9%A9%BB%E7%95%99%E5%9C%A8-Widget-%E5%86%85"><span class="post-toc-list-text">坑 3：条目 UI 状态可永久驻留在 Widget 内</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>本文主题：长列表为什么会“滚动一卡一卡”、内存忽高忽低<br>
+核心问题：ListView 什么时候会复用条目，<code>FUserWidgetPool</code> 什么时候真正生效？</p>
+</blockquote>
+<h2 id="写在前面">写在前面</h2>
+<p>长列表优化这件事，很多时候不是“渲染不行”，而是“更新策略太粗”。<br>
+我第一次在背包系统里压 5000 条数据时，滚动卡顿就是这么来的。</p>
+<p>这篇会把 ListViewBase、SListView 和 FUserWidgetPool 的协作关系讲透，<br>
+重点放在“什么时候该复用，什么时候你在悄悄重建”。</p>
+<h2 id="先把主线拉直">先把主线拉直</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    A[&quot;UListView / UTileView&quot;] --&gt; B[&quot;UListViewBase::RebuildListWidget&quot;]</span><br><span class="line">    B --&gt; C[&quot;SListView/STableViewBase&quot;]</span><br><span class="line">    C --&gt; D[&quot;可见窗口范围计算&quot;]</span><br><span class="line">    D --&gt; E[&quot;生成或复用 Entry&quot;]</span><br><span class="line">    E --&gt; F[&quot;FUserWidgetPool::GetOrCreateInstance&quot;]</span><br><span class="line">    F --&gt; G[&quot;OnListItemObjectSet / OnEntryReleased&quot;]</span><br></pre></td></tr></table></figure>
+<h2 id="本篇我会盯的源码位置（UE5-5）">本篇我会盯的源码位置（UE5.5）</h2>
+<ol>
+<li><code>Engine/Source/Runtime/UMG/Public/Components/ListViewBase.h</code><br>
+<code>UListViewBase::RebuildListWidget</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/Components/ListViewBase.cpp</code><br>
+<code>UListViewBase::RegenerateAllEntries</code></li>
+<li><code>Engine/Source/Runtime/UMG/Public/Components/ListView.h</code><br>
+<code>UListView</code></li>
+<li><code>Engine/Source/Runtime/UMG/Public/Blueprint/UserWidgetPool.h</code><br>
+<code>FUserWidgetPool::GetOrCreateInstance</code></li>
+<li><code>Engine/Source/Runtime/UMG/Private/Blueprint/UserWidgetPool.cpp</code><br>
+Pool 生命周期实现</li>
+<li><code>Engine/Source/Runtime/Slate/Public/Widgets/Views/SListView.h</code><br>
+Slate 列表层</li>
+</ol>
+<h2 id="我常用的断点走法">我常用的断点走法</h2>
+<ol>
+<li>在 <code>RebuildListWidget</code> 下断，确认自定义列表是否正确构造 Slate 列表。</li>
+<li>在 <code>RegenerateAllEntries</code> 下断，观察是否频繁全量重生成。</li>
+<li>在 <code>GetOrCreateInstance</code> 下断，确认是否发生复用而非反复创建。</li>
+<li>在 <code>OnEntryReleased</code> 与 <code>OnListItemObjectSet</code> 观察条目回收/重绑节奏。</li>
+</ol>
+<h2 id="先看这一段源码">先看这一段源码</h2>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// UserWidgetPool.h（语义）</span></span><br><span class="line"><span class="function">UUserWidget* <span class="title">GetOrCreateInstance</span><span class="params">(...)</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Release</span><span class="params">(UUserWidget* Widget, <span class="type">bool</span> bReleaseSlate)</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ReleaseAll</span><span class="params">(<span class="type">bool</span> bReleaseSlate)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>要点：</p>
+<ol>
+<li>池化的是 <code>UUserWidget + 对应 Slate 缓存关系</code>，不只是一个 UObject 指针。</li>
+<li>频繁 <code>RegenerateAllEntries</code> 会冲掉复用收益。</li>
+<li>条目更新应偏向“数据重绑”，而不是“重建条目树”。</li>
+</ol>
+<h2 id="最小复现实验（含反证）">最小复现实验（含反证）</h2>
+<h3 id="实验-A：5000-条数据滚动压测">实验 A：5000 条数据滚动压测</h3>
+<ol>
+<li>生成 5000 条数据对象，列表只显示可视窗口。</li>
+<li>A 方案：每次筛选都 <code>RegenerateAllEntries</code>。B 方案：增量更新数据并触发局部刷新。</li>
+<li>记录滚动帧时间、GC 峰值、创建条目次数。</li>
+</ol>
+<p>预期：<br>
+增量方案在滚动稳定性和创建次数上显著优于全量重建方案。</p>
+<p>反证：<br>
+若“全量重建影响不大”成立，则两方案的条目创建数和 GC 峰值应接近。</p>
+<h2 id="我在项目里反复见到的-3-个坑">我在项目里反复见到的 3 个坑</h2>
+<h3 id="坑-1：ListView-卡顿一定是-Slate-慢">坑 1：ListView 卡顿一定是 Slate 慢</h3>
+<ul>
+<li>根因：常见瓶颈在业务层频繁全量刷新。</li>
+<li>修正：优先审计 <code>RegenerateAllEntries</code> 触发频率。</li>
+</ul>
+<h3 id="坑-2：池化开启后就不会再触发-Construct-Destruct">坑 2：池化开启后就不会再触发 Construct/Destruct</h3>
+<ul>
+<li>根因：Slate 资源释放策略会影响 NativeConstruct/NativeDestruct 触发。</li>
+<li>修正：把条目逻辑设计为可重入，避免依赖“只构造一次”。</li>
+</ul>
+<h3 id="坑-3：条目-UI-状态可永久驻留在-Widget-内">坑 3：条目 UI 状态可永久驻留在 Widget 内</h3>
+<ul>
+<li>根因：复用时条目会绑定不同数据对象，旧状态污染新项。</li>
+<li>修正：在 <code>OnListItemObjectSet</code> 完整重置状态，释放时清理临时态。</li>
+</ul>
+<h2 id="现场排查顺序">现场排查顺序</h2>
+<ol>
+<li>统计每次交互是否触发了全量 <code>RegenerateAllEntries</code>。</li>
+<li>统计条目创建/复用比例。</li>
+<li>检查条目重绑时是否遗漏状态重置。</li>
+<li>检查是否过度释放 Slate 资源导致重复构建。</li>
+<li>检查数据对象是否符合 <code>IUserObjectListEntry</code> 使用约束。</li>
+</ol>
+<h2 id="这一篇要带走什么">这一篇要带走什么</h2>
+<p>高密度列表优化的本质是“减少重建、提高复用、稳定重绑”。<br>
+先把 <code>ListViewBase -&gt; Pool -&gt; Entry 生命周期</code> 这条链读通，再做样式层优化，收益最大。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-umg-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/05/25/ue-umg-source-notes/ue-umg-source-07-rendering-onpaint-batch-retainer-invalidation/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">渲染内核：OnPaint、ElementList、Batch、Retainer、Invalidation</strong>
+                </a>
+                
+
+                
+                <a href="/2025/06/22/ue-umg-source-notes/ue-umg-source-09-crash-leak-threading-troubleshooting-playbook/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 9 篇</span>
+                    <strong class="series-nav-title">工程收官：UMG 常见崩溃/泄漏/线程越界排障总手册</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A5000-%E6%9D%A1%E6%95%B0%E6%8D%AE%E6%BB%9A%E5%8A%A8%E5%8E%8B%E6%B5%8B"><span class="post-toc-list-text">实验 A：5000 条数据滚动压测</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9AListView-%E5%8D%A1%E9%A1%BF%E4%B8%80%E5%AE%9A%E6%98%AF-Slate-%E6%85%A2"><span class="post-toc-list-text">坑 1：ListView 卡顿一定是 Slate 慢</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%B1%A0%E5%8C%96%E5%BC%80%E5%90%AF%E5%90%8E%E5%B0%B1%E4%B8%8D%E4%BC%9A%E5%86%8D%E8%A7%A6%E5%8F%91-Construct-Destruct"><span class="post-toc-list-text">坑 2：池化开启后就不会再触发 Construct&#x2F;Destruct</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9A%E6%9D%A1%E7%9B%AE-UI-%E7%8A%B6%E6%80%81%E5%8F%AF%E6%B0%B8%E4%B9%85%E9%A9%BB%E7%95%99%E5%9C%A8-Widget-%E5%86%85"><span class="post-toc-list-text">坑 3：条目 UI 状态可永久驻留在 Widget 内</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
