@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SWidget 的真实身份：声明式构造、共享指针、属性系统与生命周期 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">SWidget 的真实身份：声明式构造、共享指针、属性系统与生命周期</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.01.18
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            <span style="color: var(--accent);">#SlateCore</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <div class="series-meta">
+                <span>第 3 篇</span>
+                <span>已发布 16 / 16</span>
+                
+                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 19%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E9%80%82%E5%BA%94%E8%BF%99%E5%A5%97%E5%AF%B9%E8%B1%A1%E8%A7%82"><span class="post-toc-list-text">先适应这套对象观</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E4%B8%8D%E8%81%8A-GC"><span class="post-toc-list-text">这篇不聊 GC</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AF%B9%E8%B1%A1%E5%85%B3%E7%B3%BB%E5%A4%A7%E6%A6%82%E8%BF%99%E6%A0%B7%E4%B8%B2"><span class="post-toc-list-text">对象关系大概这样串</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%89%93%E5%BC%80%E8%BF%99%E5%87%A0%E5%A4%84"><span class="post-toc-list-text">先打开这几处</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8A%8A-UObject-%E4%B9%A0%E6%83%AF%E5%B8%A6%E5%A4%AA%E6%B7%B1"><span class="post-toc-list-text">别把 UObject 习惯带太深</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E6%8E%A7%E4%BB%B6%E6%97%B6%E6%88%91%E4%BC%9A%E6%A3%80%E6%9F%A5"><span class="post-toc-list-text">写控件时我会检查</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Construct-%E4%B8%8D%E6%98%AF%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="post-toc-list-text">Construct 不是构造函数</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Attribute-%E7%9A%84%E4%BB%B7%E5%80%BC%E6%98%AF%E2%80%9C%E7%9F%A5%E9%81%93%E6%94%B9%E4%BA%86%E4%BB%80%E4%B9%88%E2%80%9D"><span class="post-toc-list-text">Attribute 的价值是“知道改了什么”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%85%B1%E4%BA%AB%E6%8C%87%E9%92%88%E8%AE%A9%E7%8E%AF%E5%BC%95%E7%94%A8%E5%8F%98%E6%88%90%E7%9C%9F%E5%AE%9E%E9%A3%8E%E9%99%A9"><span class="post-toc-list-text">共享指针让环引用变成真实风险</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%95%99%E4%B8%80%E4%B8%AA%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">留一个判断</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Slate 原理与源码拆解（UE5.7）<br>
+本篇只抓一件事：把 <code>SWidget</code> 当成轻量 C++ 对象图来读。</p>
+</blockquote>
+<h2 id="先适应这套对象观">先适应这套对象观</h2>
+<p>从 UMG 过来读 Slate，最别扭的地方就是：这里没有 UObject 那套熟悉的生命周期。没有 <code>BeginPlay</code>，没有 GC 标记，很多东西靠 <code>TSharedRef</code>、<code>SNew</code>、<code>Construct</code> 和 Attribute 自己把关系织起来。第一次看会觉得“这也太 C++ 了”，但这恰好是 Slate 的味道。</p>
+<p>这一篇不追某个具体控件，而是读 <code>SWidget</code> 的对象模型。它的重点不是“怎么创建一个控件”，而是为什么 Slate 能用声明式语法搭出控件树，又能用属性失效把状态变化传回布局和绘制系统。</p>
+<p><code>SWidget</code> 的难点不是语法，而是它没有 UObject 那种强仪式感生命周期。你得从引用、Slot、Attribute 和 Invalidate 的组合里看它怎么活。</p>
+<h2 id="这篇不聊-GC">这篇不聊 GC</h2>
+<p>源码按 <code>C:\Epic\UE_5.7</code> 来。这里更看重调用位置和职责边界，不看重精确行号；如果你用 5.5，对着符号搜会比对着行号找靠谱。</p>
+<h2 id="对象关系大概这样串">对象关系大概这样串</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    N0[&quot;SNew 宏展开&quot;]</span><br><span class="line">    N1[&quot;Construct 参数对象&quot;]</span><br><span class="line">    N2[&quot;TSharedRef&lt;SWidget&gt;&quot;]</span><br><span class="line">    N3[&quot;ChildSlot / Slots&quot;]</span><br><span class="line">    N4[&quot;属性变化&quot;]</span><br><span class="line">    N5[&quot;Invalidate&quot;]</span><br><span class="line">    N0 --&gt; N1</span><br><span class="line">    N1 --&gt; N2</span><br><span class="line">    N2 --&gt; N3</span><br><span class="line">    N3 --&gt; N4</span><br><span class="line">    N4 --&gt; N5</span><br></pre></td></tr></table></figure>
+<h2 id="先打开这几处">先打开这几处</h2>
+<table>
+<thead>
+<tr>
+<th>源码位置</th>
+<th>关键符号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlateCore/Public/Widgets/SWidget.h</code></td>
+<td><code>SWidget</code></td>
+<td>控件协议和生命周期核心</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Widgets/DeclarativeSyntaxSupport.h</code></td>
+<td><code>SNew / SAssignNew</code></td>
+<td>声明式构造语法入口</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Types/SlateAttribute.h</code></td>
+<td><code>TSlateAttribute</code></td>
+<td>属性追踪与失效协作</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Widgets/SCompoundWidget.h</code></td>
+<td><code>SCompoundWidget</code></td>
+<td>常用复合控件基类</td>
+</tr>
+</tbody>
+</table>
+<h2 id="别把-UObject-习惯带太深">别把 UObject 习惯带太深</h2>
+<p>不要给 <code>SWidget</code> 硬套 UObject 生命周期。Slate 控件的释放顺序、闭包捕获、弱引用和属性失效，都得按引用计数对象图来理解。尤其在 Lambda 里捕 UObject，别让“看起来还能用”的指针把你骗了。</p>
+<h2 id="写控件时我会检查">写控件时我会检查</h2>
+<ul>
+<li>自定义控件先确认 <code>Construct</code> 里是否建立了稳定的 ChildSlot。</li>
+<li>崩溃时优先看 Lambda 捕获和共享指针环。</li>
+<li>属性不刷新时查 <code>TSlateAttribute</code> 是否声明了正确的失效理由。</li>
+<li>不要把 <code>Construct</code> 当成显示/隐藏都会触发的钩子。</li>
+</ul>
+<h2 id="源码流程框架">源码流程框架</h2>
+<ol>
+<li>声明式创建从 <code>SNew</code> / <code>SAssignNew</code> 开始，宏会构造对应 Widget 的 <code>FArguments</code>，再调用控件的 <code>Construct</code>。</li>
+<li><code>Construct</code> 里通常会保存 Attribute、设置 Slot、构造子控件。这里不是 UObject 构造函数，更像 Slate 控件的装配阶段。</li>
+<li>控件树通过 <code>TSharedRef&lt;SWidget&gt;</code> 和各种 Slot 持有。<code>SCompoundWidget</code> 常见是一条 <code>ChildSlot</code>，<code>SPanel</code> 则维护多个子 Slot。</li>
+<li>属性如果使用 <code>TSlateAttribute</code> / managed attribute，会带着失效理由参与后续更新。属性变化不是单纯赋值，而是可能触发布局或绘制失效。</li>
+<li>生命周期靠引用计数和父子持有关系自然结束。没有 GC 扫描，也没有 UObject 的反射生命周期。</li>
+<li>UMG 包装 Slate 时，要格外注意 UObject 生命周期和 Slate 引用生命周期不一致。</li>
+</ol>
+<h2 id="几个细节拆开看">几个细节拆开看</h2>
+<h3 id="Construct-不是构造函数"><code>Construct</code> 不是构造函数</h3>
+<p>Slate 控件的 C++ 构造函数通常很薄，真正装配发生在 <code>Construct(const FArguments&amp;)</code>。这就是为什么很多状态必须在 Construct 参数里传进去，而不是指望 UObject 那种构造后再初始化的流程。</p>
+<h3 id="Attribute-的价值是“知道改了什么”">Attribute 的价值是“知道改了什么”</h3>
+<p>普通成员变量变了，Slate 不一定知道该重算什么；Attribute 绑定了失效理由，系统才知道是 Paint 失效、Layout 失效，还是 Volatility 变化。读 <code>SlateAttribute.h</code> 时要重点看它和 <code>EInvalidateWidgetReason</code> 的关系。</p>
+<h3 id="共享指针让环引用变成真实风险">共享指针让环引用变成真实风险</h3>
+<p>Slate 很方便用 Lambda 捕获 <code>SharedThis(this)</code>，但这也是泄漏来源。控件持有委托，委托捕获控件自己，引用计数就可能闭环。自定义控件里我更愿意用弱引用，尤其是跨帧回调或 ActiveTimer。</p>
+<h2 id="留一个判断">留一个判断</h2>
+<p><code>SWidget</code> 这层读顺以后，Slate 的语法就没那么吓人了。它不是“没有生命周期”，只是生命周期不按 UObject 的仪式走。</p>
+<p>下一篇开始读布局。<code>SWidget</code> 既然已经成了一棵树，问题就变成：每个节点怎么回答“我想要多大”，父节点又怎么决定“你实际能拿多少”。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/01/11/ue-slate-source-notes/ue-slate-source-02-tick-and-draw-widgets/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 2 篇</span>
+                    <strong class="series-nav-title">一帧 Slate 从哪里开始：FSlateApplication::TickAndDrawWidgets 主循环拆解</strong>
+                </a>
+                
+
+                
+                <a href="/2025/01/25/ue-slate-source-notes/ue-slate-source-04-layout-prepass-geometry/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">布局不是递归摆盒子：Prepass、DesiredSize、ArrangeChildren 与 Geometry</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E9%80%82%E5%BA%94%E8%BF%99%E5%A5%97%E5%AF%B9%E8%B1%A1%E8%A7%82"><span class="post-toc-list-text">先适应这套对象观</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E4%B8%8D%E8%81%8A-GC"><span class="post-toc-list-text">这篇不聊 GC</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AF%B9%E8%B1%A1%E5%85%B3%E7%B3%BB%E5%A4%A7%E6%A6%82%E8%BF%99%E6%A0%B7%E4%B8%B2"><span class="post-toc-list-text">对象关系大概这样串</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%89%93%E5%BC%80%E8%BF%99%E5%87%A0%E5%A4%84"><span class="post-toc-list-text">先打开这几处</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8A%8A-UObject-%E4%B9%A0%E6%83%AF%E5%B8%A6%E5%A4%AA%E6%B7%B1"><span class="post-toc-list-text">别把 UObject 习惯带太深</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E6%8E%A7%E4%BB%B6%E6%97%B6%E6%88%91%E4%BC%9A%E6%A3%80%E6%9F%A5"><span class="post-toc-list-text">写控件时我会检查</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Construct-%E4%B8%8D%E6%98%AF%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="post-toc-list-text">Construct 不是构造函数</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Attribute-%E7%9A%84%E4%BB%B7%E5%80%BC%E6%98%AF%E2%80%9C%E7%9F%A5%E9%81%93%E6%94%B9%E4%BA%86%E4%BB%80%E4%B9%88%E2%80%9D"><span class="post-toc-list-text">Attribute 的价值是“知道改了什么”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%85%B1%E4%BA%AB%E6%8C%87%E9%92%88%E8%AE%A9%E7%8E%AF%E5%BC%95%E7%94%A8%E5%8F%98%E6%88%90%E7%9C%9F%E5%AE%9E%E9%A3%8E%E9%99%A9"><span class="post-toc-list-text">共享指针让环引用变成真实风险</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%95%99%E4%B8%80%E4%B8%AA%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">留一个判断</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

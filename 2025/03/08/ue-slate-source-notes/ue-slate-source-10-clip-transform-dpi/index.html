@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.03.08
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            <span style="color: var(--accent);">#SlateCore</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <div class="series-meta">
+                <span>第 10 篇</span>
+                <span>已发布 16 / 16</span>
+                
+                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 63%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%AE%E4%B8%A4%E4%B8%AA%E5%83%8F%E7%B4%A0%E4%B9%9F%E8%A6%81%E8%AE%B2%E8%AF%81%E6%8D%AE"><span class="post-toc-list-text">差两个像素也要讲证据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E5%8F%AA%E7%AE%A1%E5%9D%90%E6%A0%87%E5%92%8C%E8%A3%81%E5%89%AA"><span class="post-toc-list-text">这篇只管坐标和裁剪</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9D%90%E6%A0%87%E4%BC%9A%E7%BB%8F%E8%BF%87%E8%BF%99%E4%BA%9B%E5%B1%82"><span class="post-toc-list-text">坐标会经过这些层</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E5%9D%90%E6%A0%87%E4%BB%8E%E5%93%AA%E6%9D%A5"><span class="post-toc-list-text">先看坐标从哪来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8B%BF%E5%B1%8F%E5%B9%95%E5%9D%90%E6%A0%87%E5%80%92%E6%8E%A8%E4%B8%80%E5%88%87"><span class="post-toc-list-text">别拿屏幕坐标倒推一切</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%94%99%E4%BD%8D%E5%92%8C%E5%8F%91%E8%99%9A"><span class="post-toc-list-text">错位和发虚</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#LayoutTransform-%E5%92%8C-RenderTransform-%E5%88%AB%E6%B7%B7"><span class="post-toc-list-text">LayoutTransform 和 RenderTransform 别混</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Clip-%E6%98%AF%E6%A0%88%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8D%95%E4%B8%AA%E7%9F%A9%E5%BD%A2"><span class="post-toc-list-text">Clip 是栈，不是单个矩形</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DPI-%E4%BC%9A%E8%AE%A9%E2%80%9C%E6%95%B4%E6%95%B0%E5%9D%90%E6%A0%87%E2%80%9D%E5%A4%B1%E6%95%88"><span class="post-toc-list-text">DPI 会让“整数坐标”失效</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E7%9A%84%E5%81%9C%E9%9D%A0%E7%82%B9"><span class="post-toc-list-text">这一篇的停靠点</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Slate 原理与源码拆解（UE5.7）<br>
+本篇只抓一件事：把错位问题拆成坐标系问题。</p>
+</blockquote>
+<h2 id="差两个像素也要讲证据">差两个像素也要讲证据</h2>
+<p>UI 偏两个像素这种问题最容易把人逼疯，因为它看起来小，背后却可能牵着一串坐标系。Slate 里有布局变换、渲染变换、裁剪空间、窗口缩放、DPI 缩放，任何一层没对齐，最后都可能变成“怎么就是差一点”。</p>
+<p>这一篇不追具体控件，而是追 <code>FGeometry</code>、Clip 和 DPI。我的经验是，错位问题不要先凭眼睛猜，要先把当前坐标属于哪一层讲清楚。否则调一个偏移量，只是在和另一个隐藏偏移量拔河。</p>
+<p>错位问题最像玄学，其实是因为我们经常混用坐标系。只要把当前值属于布局、窗口还是渲染空间说清楚，很多偏移就不神秘了。</p>
+<h2 id="这篇只管坐标和裁剪">这篇只管坐标和裁剪</h2>
+<p>下面默认看的都是 <code>C:\Epic\UE_5.7</code>。我会尽量按符号和职责写，不按行号写；行号太脆，过一个小版本就可能没意义。UMG 这次只当外层入口，不抢主线。</p>
+<h2 id="坐标会经过这些层">坐标会经过这些层</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    N0[&quot;DesiredSize&quot;]</span><br><span class="line">    N1[&quot;AllottedGeometry&quot;]</span><br><span class="line">    N2[&quot;LayoutTransform&quot;]</span><br><span class="line">    N3[&quot;RenderTransform&quot;]</span><br><span class="line">    N4[&quot;ClipState&quot;]</span><br><span class="line">    N5[&quot;ApplicationScale / DPI&quot;]</span><br><span class="line">    N6[&quot;Final Paint Geometry&quot;]</span><br><span class="line">    N0 --&gt; N1</span><br><span class="line">    N1 --&gt; N2</span><br><span class="line">    N2 --&gt; N3</span><br><span class="line">    N3 --&gt; N4</span><br><span class="line">    N4 --&gt; N5</span><br><span class="line">    N5 --&gt; N6</span><br></pre></td></tr></table></figure>
+<h2 id="先看坐标从哪来">先看坐标从哪来</h2>
+<table>
+<thead>
+<tr>
+<th>源码位置</th>
+<th>关键符号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlateCore/Public/Layout/Geometry.h</code></td>
+<td><code>FGeometry</code></td>
+<td>坐标与变换载体</td>
+</tr>
+<tr>
+<td><code>SlateCore/Private/Layout/Clipping.cpp</code></td>
+<td><code>FSlateClippingManager</code></td>
+<td>裁剪状态管理</td>
+</tr>
+<tr>
+<td><code>Slate/Private/Framework/Application/SlateApplication.cpp</code></td>
+<td><code>GetApplicationScale</code></td>
+<td>应用缩放入口</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Rendering/RenderingCommon.h</code></td>
+<td><code>FPaintGeometry</code></td>
+<td>绘制几何描述</td>
+</tr>
+</tbody>
+</table>
+<h2 id="别拿屏幕坐标倒推一切">别拿屏幕坐标倒推一切</h2>
+<p>不要拿最终屏幕坐标倒推所有布局问题。屏幕空间只是结果，布局空间、窗口空间和渲染空间之间经过了多次变换；你得先知道自己手里那组数是哪一层的。</p>
+<h2 id="错位和发虚">错位和发虚</h2>
+<ul>
+<li>错位时同时打印 AbsolutePosition、LocalSize 和 Scale。</li>
+<li>发虚时检查非整数缩放和半像素偏移。</li>
+<li>被裁剪时沿裁剪栈找第一个过小的 ClipZone。</li>
+<li>DPI 问题要查窗口和应用缩放，不只改控件大小。</li>
+</ul>
+<h2 id="源码流程框架">源码流程框架</h2>
+<ol>
+<li>布局阶段产生的 <code>FGeometry</code> 包含 LocalSize、AbsolutePosition、LayoutTransform 等信息。</li>
+<li>绘制阶段会从 Geometry 生成 <code>FPaintGeometry</code>，再交给 DrawElement。这里可能叠加 RenderTransform。</li>
+<li>裁剪由 <code>FSlateClippingManager</code> 管理，父控件或窗口会 Push Clip，子控件绘制时继承或修改裁剪栈。</li>
+<li>窗口根部会乘 ApplicationScale 和窗口 DPI Scale，Prepass 与 Paint 都会受到这个比例影响。</li>
+<li>非整数缩放、半像素位置、RenderTransform 会影响最终采样，导致 UI 看起来发虚。</li>
+<li>命中测试使用的几何和裁剪也受这些变换影响，所以视觉错位可能同时伴随点击区域错位。</li>
+</ol>
+<h2 id="几个细节拆开看">几个细节拆开看</h2>
+<h3 id="LayoutTransform-和-RenderTransform-别混">LayoutTransform 和 RenderTransform 别混</h3>
+<p>LayoutTransform 参与布局空间推导，RenderTransform 更偏绘制阶段的附加变化。用 RenderTransform 做动画通常不会让父容器重新给空间；用布局参数改尺寸则会触发完全不同的失效路径。</p>
+<h3 id="Clip-是栈，不是单个矩形">Clip 是栈，不是单个矩形</h3>
+<p>很多裁剪问题不是当前控件裁剪错，而是祖先控件早就 Push 了一个更小的 ClipZone。查被裁掉时要沿裁剪栈往上找第一个收窄的位置。</p>
+<h3 id="DPI-会让“整数坐标”失效">DPI 会让“整数坐标”失效</h3>
+<p>局部空间里看着是整数，乘上 DPI 或 ApplicationScale 后可能变成非整数。像素对齐问题要看最终 PaintGeometry，而不是只看控件本地坐标。</p>
+<h2 id="这一篇的停靠点">这一篇的停靠点</h2>
+<p>坐标问题读到这里，至少别再只凭肉眼调偏移量。先把坐标空间讲明白，再谈修正，才不会越补越歪。</p>
+<p>下一篇读文本。坐标问题解决的是“它在哪里”，文本系统解决的是“这些字怎么被测量、塑形、缓存并最终画出来”。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/03/01/ue-slate-source-notes/ue-slate-source-09-invalidation-fast-path/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 9 篇</span>
+                    <strong class="series-nav-title">Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播</strong>
+                </a>
+                
+
+                
+                <a href="/2025/03/15/ue-slate-source-notes/ue-slate-source-11-text-font-cache-layout/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 11 篇</span>
+                    <strong class="series-nav-title">Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%AE%E4%B8%A4%E4%B8%AA%E5%83%8F%E7%B4%A0%E4%B9%9F%E8%A6%81%E8%AE%B2%E8%AF%81%E6%8D%AE"><span class="post-toc-list-text">差两个像素也要讲证据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E5%8F%AA%E7%AE%A1%E5%9D%90%E6%A0%87%E5%92%8C%E8%A3%81%E5%89%AA"><span class="post-toc-list-text">这篇只管坐标和裁剪</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9D%90%E6%A0%87%E4%BC%9A%E7%BB%8F%E8%BF%87%E8%BF%99%E4%BA%9B%E5%B1%82"><span class="post-toc-list-text">坐标会经过这些层</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E5%9D%90%E6%A0%87%E4%BB%8E%E5%93%AA%E6%9D%A5"><span class="post-toc-list-text">先看坐标从哪来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8B%BF%E5%B1%8F%E5%B9%95%E5%9D%90%E6%A0%87%E5%80%92%E6%8E%A8%E4%B8%80%E5%88%87"><span class="post-toc-list-text">别拿屏幕坐标倒推一切</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%94%99%E4%BD%8D%E5%92%8C%E5%8F%91%E8%99%9A"><span class="post-toc-list-text">错位和发虚</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#LayoutTransform-%E5%92%8C-RenderTransform-%E5%88%AB%E6%B7%B7"><span class="post-toc-list-text">LayoutTransform 和 RenderTransform 别混</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Clip-%E6%98%AF%E6%A0%88%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8D%95%E4%B8%AA%E7%9F%A9%E5%BD%A2"><span class="post-toc-list-text">Clip 是栈，不是单个矩形</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DPI-%E4%BC%9A%E8%AE%A9%E2%80%9C%E6%95%B4%E6%95%B0%E5%9D%90%E6%A0%87%E2%80%9D%E5%A4%B1%E6%95%88"><span class="post-toc-list-text">DPI 会让“整数坐标”失效</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E7%9A%84%E5%81%9C%E9%9D%A0%E7%82%B9"><span class="post-toc-list-text">这一篇的停靠点</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

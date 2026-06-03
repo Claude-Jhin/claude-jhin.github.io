@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>布局不是递归摆盒子：Prepass、DesiredSize、ArrangeChildren 与 Geometry - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">布局不是递归摆盒子：Prepass、DesiredSize、ArrangeChildren 与 Geometry</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.01.25
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            <span style="color: var(--accent);">#SlateCore</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <div class="series-meta">
+                <span>第 4 篇</span>
+                <span>已发布 16 / 16</span>
+                
+                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 25%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%83%E5%B1%80%E9%97%AE%E9%A2%98%EF%BC%8C%E5%85%88%E5%88%AB%E7%9C%8B%E5%B1%8F%E5%B9%95"><span class="post-toc-list-text">布局问题，先别看屏幕</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%8C%83%E5%9B%B4%E6%94%B6%E7%AA%84%E5%88%B0%E4%B8%A4%E6%AC%A1%E8%AE%A1%E7%AE%97"><span class="post-toc-list-text">范围收窄到两次计算</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%83%E5%B1%80%E9%93%BE%E8%B7%AF%E6%88%91%E8%BF%99%E6%A0%B7%E7%9C%8B"><span class="post-toc-list-text">布局链路我这样看</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E5%85%B3%E9%94%AE%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">几个关键入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#DesiredSize-%E6%9C%80%E4%BC%9A%E9%AA%97%E4%BA%BA"><span class="post-toc-list-text">DesiredSize 最会骗人</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%94%99%E4%BD%8D%E6%97%B6"><span class="post-toc-list-text">排查错位时</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Prepass-%E7%9A%84%E9%80%92%E5%BD%92%E6%96%B9%E5%90%91%E8%A6%81%E6%B3%A8%E6%84%8F"><span class="post-toc-list-text">Prepass 的递归方向要注意</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#ComputeDesiredSize-%E4%B8%8D%E8%B4%9F%E8%B4%A3%E6%9C%80%E7%BB%88%E8%A3%81%E5%86%B3"><span class="post-toc-list-text">ComputeDesiredSize 不负责最终裁决</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DPI-%E5%8F%82%E4%B8%8E%E5%BE%97%E5%BE%88%E6%97%A9"><span class="post-toc-list-text">DPI 参与得很早</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E7%9A%84%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">这一篇的结论</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Slate 原理与源码拆解（UE5.7）<br>
+本篇只抓一件事：把布局拆成“想要多大”和“最终给多大”。</p>
+</blockquote>
+<h2 id="布局问题，先别看屏幕">布局问题，先别看屏幕</h2>
+<p>布局 bug 最折磨人的地方，是屏幕上错了，但错不一定发生在绘制阶段。你看到按钮偏了几像素，可能是 <code>DesiredSize</code> 每帧变，也可能是父容器 <code>ArrangeChildren</code> 压缩了它，还可能是 DPI 和 RenderTransform 把最终几何又拧了一下。</p>
+<p>这一篇我会把 Slate 布局拆成两段：Prepass 先问每个控件想要多大，Arrange 再由父容器决定每个子控件实际拿到什么空间。<code>FGeometry</code> 是结果，不是原因；只盯它，很多问题会查晚一步。</p>
+<p>布局 bug 最忌讳一边看屏幕一边调数字。先把“测量”和“分配”拆开，错位问题会少很多玄学味。</p>
+<h2 id="范围收窄到两次计算">范围收窄到两次计算</h2>
+<p>版本先钉在 <code>C:\Epic\UE_5.7</code>。这篇只读 Slate 内核相关路径，UMG 只在必要时拿来说明“外面怎么接进来”。</p>
+<h2 id="布局链路我这样看">布局链路我这样看</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    N0[&quot;Root Window&quot;]</span><br><span class="line">    N1[&quot;SlatePrepass&quot;]</span><br><span class="line">    N2[&quot;ComputeDesiredSize&quot;]</span><br><span class="line">    N3[&quot;ArrangeChildren&quot;]</span><br><span class="line">    N4[&quot;FGeometry&quot;]</span><br><span class="line">    N5[&quot;OnPaint 使用 Geometry&quot;]</span><br><span class="line">    N0 --&gt; N1</span><br><span class="line">    N1 --&gt; N2</span><br><span class="line">    N2 --&gt; N3</span><br><span class="line">    N3 --&gt; N4</span><br><span class="line">    N4 --&gt; N5</span><br></pre></td></tr></table></figure>
+<h2 id="几个关键入口">几个关键入口</h2>
+<table>
+<thead>
+<tr>
+<th>源码位置</th>
+<th>关键符号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlateCore/Private/Widgets/SWidget.cpp</code></td>
+<td><code>SWidget::SlatePrepass</code></td>
+<td>布局测量阶段入口</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Layout/Geometry.h</code></td>
+<td><code>FGeometry</code></td>
+<td>布局与渲染变换载体</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Widgets/SPanel.h</code></td>
+<td><code>SPanel::OnArrangeChildren</code></td>
+<td>面板分配子控件空间</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Layout/Children.h</code></td>
+<td><code>FArrangedChildren</code></td>
+<td>排列结果容器</td>
+</tr>
+</tbody>
+</table>
+<h2 id="DesiredSize-最会骗人">DesiredSize 最会骗人</h2>
+<p>不要把 <code>DesiredSize</code> 当最终尺寸。它只是控件的“愿望”，父容器才是分配者。很多布局争执不是子控件算错，而是父容器策略和你想的不一样。</p>
+<h2 id="排查错位时">排查错位时</h2>
+<ul>
+<li>布局抖动先看 <code>DesiredSize</code> 是否每帧变化。</li>
+<li>错位时同时打印 LayoutTransform 和 RenderTransform。</li>
+<li>自定义 Panel 必须成对检查 <code>ComputeDesiredSize</code> 和 <code>OnArrangeChildren</code>。</li>
+<li>DPI 问题别只改控件尺寸，要查应用缩放来源。</li>
+</ul>
+<h2 id="源码流程框架">源码流程框架</h2>
+<ol>
+<li>窗口绘制前会先走 <code>DrawPrepass</code>，根窗口调用 <code>SWindow::SlatePrepass(ApplicationScale * DPIScale)</code>。</li>
+<li><code>SWidget::SlatePrepass</code> 递归访问子控件，先让子树更新，再计算当前控件的 DesiredSize。</li>
+<li>控件自己的尺寸愿望通常来自 <code>ComputeDesiredSize</code>，但这个结果会被缓存，不是每次访问都重算。</li>
+<li>父容器在 Arrange 阶段调用 <code>OnArrangeChildren</code>，把自己的 AllottedGeometry 分给子控件。</li>
+<li>最终 Paint 拿到的是 <code>FGeometry</code>，其中包含布局变换、局部尺寸、绝对位置和渲染变换相关信息。</li>
+<li>命中测试也依赖绘制/排列时建立的数据，所以布局错不只影响显示，还会影响输入。</li>
+</ol>
+<h2 id="几个细节拆开看">几个细节拆开看</h2>
+<h3 id="Prepass-的递归方向要注意">Prepass 的递归方向要注意</h3>
+<p>很多人以为父控件先算好自己再给子控件。Slate 的 DesiredSize 需要从叶子往上收，所以 Prepass 里经常是先让子控件更新，再由父控件汇总自己的期望尺寸。自定义 Panel 写错这里，尺寸会很诡异。</p>
+<h3 id="ComputeDesiredSize-不负责最终裁决"><code>ComputeDesiredSize</code> 不负责最终裁决</h3>
+<p>一个 <code>STextBlock</code> 可能希望很宽，但外层 <code>SBox</code>、<code>SOverlay</code>、<code>SScrollBox</code> 都可能改写最终空间。最终 Paint 用的是父容器安排后的 Geometry，所以“控件想要”和“控件得到”必须分开看。</p>
+<h3 id="DPI-参与得很早">DPI 参与得很早</h3>
+<p>窗口 Prepass 传入的 Scale 往往已经乘上 ApplicationScale 和窗口 DPI。也就是说 DPI 不是最后渲染阶段才放大一下；它会影响 DesiredSize 缓存和 Geometry 推导。</p>
+<h2 id="这一篇的结论">这一篇的结论</h2>
+<p>布局问题先收在这里：<code>DesiredSize</code> 是愿望，<code>Geometry</code> 是结果，中间那段父容器分配空间的过程，才是很多错位的案发现场。</p>
+<p>下一篇转到输入。布局和绘制会留下命中测试需要的数据，而一次鼠标点击能不能找到目标控件，就要看这些数据有没有被正确接上。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/01/18/ue-slate-source-notes/ue-slate-source-03-swidget-lifetime/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 3 篇</span>
+                    <strong class="series-nav-title">SWidget 的真实身份：声明式构造、共享指针、属性系统与生命周期</strong>
+                </a>
+                
+
+                
+                <a href="/2025/02/01/ue-slate-source-notes/ue-slate-source-05-input-hittest-widgetpath/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">输入事件如何找到控件：平台消息、HittestGrid、WidgetPath 与路由规则</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%83%E5%B1%80%E9%97%AE%E9%A2%98%EF%BC%8C%E5%85%88%E5%88%AB%E7%9C%8B%E5%B1%8F%E5%B9%95"><span class="post-toc-list-text">布局问题，先别看屏幕</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%8C%83%E5%9B%B4%E6%94%B6%E7%AA%84%E5%88%B0%E4%B8%A4%E6%AC%A1%E8%AE%A1%E7%AE%97"><span class="post-toc-list-text">范围收窄到两次计算</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%83%E5%B1%80%E9%93%BE%E8%B7%AF%E6%88%91%E8%BF%99%E6%A0%B7%E7%9C%8B"><span class="post-toc-list-text">布局链路我这样看</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E5%85%B3%E9%94%AE%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">几个关键入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#DesiredSize-%E6%9C%80%E4%BC%9A%E9%AA%97%E4%BA%BA"><span class="post-toc-list-text">DesiredSize 最会骗人</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%94%99%E4%BD%8D%E6%97%B6"><span class="post-toc-list-text">排查错位时</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Prepass-%E7%9A%84%E9%80%92%E5%BD%92%E6%96%B9%E5%90%91%E8%A6%81%E6%B3%A8%E6%84%8F"><span class="post-toc-list-text">Prepass 的递归方向要注意</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#ComputeDesiredSize-%E4%B8%8D%E8%B4%9F%E8%B4%A3%E6%9C%80%E7%BB%88%E8%A3%81%E5%86%B3"><span class="post-toc-list-text">ComputeDesiredSize 不负责最终裁决</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#DPI-%E5%8F%82%E4%B8%8E%E5%BE%97%E5%BE%88%E6%97%A9"><span class="post-toc-list-text">DPI 参与得很早</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E7%9A%84%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">这一篇的结论</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

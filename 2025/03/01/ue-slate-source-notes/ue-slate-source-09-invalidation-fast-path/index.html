@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.03.01
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            <span style="color: var(--accent);">#SlateCore</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <div class="series-meta">
+                <span>第 9 篇</span>
+                <span>已发布 16 / 16</span>
+                
+                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 56%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Invalidation-%E4%B8%8D%E8%B4%9F%E8%B4%A3%E5%8F%98%E9%AD%94%E6%9C%AF"><span class="post-toc-list-text">Invalidation 不负责变魔术</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AA%E7%9C%8B%E5%A4%8D%E7%94%A8%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">只看复用条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BF%AB%E9%80%9F%E8%B7%AF%E5%BE%84%E5%A4%A7%E8%87%B4%E8%BF%99%E6%A0%B7%E8%B5%B0"><span class="post-toc-list-text">快速路径大致这样走</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%A4%B1%E6%95%88%E7%B3%BB%E7%BB%9F%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">失效系统入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%93%E5%AD%98%E4%B8%8D%E6%98%AF%E5%85%8D%E8%B4%B9%E5%8D%88%E9%A4%90"><span class="post-toc-list-text">缓存不是免费午餐</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9F%A5%E5%A4%B1%E6%95%88%E6%8A%96%E5%8A%A8"><span class="post-toc-list-text">查失效抖动</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%B1%E6%95%88%E7%90%86%E7%94%B1%E5%86%B3%E5%AE%9A%E9%87%8D%E7%AE%97%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">失效理由决定重算范围</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#WidgetProxy-%E6%98%AF%E5%BF%AB%E9%80%9F%E8%B7%AF%E5%BE%84%E7%9A%84%E5%BD%B1%E5%AD%90%E8%8A%82%E7%82%B9"><span class="post-toc-list-text">WidgetProxy 是快速路径的影子节点</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Volatile-%E6%98%AF%E4%B8%BB%E5%8A%A8%E6%94%BE%E5%BC%83%E9%83%A8%E5%88%86%E7%BC%93%E5%AD%98"><span class="post-toc-list-text">Volatile 是主动放弃部分缓存</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8A%8A%E7%BC%93%E5%AD%98%E5%BD%93%E4%BF%A1%E4%BB%B0"><span class="post-toc-list-text">别把缓存当信仰</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Slate 原理与源码拆解（UE5.7）<br>
+本篇只抓一件事：把 Invalidation 当成复用协议，而不是性能开关。</p>
+</blockquote>
+<h2 id="Invalidation-不负责变魔术">Invalidation 不负责变魔术</h2>
+<p>Invalidation 是 Slate 里最像“玄学按钮”的东西。打开之后有时立竿见影，有时反而更慢。问题不在它玄学，而在我们经常忘了问：这棵子树稳定吗？失效理由准确吗？缓存命中率够吗？</p>
+<p>这一篇读 <code>FSlateInvalidationRoot</code> 和 <code>WidgetProxy</code>。我想把 Invalidation 从“能优化 UI”这种口号，拆成一套很朴素的判断：哪些布局、绘制、命中数据还能复用，哪些必须重算。</p>
+<p>Invalidation 好用的时候很爽，不好用的时候很迷惑。我的经验是先问子树稳不稳，再问缓存值不值；顺序反了，就容易把优化写成负优化。</p>
+<h2 id="只看复用条件">只看复用条件</h2>
+<p>基线还是 <code>C:\Epic\UE_5.7</code>。我只写相对路径和符号名，不追行号；行号会漂，职责不会轻易漂。UMG 只在必要时提一嘴，主线仍然压在 Slate 内核。</p>
+<h2 id="快速路径大致这样走">快速路径大致这样走</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    N0[&quot;Widget Invalidate&quot;]</span><br><span class="line">    N1[&quot;Invalidation Root 收集脏节点&quot;]</span><br><span class="line">    N2[&quot;WidgetProxy 更新&quot;]</span><br><span class="line">    N3[&quot;Fast Path Prepass/Paint&quot;]</span><br><span class="line">    N4[&quot;CachedElementData 复用&quot;]</span><br><span class="line">    N5[&quot;HittestGrid 校验&quot;]</span><br><span class="line">    N0 --&gt; N1</span><br><span class="line">    N1 --&gt; N2</span><br><span class="line">    N2 --&gt; N3</span><br><span class="line">    N3 --&gt; N4</span><br><span class="line">    N4 --&gt; N5</span><br></pre></td></tr></table></figure>
+<h2 id="失效系统入口">失效系统入口</h2>
+<table>
+<thead>
+<tr>
+<th>源码位置</th>
+<th>关键符号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlateCore/Private/FastUpdate/SlateInvalidationRoot.cpp</code></td>
+<td><code>FSlateInvalidationRoot::PaintInvalidationRoot</code></td>
+<td>失效根绘制主入口</td>
+</tr>
+<tr>
+<td><code>SlateCore/Private/FastUpdate/WidgetProxy.cpp</code></td>
+<td><code>FWidgetProxy</code></td>
+<td>快速路径代理</td>
+</tr>
+<tr>
+<td><code>SlateCore/Private/FastUpdate/SlateInvalidationWidgetList.cpp</code></td>
+<td><code>FSlateInvalidationWidgetList</code></td>
+<td>失效控件列表</td>
+</tr>
+<tr>
+<td><code>SlateCore/Private/Rendering/DrawElements.cpp</code></td>
+<td><code>FSlateCachedElementData</code></td>
+<td>缓存绘制数据</td>
+</tr>
+</tbody>
+</table>
+<h2 id="缓存不是免费午餐">缓存不是免费午餐</h2>
+<p>不要把 Invalidation 当成“打开就快”。如果控件每帧变、子节点顺序频繁改、文本反复重排，缓存系统只是在更认真地帮你收拾烂摊子。</p>
+<h2 id="查失效抖动">查失效抖动</h2>
+<ul>
+<li>先判断子树是否稳定，再谈 Invalidation 收益。</li>
+<li>频繁失效时统计失效理由，重点看 ChildOrder 和 Volatility。</li>
+<li>命中异常时检查 HittestGrid 是否和 WidgetProxy 同步。</li>
+<li>不要在 Tick 里无脑 <code>InvalidateLayoutAndVolatility</code>。</li>
+</ul>
+<h2 id="源码流程框架">源码流程框架</h2>
+<ol>
+<li>控件状态变化调用 Invalidate，带上 <code>EInvalidateWidgetReason</code>，比如 Layout、Paint、Volatility、ChildOrder。</li>
+<li>失效会向上找到对应的 Invalidation Root，根会记录哪些 Widget 或 Proxy 需要更新。</li>
+<li><code>FSlateInvalidationRoot::PaintInvalidationRoot</code> 是快速路径绘制的核心入口，它决定哪些部分复用缓存、哪些部分重算。</li>
+<li><code>FWidgetProxy</code> 保存控件在快速路径中的排序、可见性、父子关系、几何、Layer 等摘要信息。</li>
+<li>如果只是 Paint 失效，布局可能复用；如果是 Layout 或 ChildOrder 失效，Prepass、排序、HittestGrid 都可能被迫更新。</li>
+<li>绘制结果可进入 <code>FSlateCachedElementData</code>，下一帧如果条件满足就复用。</li>
+</ol>
+<h2 id="几个细节拆开看">几个细节拆开看</h2>
+<h3 id="失效理由决定重算范围">失效理由决定重算范围</h3>
+<p>这是 Invalidation 最核心的细节。Paint 失效和 Layout 失效不是一个成本级别；ChildOrder 更重，因为它会影响 WidgetList 顺序、命中测试、绘制层级。乱用 <code>InvalidateLayoutAndVolatility</code> 等于告诉 Slate “你多重算一点吧”。</p>
+<h3 id="WidgetProxy-是快速路径的影子节点">WidgetProxy 是快速路径的影子节点</h3>
+<p>快速路径不想每次都重新沿真实控件树做全量工作，所以需要 Proxy 保存排序、父子、可见性等信息。问题是影子必须和真身同步；同步不准，就会出现缓存绘制正确但命中或层级不对的怪问题。</p>
+<h3 id="Volatile-是主动放弃部分缓存">Volatile 是主动放弃部分缓存</h3>
+<p>高频动画、光标、拖拽装饰这类控件如果每帧都变，硬缓存意义不大。Volatile 的意义不是“这个控件性能差”，而是告诉失效系统：别假装它稳定。</p>
+<h2 id="别把缓存当信仰">别把缓存当信仰</h2>
+<p>Invalidation 先收成一句土话：稳定的东西才值得缓存。不稳定的东西硬塞进缓存体系，只会让调试多一层烟。</p>
+<p>下一篇处理那些肉眼最容易发现、源码里却最容易绕晕的问题：Clip、Transform、DPI 和窗口缩放怎么一起制造错位、发虚和裁剪异常。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/02/22/ue-slate-source-notes/ue-slate-source-08-batcher-rhi-renderer/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 8 篇</span>
+                    <strong class="series-nav-title">从 DrawElement 到 GPU：Batcher、TextureAtlas、SlateRHIRenderer 与批次合并</strong>
+                </a>
+                
+
+                
+                <a href="/2025/03/08/ue-slate-source-notes/ue-slate-source-10-clip-transform-dpi/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 10 篇</span>
+                    <strong class="series-nav-title">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Invalidation-%E4%B8%8D%E8%B4%9F%E8%B4%A3%E5%8F%98%E9%AD%94%E6%9C%AF"><span class="post-toc-list-text">Invalidation 不负责变魔术</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AA%E7%9C%8B%E5%A4%8D%E7%94%A8%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">只看复用条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BF%AB%E9%80%9F%E8%B7%AF%E5%BE%84%E5%A4%A7%E8%87%B4%E8%BF%99%E6%A0%B7%E8%B5%B0"><span class="post-toc-list-text">快速路径大致这样走</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%A4%B1%E6%95%88%E7%B3%BB%E7%BB%9F%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">失效系统入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%93%E5%AD%98%E4%B8%8D%E6%98%AF%E5%85%8D%E8%B4%B9%E5%8D%88%E9%A4%90"><span class="post-toc-list-text">缓存不是免费午餐</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9F%A5%E5%A4%B1%E6%95%88%E6%8A%96%E5%8A%A8"><span class="post-toc-list-text">查失效抖动</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%B1%E6%95%88%E7%90%86%E7%94%B1%E5%86%B3%E5%AE%9A%E9%87%8D%E7%AE%97%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">失效理由决定重算范围</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#WidgetProxy-%E6%98%AF%E5%BF%AB%E9%80%9F%E8%B7%AF%E5%BE%84%E7%9A%84%E5%BD%B1%E5%AD%90%E8%8A%82%E7%82%B9"><span class="post-toc-list-text">WidgetProxy 是快速路径的影子节点</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Volatile-%E6%98%AF%E4%B8%BB%E5%8A%A8%E6%94%BE%E5%BC%83%E9%83%A8%E5%88%86%E7%BC%93%E5%AD%98"><span class="post-toc-list-text">Volatile 是主动放弃部分缓存</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8A%8A%E7%BC%93%E5%AD%98%E5%BD%93%E4%BF%A1%E4%BB%B0"><span class="post-toc-list-text">别把缓存当信仰</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

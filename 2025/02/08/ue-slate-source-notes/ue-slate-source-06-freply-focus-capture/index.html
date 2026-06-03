@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FReply 为什么能改变世界：Handled、Capture、Focus、Navigation 的副作用链 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">FReply 为什么能改变世界：Handled、Capture、Focus、Navigation 的副作用链</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.02.08
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            <span style="color: var(--accent);">#SlateCore</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <div class="series-meta">
+                <span>第 6 篇</span>
+                <span>已发布 16 / 16</span>
+                
+                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 38%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Reply-%E4%B8%8D%E6%98%AF%E4%B8%80%E5%8F%A5%E2%80%9C%E5%A4%84%E7%90%86%E4%BA%86%E2%80%9D"><span class="post-toc-list-text">Reply 不是一句“处理了”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E5%8F%AA%E7%9C%8B%E5%89%AF%E4%BD%9C%E7%94%A8"><span class="post-toc-list-text">这篇只看副作用</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Reply-%E8%90%BD%E5%9C%B0%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">Reply 落地路径</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E7%BF%BB%E8%BF%99%E5%87%A0%E5%A4%84"><span class="post-toc-list-text">我会翻这几处</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Handled-%E4%B8%8D%E6%98%AF-true"><span class="post-toc-list-text">Handled 不是 true</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%84%A6%E7%82%B9%E4%B9%B1%E6%97%B6"><span class="post-toc-list-text">焦点乱时</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Reply-%E6%98%AF%E5%BB%B6%E8%BF%9F%E6%89%A7%E8%A1%8C%E7%9A%84%E5%91%BD%E4%BB%A4%E5%8C%85"><span class="post-toc-list-text">Reply 是延迟执行的命令包</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Handled-%E7%9A%84%E5%BD%B1%E5%93%8D%E6%AF%94%E6%83%B3%E8%B1%A1%E5%A4%A7"><span class="post-toc-list-text">Handled 的影响比想象大</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%84%A6%E7%82%B9%E6%8C%89-User-%E5%88%86%E5%BC%80%E7%BB%B4%E6%8A%A4"><span class="post-toc-list-text">焦点按 User 分开维护</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E9%87%8C%E5%85%88%E6%94%B6%E4%BD%8F"><span class="post-toc-list-text">这里先收住</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Slate 原理与源码拆解（UE5.7）<br>
+本篇只抓一件事：把 <code>FReply</code> 从返回值读成一包 UI 意图。</p>
+</blockquote>
+<h2 id="Reply-不是一句“处理了”">Reply 不是一句“处理了”</h2>
+<p><code>FReply</code> 是 Slate 里一个很容易被轻视的类型。它长得像“我处理了/我没处理”的返回值，但它其实能改焦点、抓鼠标、发起拖拽、触发导航。很多焦点灾难不是从焦点函数开始的，而是从某个控件返回了一份带副作用的 Reply 开始的。</p>
+<p>这一篇不把 <code>FReply</code> 当布尔值读。我要看它如何在事件路由结束后，被 <code>FSlateApplication</code> 拿去执行那些延迟副作用。理解这一层，才能解释为什么一个小小的 <code>Handled()</code> 会让后续输入路径全变了。</p>
+<p><code>FReply</code> 最危险的地方在于它太像返回值。实际它更像一张小纸条：事件路由结束后，应用层照着纸条去改焦点、捕获和导航。</p>
+<h2 id="这篇只看副作用">这篇只看副作用</h2>
+<p>下面默认看的都是 <code>C:\Epic\UE_5.7</code>。我会尽量按符号和职责写，不按行号写；行号太脆，过一个小版本就可能没意义。UMG 这次只当外层入口，不抢主线。</p>
+<h2 id="Reply-落地路径">Reply 落地路径</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    N0[&quot;控件 OnMouseButtonDown&quot;]</span><br><span class="line">    N1[&quot;返回 FReply&quot;]</span><br><span class="line">    N2[&quot;Route 解析 Reply&quot;]</span><br><span class="line">    N3[&quot;ProcessReply&quot;]</span><br><span class="line">    N4[&quot;Focus / Capture / Navigation 状态更新&quot;]</span><br><span class="line">    N5[&quot;后续事件目标变化&quot;]</span><br><span class="line">    N0 --&gt; N1</span><br><span class="line">    N1 --&gt; N2</span><br><span class="line">    N2 --&gt; N3</span><br><span class="line">    N3 --&gt; N4</span><br><span class="line">    N4 --&gt; N5</span><br></pre></td></tr></table></figure>
+<h2 id="我会翻这几处">我会翻这几处</h2>
+<table>
+<thead>
+<tr>
+<th>源码位置</th>
+<th>关键符号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlateCore/Private/Input/Reply.cpp</code></td>
+<td><code>FReply</code></td>
+<td>输入回复对象实现</td>
+</tr>
+<tr>
+<td><code>Slate/Private/Framework/Application/SlateApplication.cpp</code></td>
+<td><code>ProcessReply</code></td>
+<td>执行 Reply 副作用</td>
+</tr>
+<tr>
+<td><code>Slate/Private/Framework/Application/SlateUser.cpp</code></td>
+<td><code>FSlateUser</code></td>
+<td>焦点与捕获状态</td>
+</tr>
+<tr>
+<td><code>Slate/Private/Framework/Application/NavigationConfig.cpp</code></td>
+<td><code>FNavigationConfig</code></td>
+<td>导航规则</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Handled-不是-true">Handled 不是 true</h2>
+<p>不要把 <code>FReply::Handled</code> 翻译成 C++ 里的 <code>return true</code>。它可能还带着 <code>CaptureMouse</code>、<code>SetUserFocus</code>、<code>BeginDragDrop</code> 等命令；真正效果要等应用层处理 Reply 才落地。</p>
+<h2 id="焦点乱时">焦点乱时</h2>
+<ul>
+<li>焦点乱跳时全局搜 <code>SetUserFocus</code>，别只看 <code>OnFocusReceived</code>。</li>
+<li>鼠标松开不到控件时检查是否被 CaptureMouse 接管。</li>
+<li>事件被吞时找路由上第一个返回 Handled 的控件。</li>
+<li>手柄导航异常要同时看 NavigationConfig 和控件可聚焦性。</li>
+</ul>
+<h2 id="源码流程框架">源码流程框架</h2>
+<ol>
+<li>控件事件函数返回 <code>FReply</code>，最基本的是 <code>Handled()</code> 或 <code>Unhandled()</code>。</li>
+<li>路由器根据 Handled/Unhandled 决定事件是否继续冒泡或交给其他控件。</li>
+<li>如果 Reply 里设置了 <code>SetUserFocus</code>、<code>CaptureMouse</code>、<code>ReleaseMouseCapture</code>、<code>BeginDragDrop</code> 等操作，它们只是被记录下来。</li>
+<li>路由结束后，<code>FSlateApplication::ProcessReply</code> 统一读取这些操作，并修改 <code>FSlateUser</code>、MouseCaptor、DragDropContent 等全局状态。</li>
+<li>焦点变化会影响后续键盘事件路由；鼠标捕获会影响后续鼠标事件目标。</li>
+<li>Navigation Reply 会进入导航逻辑，结合 <code>FNavigationConfig</code> 和当前路径寻找下一个焦点控件。</li>
+</ol>
+<h2 id="几个细节拆开看">几个细节拆开看</h2>
+<h3 id="Reply-是延迟执行的命令包">Reply 是延迟执行的命令包</h3>
+<p><code>FReply::Handled().SetUserFocus(...)</code> 不是当场改焦点，而是把意图塞进 Reply。真正执行点在 <code>ProcessReply</code>。所以查焦点问题时，断在 <code>OnMouseButtonDown</code> 只能看到谁提出请求，断在 <code>ProcessReply</code> 才能看到请求怎么落地。</p>
+<h3 id="Handled-的影响比想象大">Handled 的影响比想象大</h3>
+<p>Handled 会改变路由结果，也可能阻止更外层控件收到事件。编辑器扩展里常见问题是内层控件为了拦截点击返回 Handled，结果外层菜单或窗口逻辑拿不到本该拿到的输入。</p>
+<h3 id="焦点按-User-分开维护">焦点按 User 分开维护</h3>
+<p>多用户、多手柄、多 PIE 窗口场景不要把焦点当成一个全局变量。<code>FSlateUser</code> 持有用户级状态，<code>UserIndex</code> 错了，焦点看起来就像随机跳。</p>
+<h2 id="这里先收住">这里先收住</h2>
+<p><code>FReply</code> 这一层读完，很多焦点问题会变得没那么邪门：不是 Slate 随机换目标，而是某个 Reply 明确要求它换。</p>
+<p>下一篇换到绘制线。输入会改状态，状态最终要落到屏幕上；先看 <code>OnPaint</code> 到底是在“画”，还是在给后面的批处理系统记账。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/02/01/ue-slate-source-notes/ue-slate-source-05-input-hittest-widgetpath/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 5 篇</span>
+                    <strong class="series-nav-title">输入事件如何找到控件：平台消息、HittestGrid、WidgetPath 与路由规则</strong>
+                </a>
+                
+
+                
+                <a href="/2025/02/15/ue-slate-source-notes/ue-slate-source-07-onpaint-drawelement/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 7 篇</span>
+                    <strong class="series-nav-title">Slate 绘制主线：OnPaint、LayerId、DrawElement 与 ElementList</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Reply-%E4%B8%8D%E6%98%AF%E4%B8%80%E5%8F%A5%E2%80%9C%E5%A4%84%E7%90%86%E4%BA%86%E2%80%9D"><span class="post-toc-list-text">Reply 不是一句“处理了”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E5%8F%AA%E7%9C%8B%E5%89%AF%E4%BD%9C%E7%94%A8"><span class="post-toc-list-text">这篇只看副作用</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Reply-%E8%90%BD%E5%9C%B0%E8%B7%AF%E5%BE%84"><span class="post-toc-list-text">Reply 落地路径</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E7%BF%BB%E8%BF%99%E5%87%A0%E5%A4%84"><span class="post-toc-list-text">我会翻这几处</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Handled-%E4%B8%8D%E6%98%AF-true"><span class="post-toc-list-text">Handled 不是 true</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%84%A6%E7%82%B9%E4%B9%B1%E6%97%B6"><span class="post-toc-list-text">焦点乱时</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Reply-%E6%98%AF%E5%BB%B6%E8%BF%9F%E6%89%A7%E8%A1%8C%E7%9A%84%E5%91%BD%E4%BB%A4%E5%8C%85"><span class="post-toc-list-text">Reply 是延迟执行的命令包</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Handled-%E7%9A%84%E5%BD%B1%E5%93%8D%E6%AF%94%E6%83%B3%E8%B1%A1%E5%A4%A7"><span class="post-toc-list-text">Handled 的影响比想象大</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%84%A6%E7%82%B9%E6%8C%89-User-%E5%88%86%E5%BC%80%E7%BB%B4%E6%8A%A4"><span class="post-toc-list-text">焦点按 User 分开维护</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E9%87%8C%E5%85%88%E6%94%B6%E4%BD%8F"><span class="post-toc-list-text">这里先收住</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

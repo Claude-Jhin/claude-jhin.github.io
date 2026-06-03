@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE5 Slate 原理与源码拆解 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/columns" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回专栏
+    </a>
+</div>
+
+<article class="post-container module column-shell">
+    
+    <header class="column-hero">
+        <div class="column-hero-top">
+            <div>
+                <p class="columns-kicker">系列内容</p>
+                <h1 class="columns-title">UE5 Slate 原理与源码拆解</h1>
+            </div>
+            <span class="column-badge is-complete">已完结</span>
+        </div>
+
+        <p class="columns-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+
+        <div class="column-overview-meta">
+            <span>当前阶段：2025.01 - 2025.04 旗舰连载</span>
+            <span>已发布 16 / 16</span>
+        </div>
+
+        <div class="column-progress large" aria-hidden="true">
+            <span style="width: 100%"></span>
+        </div>
+    </header>
+
+    
+    <section class="column-section">
+        <h2 class="column-section-title">这一栏想解决什么</h2>
+        <ul class="column-goals">
+            
+            <li>建立 Slate 作为引擎 UI 内核的完整心智模型，和 UMG 的 UObject 桥接层明确分开</li>
+            
+            <li>读通 FSlateApplication、SWidget、FReply、FSlateDrawElement、Invalidation、SlateRHIRenderer 等核心链路</li>
+            
+            <li>沉淀可复用的 Slate 性能诊断、焦点排障、绘制异常与自定义控件实现方法</li>
+            
+        </ul>
+    </section>
+    
+
+    
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">系列大纲</h2>
+            <p class="column-section-note">后续文章会沿着这条路线持续补齐。</p>
+        </div>
+
+        <div class="column-outline">
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">1</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Slate 不是 UI 控件库：从模块边界读懂 Slate / SlateCore / SlateRHIRenderer</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">先把模块职责和调用边界画清楚，避免把 Slate 误读成“一堆 S 开头控件”。</p>
+                    
+                    <a class="column-outline-link" href="/2025/01/04/ue-slate-source-notes/ue-slate-source-01-module-boundary/">Slate 不是 UI 控件库：从模块边界读懂 Slate / SlateCore / SlateRHIRenderer -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">2</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">一帧 Slate 从哪里开始：FSlateApplication::TickAndDrawWidgets 主循环拆解</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">追踪 Slate 每帧从应用层 Tick 到窗口绘制提交的主线，建立后续源码阅读坐标系。</p>
+                    
+                    <a class="column-outline-link" href="/2025/01/11/ue-slate-source-notes/ue-slate-source-02-tick-and-draw-widgets/">一帧 Slate 从哪里开始：FSlateApplication::TickAndDrawWidgets 主循环拆解 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">3</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">SWidget 的真实身份：声明式构造、共享指针、属性系统与生命周期</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">解释 SWidget 为什么不是 UObject，以及声明式参数、TSharedRef、TSlateAttribute 如何共同组织控件状态。</p>
+                    
+                    <a class="column-outline-link" href="/2025/01/18/ue-slate-source-notes/ue-slate-source-03-swidget-lifetime/">SWidget 的真实身份：声明式构造、共享指针、属性系统与生命周期 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">4</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">布局不是递归摆盒子：Prepass、DesiredSize、ArrangeChildren 与 Geometry</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">拆解 Slate 布局两阶段，把尺寸计算、子控件排列和最终几何变换串成一条链。</p>
+                    
+                    <a class="column-outline-link" href="/2025/01/25/ue-slate-source-notes/ue-slate-source-04-layout-prepass-geometry/">布局不是递归摆盒子：Prepass、DesiredSize、ArrangeChildren 与 Geometry -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">5</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">输入事件如何找到控件：平台消息、HittestGrid、WidgetPath 与路由规则</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">从输入入口追到命中测试和 WidgetPath 构建，解释事件为什么会到某个控件而不是另一个控件。</p>
+                    
+                    <a class="column-outline-link" href="/2025/02/01/ue-slate-source-notes/ue-slate-source-05-input-hittest-widgetpath/">输入事件如何找到控件：平台消息、HittestGrid、WidgetPath 与路由规则 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">6</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">FReply 为什么能改变世界：Handled、Capture、Focus、Navigation 的副作用链</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">聚焦 FReply 的语义和副作用，讲清焦点、捕获、导航与事件吞掉的真实原因。</p>
+                    
+                    <a class="column-outline-link" href="/2025/02/08/ue-slate-source-notes/ue-slate-source-06-freply-focus-capture/">FReply 为什么能改变世界：Handled、Capture、Focus、Navigation 的副作用链 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">7</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Slate 绘制主线：OnPaint、LayerId、DrawElement 与 ElementList</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">从控件 OnPaint 读到 DrawElement 收集，理解 Slate 为什么先记录绘制命令而不是立刻画。</p>
+                    
+                    <a class="column-outline-link" href="/2025/02/15/ue-slate-source-notes/ue-slate-source-07-onpaint-drawelement/">Slate 绘制主线：OnPaint、LayerId、DrawElement 与 ElementList -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">8</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">从 DrawElement 到 GPU：Batcher、TextureAtlas、SlateRHIRenderer 与批次合并</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">追踪 DrawElement 如何变成批次、顶点和 RHI 提交，定位 UI DrawCall 和贴图图集问题。</p>
+                    
+                    <a class="column-outline-link" href="/2025/02/22/ue-slate-source-notes/ue-slate-source-08-batcher-rhi-renderer/">从 DrawElement 到 GPU：Batcher、TextureAtlas、SlateRHIRenderer 与批次合并 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">9</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">拆开 Slate 快速路径、WidgetProxy 和失效传播规则，解释缓存何时省性能、何时制造幻觉。</p>
+                    
+                    <a class="column-outline-link" href="/2025/03/01/ue-slate-source-notes/ue-slate-source-09-invalidation-fast-path/">Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">10</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">聚焦裁剪、变换和 DPI 缩放在布局绘制之间的衔接，定位错位与模糊问题。</p>
+                    
+                    <a class="column-outline-link" href="/2025/03/08/ue-slate-source-notes/ue-slate-source-10-clip-transform-dpi/">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">11</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">读通文本测量、塑形、字体缓存和布局重排，解释中文 UI 的性能与显示细节。</p>
+                    
+                    <a class="column-outline-link" href="/2025/03/15/ue-slate-source-notes/ue-slate-source-11-text-font-cache-layout/">Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">12</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">样式和资源系统：FSlateStyleSet、Brush、动态图片与资源生命周期</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">讲清样式注册、Brush 资源引用、动态图加载和释放时机，避免资源泄漏与丢图。</p>
+                    
+                    <a class="column-outline-link" href="/2025/03/22/ue-slate-source-notes/ue-slate-source-12-style-brush-resource/">样式和资源系统：FSlateStyleSet、Brush、动态图片与资源生命周期 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">13</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">窗口、菜单与弹层：SWindow、MenuStack、Popup、Tooltip 的层级管理</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">还原多窗口和弹层管理主线，解释菜单、Tooltip、Popup 的创建、置顶和销毁。</p>
+                    
+                    <a class="column-outline-link" href="/2025/03/29/ue-slate-source-notes/ue-slate-source-13-window-menu-popup-tooltip/">窗口、菜单与弹层：SWindow、MenuStack、Popup、Tooltip 的层级管理 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">14</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">从编辑器扩展常见入口读到命令、菜单、停靠布局和 Tab 管理，建立编辑器 Slate 架构图。</p>
+                    
+                    <a class="column-outline-link" href="/2025/04/05/ue-slate-source-notes/ue-slate-source-14-editor-commands-multibox-docking/">编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">15</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">Slate 性能诊断：Stat Slate、Widget Reflector、ConsoleSlateDebugger 与回归基线</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">把统计、反射器和调试器串成排障流程，形成可复制的性能回归基线。</p>
+                    
+                    <a class="column-outline-link" href="/2025/04/12/ue-slate-source-notes/ue-slate-source-15-performance-debugging/">Slate 性能诊断：Stat Slate、Widget Reflector、ConsoleSlateDebugger 与回归基线 -></a>
+                    
+                </div>
+            </article>
+            
+            
+            <article class="column-outline-item is-complete">
+                <div class="column-outline-index">16</div>
+                <div class="column-outline-body">
+                    <div class="column-outline-top">
+                        <h3 class="column-outline-title">工程收官：自定义 Slate 控件、崩溃/泄漏/焦点灾难排障手册</h3>
+                        <span class="column-outline-state">已发布</span>
+                    </div>
+                    <p class="column-outline-summary">以自定义控件为收束，整理崩溃、泄漏、焦点错乱和绘制异常的源码级排障方法。</p>
+                    
+                    <a class="column-outline-link" href="/2025/04/19/ue-slate-source-notes/ue-slate-source-16-custom-widget-troubleshooting/">工程收官：自定义 Slate 控件、崩溃/泄漏/焦点灾难排障手册 -></a>
+                    
+                </div>
+            </article>
+            
+        </div>
+    </section>
+    
+
+    <section class="column-section">
+        <div class="column-section-head">
+            <h2 class="column-section-title">已发布文章</h2>
+            <p class="column-section-note">按专栏顺序排列，适合从上往下连续阅读。</p>
+        </div>
+
+        
+        <div class="archive-list column-post-list">
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 1 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/01/04/ue-slate-source-notes/ue-slate-source-01-module-boundary/">Slate 不是 UI 控件库：从模块边界读懂 Slate / SlateCore / SlateRHIRenderer</a>
+                    <span class="post-meta">2025.01.04</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 2 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/01/11/ue-slate-source-notes/ue-slate-source-02-tick-and-draw-widgets/">一帧 Slate 从哪里开始：FSlateApplication::TickAndDrawWidgets 主循环拆解</a>
+                    <span class="post-meta">2025.01.11</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 3 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/01/18/ue-slate-source-notes/ue-slate-source-03-swidget-lifetime/">SWidget 的真实身份：声明式构造、共享指针、属性系统与生命周期</a>
+                    <span class="post-meta">2025.01.18</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 4 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/01/25/ue-slate-source-notes/ue-slate-source-04-layout-prepass-geometry/">布局不是递归摆盒子：Prepass、DesiredSize、ArrangeChildren 与 Geometry</a>
+                    <span class="post-meta">2025.01.25</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 5 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/02/01/ue-slate-source-notes/ue-slate-source-05-input-hittest-widgetpath/">输入事件如何找到控件：平台消息、HittestGrid、WidgetPath 与路由规则</a>
+                    <span class="post-meta">2025.02.01</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 6 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/02/08/ue-slate-source-notes/ue-slate-source-06-freply-focus-capture/">FReply 为什么能改变世界：Handled、Capture、Focus、Navigation 的副作用链</a>
+                    <span class="post-meta">2025.02.08</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 7 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/02/15/ue-slate-source-notes/ue-slate-source-07-onpaint-drawelement/">Slate 绘制主线：OnPaint、LayerId、DrawElement 与 ElementList</a>
+                    <span class="post-meta">2025.02.15</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 8 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/02/22/ue-slate-source-notes/ue-slate-source-08-batcher-rhi-renderer/">从 DrawElement 到 GPU：Batcher、TextureAtlas、SlateRHIRenderer 与批次合并</a>
+                    <span class="post-meta">2025.02.22</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 9 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/03/01/ue-slate-source-notes/ue-slate-source-09-invalidation-fast-path/">Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播</a>
+                    <span class="post-meta">2025.03.01</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 10 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/03/08/ue-slate-source-notes/ue-slate-source-10-clip-transform-dpi/">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉</a>
+                    <span class="post-meta">2025.03.08</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 11 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/03/15/ue-slate-source-notes/ue-slate-source-11-text-font-cache-layout/">Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本</a>
+                    <span class="post-meta">2025.03.15</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 12 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/03/22/ue-slate-source-notes/ue-slate-source-12-style-brush-resource/">样式和资源系统：FSlateStyleSet、Brush、动态图片与资源生命周期</a>
+                    <span class="post-meta">2025.03.22</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 13 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/03/29/ue-slate-source-notes/ue-slate-source-13-window-menu-popup-tooltip/">窗口、菜单与弹层：SWindow、MenuStack、Popup、Tooltip 的层级管理</a>
+                    <span class="post-meta">2025.03.29</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 14 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/04/05/ue-slate-source-notes/ue-slate-source-14-editor-commands-multibox-docking/">编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器</a>
+                    <span class="post-meta">2025.04.05</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 15 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/04/12/ue-slate-source-notes/ue-slate-source-15-performance-debugging/">Slate 性能诊断：Stat Slate、Widget Reflector、ConsoleSlateDebugger 与回归基线</a>
+                    <span class="post-meta">2025.04.12</span>
+                </div>
+            </div>
+            
+            <div class="archive-item column-post-item">
+                <span class="column-post-order">第 16 篇</span>
+                <div class="column-post-main">
+                    <a href="/2025/04/19/ue-slate-source-notes/ue-slate-source-16-custom-widget-troubleshooting/">工程收官：自定义 Slate 控件、崩溃/泄漏/焦点灾难排障手册</a>
+                    <span class="post-meta">2025.04.19</span>
+                </div>
+            </div>
+            
+        </div>
+        
+    </section>
+    
+</article>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

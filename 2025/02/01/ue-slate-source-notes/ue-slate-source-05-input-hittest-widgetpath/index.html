@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>输入事件如何找到控件：平台消息、HittestGrid、WidgetPath 与路由规则 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">输入事件如何找到控件：平台消息、HittestGrid、WidgetPath 与路由规则</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.02.01
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            <span style="color: var(--accent);">#SlateCore</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <div class="series-meta">
+                <span>第 5 篇</span>
+                <span>已发布 16 / 16</span>
+                
+                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 31%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8C%89%E9%92%AE%E6%B2%A1%E5%93%8D%EF%BC%8C%E4%B8%8D%E4%B8%80%E5%AE%9A%E6%98%AF%E6%8C%89%E9%92%AE%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">按钮没响，不一定是按钮的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E5%8F%AA%E8%BF%BD%E5%91%BD%E4%B8%AD"><span class="post-toc-list-text">这次只追命中</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BE%93%E5%85%A5%E5%85%88%E8%B5%B0%E8%BF%99%E6%9D%A1%E8%B7%AF"><span class="post-toc-list-text">输入先走这条路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E4%BB%8E%E8%BF%99%E9%87%8C%E5%BC%80%E5%A7%8B"><span class="post-toc-list-text">断点从这里开始</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E8%A7%81%E4%B8%8D%E7%AD%89%E4%BA%8E%E5%8F%AF%E7%82%B9"><span class="post-toc-list-text">可见不等于可点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9F%A5%E8%BE%93%E5%85%A5%E6%88%91%E4%BC%9A%E8%BF%99%E4%B9%88%E5%81%9A"><span class="post-toc-list-text">查输入我会这么做</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#HittestGrid-%E6%9D%A5%E8%87%AA%E7%BB%98%E5%88%B6%E6%9C%9F"><span class="post-toc-list-text">HittestGrid 来自绘制期</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#WidgetPath-%E6%98%AF%E4%BA%8B%E4%BB%B6%E8%B7%AF%E7%94%B1%E7%9A%84%E8%AF%81%E6%8D%AE"><span class="post-toc-list-text">WidgetPath 是事件路由的证据</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%BC%A0%E6%A0%87%E6%8D%95%E8%8E%B7%E4%BC%9A%E7%BB%95%E5%BC%80%E6%99%AE%E9%80%9A%E5%91%BD%E4%B8%AD"><span class="post-toc-list-text">鼠标捕获会绕开普通命中</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%BA%8B%E4%BB%B6%E6%89%BE%E5%88%B0%E8%B0%81%E8%AE%B2%E6%B8%85%E6%A5%9A"><span class="post-toc-list-text">先把事件找到谁讲清楚</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Slate 原理与源码拆解（UE5.7）<br>
+本篇只抓一件事：把“按钮没响应”还原成命中链路问题。</p>
+</blockquote>
+<h2 id="按钮没响，不一定是按钮的问题">按钮没响，不一定是按钮的问题</h2>
+<p>春节这篇本来想写轻一点，结果 Slate 输入链路一点都不轻。一个按钮点不动，最不该做的事就是先怀疑按钮。事件到按钮之前，已经经过平台消息、窗口定位、HittestGrid、WidgetPath 和路由策略，按钮只是最后一个接电话的人。</p>
+<p>这一篇只追“事件怎么找到控件”。我会把 <code>ProcessMouseButtonDownEvent</code> 当入口，顺着窗口命中、路径构建和路由往下看。只要这条路清楚，焦点、捕获、拖拽那些后续问题才有地方安放。</p>
+<p>输入链路很像查快递：最后没送到，不代表收件人有问题。先看它经过了哪个窗口、哪条路径、哪个 HitTest 结果。</p>
+<h2 id="这次只追命中">这次只追命中</h2>
+<p>基线还是 <code>C:\Epic\UE_5.7</code>。我只写相对路径和符号名，不追行号；行号会漂，职责不会轻易漂。UMG 只在必要时提一嘴，主线仍然压在 Slate 内核。</p>
+<h2 id="输入先走这条路">输入先走这条路</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    N0[&quot;Platform Application&quot;]</span><br><span class="line">    N1[&quot;FSlateApplication::ProcessMouseButtonDownEvent&quot;]</span><br><span class="line">    N2[&quot;LocateWindowUnderMouse&quot;]</span><br><span class="line">    N3[&quot;FHittestGrid&quot;]</span><br><span class="line">    N4[&quot;FWidgetPath&quot;]</span><br><span class="line">    N5[&quot;RoutePointerDownEvent&quot;]</span><br><span class="line">    N0 --&gt; N1</span><br><span class="line">    N1 --&gt; N2</span><br><span class="line">    N2 --&gt; N3</span><br><span class="line">    N3 --&gt; N4</span><br><span class="line">    N4 --&gt; N5</span><br></pre></td></tr></table></figure>
+<h2 id="断点从这里开始">断点从这里开始</h2>
+<table>
+<thead>
+<tr>
+<th>源码位置</th>
+<th>关键符号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Slate/Private/Framework/Application/SlateApplication.cpp</code></td>
+<td><code>ProcessMouseButtonDownEvent</code></td>
+<td>鼠标按下主入口</td>
+</tr>
+<tr>
+<td><code>SlateCore/Private/Input/HittestGrid.cpp</code></td>
+<td><code>FHittestGrid</code></td>
+<td>命中测试网格</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Input/Events.h</code></td>
+<td><code>FPointerEvent / FKeyEvent</code></td>
+<td>输入事件数据</td>
+</tr>
+<tr>
+<td><code>SlateCore/Public/Widgets/SWidget.h</code></td>
+<td><code>OnMouseButtonDown</code></td>
+<td>控件输入协议</td>
+</tr>
+</tbody>
+</table>
+<h2 id="可见不等于可点">可见不等于可点</h2>
+<p>不要以为“看得见”就“点得到”。<code>HitTestInvisible</code> 和 <code>SelfHitTestInvisible</code> 这种可见性状态会让绘制和命中分家；UI 在屏幕上，不代表它在输入路径上。</p>
+<h2 id="查输入我会这么做">查输入我会这么做</h2>
+<ul>
+<li>输入不到先查 Visibility，而不是先改回调。</li>
+<li>用 Widget Reflector 看命中路径是否包含目标控件。</li>
+<li>拖拽或捕获状态下检查 MouseCaptor 是否改写目标。</li>
+<li>多用户输入要看 UserIndex 和焦点用户。</li>
+</ul>
+<h2 id="源码流程框架">源码流程框架</h2>
+<ol>
+<li>平台层把鼠标事件交给 <code>FSlateApplication::ProcessMouseButtonDownEvent</code>，事件里带 PlatformWindow、屏幕位置、用户索引等信息。</li>
+<li>Slate 先定位事件对应的窗口，必要时结合鼠标捕获状态改写目标路径。</li>
+<li>没有捕获时，会根据鼠标位置和上一帧绘制建立的 <code>FHittestGrid</code> 找到 WidgetsUnderCursor。</li>
+<li>命中结果会组织成 <code>FWidgetPath</code>：从顶层窗口到最里层目标控件的一条路径。</li>
+<li><code>RoutePointerDownEvent</code> 会沿路径做 Preview / Bubble 一类路由，让父子控件都有机会处理事件。</li>
+<li>控件返回的 <code>FReply</code> 不在这里结束，还会交给 <code>ProcessReply</code> 执行焦点、捕获等副作用。</li>
+</ol>
+<h2 id="几个细节拆开看">几个细节拆开看</h2>
+<h3 id="HittestGrid-来自绘制期">HittestGrid 来自绘制期</h3>
+<p>这点很关键：命中测试不是输入时现算一遍完整布局，而是大量依赖绘制/布局阶段留下的数据。上一帧没有进入 HittestGrid 的控件，这一帧自然点不到。Visibility、裁剪、Layer 都可能影响它。</p>
+<h3 id="WidgetPath-是事件路由的证据">WidgetPath 是事件路由的证据</h3>
+<p>查输入问题时，<code>FWidgetPath</code> 比单个控件回调更有价值。路径里没有目标控件，就说明问题发生在命中之前；路径里有目标但回调没进，再看可见性、Enabled、Preview 或父控件是否提前 Handled。</p>
+<h3 id="鼠标捕获会绕开普通命中">鼠标捕获会绕开普通命中</h3>
+<p>拖拽、滑块、窗口拖动时，后续事件可能直接送给 Captor，而不是重新根据鼠标位置命中。很多“鼠标明明移到外面了还在响应”的问题，其实是捕获状态没释放。</p>
+<h2 id="先把事件找到谁讲清楚">先把事件找到谁讲清楚</h2>
+<p>输入先讲到“找到谁”。只要 <code>FWidgetPath</code> 这条路清楚了，后面的焦点、捕获、拖拽就不再是散点问题。</p>
+<p>下一篇继续沿输入线往后读：事件找到控件之后，<code>FReply</code> 会怎么改写焦点、鼠标捕获和后续路由。真正的麻烦，往往从这里才开始。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/01/25/ue-slate-source-notes/ue-slate-source-04-layout-prepass-geometry/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 4 篇</span>
+                    <strong class="series-nav-title">布局不是递归摆盒子：Prepass、DesiredSize、ArrangeChildren 与 Geometry</strong>
+                </a>
+                
+
+                
+                <a href="/2025/02/08/ue-slate-source-notes/ue-slate-source-06-freply-focus-capture/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 6 篇</span>
+                    <strong class="series-nav-title">FReply 为什么能改变世界：Handled、Capture、Focus、Navigation 的副作用链</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8C%89%E9%92%AE%E6%B2%A1%E5%93%8D%EF%BC%8C%E4%B8%8D%E4%B8%80%E5%AE%9A%E6%98%AF%E6%8C%89%E9%92%AE%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">按钮没响，不一定是按钮的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E6%AC%A1%E5%8F%AA%E8%BF%BD%E5%91%BD%E4%B8%AD"><span class="post-toc-list-text">这次只追命中</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BE%93%E5%85%A5%E5%85%88%E8%B5%B0%E8%BF%99%E6%9D%A1%E8%B7%AF"><span class="post-toc-list-text">输入先走这条路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E4%BB%8E%E8%BF%99%E9%87%8C%E5%BC%80%E5%A7%8B"><span class="post-toc-list-text">断点从这里开始</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E8%A7%81%E4%B8%8D%E7%AD%89%E4%BA%8E%E5%8F%AF%E7%82%B9"><span class="post-toc-list-text">可见不等于可点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9F%A5%E8%BE%93%E5%85%A5%E6%88%91%E4%BC%9A%E8%BF%99%E4%B9%88%E5%81%9A"><span class="post-toc-list-text">查输入我会这么做</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#HittestGrid-%E6%9D%A5%E8%87%AA%E7%BB%98%E5%88%B6%E6%9C%9F"><span class="post-toc-list-text">HittestGrid 来自绘制期</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#WidgetPath-%E6%98%AF%E4%BA%8B%E4%BB%B6%E8%B7%AF%E7%94%B1%E7%9A%84%E8%AF%81%E6%8D%AE"><span class="post-toc-list-text">WidgetPath 是事件路由的证据</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%BC%A0%E6%A0%87%E6%8D%95%E8%8E%B7%E4%BC%9A%E7%BB%95%E5%BC%80%E6%99%AE%E9%80%9A%E5%91%BD%E4%B8%AD"><span class="post-toc-list-text">鼠标捕获会绕开普通命中</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%BA%8B%E4%BB%B6%E6%89%BE%E5%88%B0%E8%B0%81%E8%AE%B2%E6%B8%85%E6%A5%9A"><span class="post-toc-list-text">先把事件找到谁讲清楚</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>

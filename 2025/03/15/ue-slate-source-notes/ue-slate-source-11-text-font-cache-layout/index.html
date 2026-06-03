@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本 - Claude's Desk</title>
+    <meta name="description" content="记录开发、技术与持续写作。">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
+    <link rel="shortcut icon" href="/favicon.png?v=20260410b">
+    <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
+    <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/css/style.css?v=20260503f">
+
+        
+                <script>
+                    const userPref = localStorage.getItem('theme');
+                    const fontPref = localStorage.getItem('font-mode');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (userPref === 'dark' || (!userPref && systemDark)) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    }
+                    if (fontPref === 'local') {
+                        document.documentElement.setAttribute('data-font', 'local');
+                    }
+                </script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+<body class="is-post">
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    <button id="font-toggle" class="font-toggle" aria-label="切换字体模式" title="切换字体模式">
+        字
+    </button>
+
+    
+
+<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
+    <a href="/" class="back-btn">
+        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
+            viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        返回首页
+    </a>
+</div>
+
+<div class="post-page-shell has-toc">
+    <article class="post-container module post-article">
+        <h1 class="post-title">Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本</h1>
+        <div class="post-meta post-meta-header">
+            发布于 2025.03.15
+            
+            /
+            
+            <span style="color: var(--accent);">#Unreal Engine</span>
+            
+            <span style="color: var(--accent);">#源码阅读</span>
+            
+            <span style="color: var(--accent);">#Slate</span>
+            
+            <span style="color: var(--accent);">#SlateCore</span>
+            
+            
+        </div>
+
+        
+        <section class="series-callout">
+            <div class="series-callout-top">
+                <div>
+                    <p class="series-kicker">所属专栏</p>
+                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+                </div>
+                <span class="column-badge is-complete">已完结</span>
+            </div>
+            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <div class="series-meta">
+                <span>第 11 篇</span>
+                <span>已发布 16 / 16</span>
+                
+                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
+                
+            </div>
+            <div class="column-progress" aria-hidden="true">
+                <span style="width: 69%"></span>
+            </div>
+            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
+        </section>
+        
+
+        
+        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
+            <div class="post-toc-head">
+                <p class="post-toc-kicker">阅读导航</p>
+                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
+            </div>
+            <nav class="post-toc-nav" aria-label="文章目录">
+                <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%87%E6%9C%AC%E7%9A%84%E6%88%90%E6%9C%AC%E4%B8%8D%E5%8F%AA%E5%9C%A8%E7%94%BB%E5%AD%97"><span class="post-toc-list-text">文本的成本不只在画字</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E7%9C%8B%E6%B5%8B%E9%87%8F%E3%80%81%E5%A1%91%E5%BD%A2%E5%92%8C%E7%BC%93%E5%AD%98"><span class="post-toc-list-text">这篇看测量、塑形和缓存</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AE%B5%E6%96%87%E5%AD%97%E4%BC%9A%E8%BF%99%E6%A0%B7%E8%B5%B0"><span class="post-toc-list-text">一段文字会这样走</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%87%E6%9C%AC%E7%B3%BB%E7%BB%9F%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">文本系统入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E5%8F%AA%E7%9B%AF-OnPaint"><span class="post-toc-list-text">别只盯 OnPaint</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%AD%E6%96%87%E5%92%8C%E5%AF%8C%E6%96%87%E6%9C%AC"><span class="post-toc-list-text">中文和富文本</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%96%87%E6%9C%AC%E5%8F%98%E5%8C%96%E6%AF%94%E7%BB%98%E5%88%B6%E6%9B%B4%E8%B4%B5"><span class="post-toc-list-text">文本变化比绘制更贵</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%AD%E6%96%87%E9%97%AE%E9%A2%98%E5%B8%B8%E5%9C%A8-fallback-%E5%92%8C-shaping"><span class="post-toc-list-text">中文问题常在 fallback 和 shaping</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FontCache-miss-%E6%98%AF%E5%85%B3%E9%94%AE%E8%A7%82%E5%AF%9F%E7%82%B9"><span class="post-toc-list-text">FontCache miss 是关键观察点</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E6%96%87%E5%AD%97%E5%BD%93%E7%B3%BB%E7%BB%9F%E8%AF%BB"><span class="post-toc-list-text">先把文字当系统读</span></a></li></ol>
+            </nav>
+        </section>
+        
+
+        <div class="post-content">
+            <blockquote>
+<p>系列定位：UE5 Slate 原理与源码拆解（UE5.7）<br>
+本篇只抓一件事：把文本成本从绘制阶段提前看。</p>
+</blockquote>
+<h2 id="文本的成本不只在画字">文本的成本不只在画字</h2>
+<p>中文文本卡顿特别容易被一句“字体贴图太大”糊弄过去。字体图集当然重要，但文本真正麻烦的地方在于测量、塑形、换行、Run 布局和缓存失效。你在 Paint 里看到的是结果，贵的活可能前面已经干完了。</p>
+<p>这一篇从 <code>FSlateFontCache</code>、<code>FSlateTextShaper</code> 和 <code>FTextLayout</code> 三块读文本。我的目标不是写一篇排版学，而是找到中文、富文本、长列表这三类场景为什么容易让 Slate 变重。</p>
+<p>中文 UI 卡顿不要急着甩锅给字体贴图。字形缓存是一块，塑形、换行、Run 重建也是一块；后几块经常更隐蔽。</p>
+<h2 id="这篇看测量、塑形和缓存">这篇看测量、塑形和缓存</h2>
+<p>源码按 <code>C:\Epic\UE_5.7</code> 来。这里更看重调用位置和职责边界，不看重精确行号；如果你用 5.5，对着符号搜会比对着行号找靠谱。</p>
+<h2 id="一段文字会这样走">一段文字会这样走</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">    N0[&quot;Text 属性变化&quot;]</span><br><span class="line">    N1[&quot;FTextLayout 重建&quot;]</span><br><span class="line">    N2[&quot;Shaper 塑形&quot;]</span><br><span class="line">    N3[&quot;FontMeasure 测量&quot;]</span><br><span class="line">    N4[&quot;FontCache 查找/生成 Glyph&quot;]</span><br><span class="line">    N5[&quot;DrawElement MakeText&quot;]</span><br><span class="line">    N0 --&gt; N1</span><br><span class="line">    N1 --&gt; N2</span><br><span class="line">    N2 --&gt; N3</span><br><span class="line">    N3 --&gt; N4</span><br><span class="line">    N4 --&gt; N5</span><br></pre></td></tr></table></figure>
+<h2 id="文本系统入口">文本系统入口</h2>
+<table>
+<thead>
+<tr>
+<th>源码位置</th>
+<th>关键符号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlateCore/Private/Fonts/FontCache.cpp</code></td>
+<td><code>FSlateFontCache</code></td>
+<td>字体缓存核心</td>
+</tr>
+<tr>
+<td><code>SlateCore/Private/Fonts/SlateTextShaper.cpp</code></td>
+<td><code>FSlateTextShaper</code></td>
+<td>文本塑形入口</td>
+</tr>
+<tr>
+<td><code>Slate/Private/Framework/Text/TextLayout.cpp</code></td>
+<td><code>FTextLayout</code></td>
+<td>文本布局主结构</td>
+</tr>
+<tr>
+<td><code>SlateCore/Private/Rendering/ElementBatcher.cpp</code></td>
+<td><code>AddTextElement / AddShapedTextElement</code></td>
+<td>文本元素批处理</td>
+</tr>
+</tbody>
+</table>
+<h2 id="别只盯-OnPaint">别只盯 OnPaint</h2>
+<p>不要把文本性能只归因于 <code>OnPaint</code>。内容变化会提前触发布局和塑形，<code>OnPaint</code> 只是把结果变成 DrawElement；真正的成本可能根本不在你下断点的地方。</p>
+<h2 id="中文和富文本">中文和富文本</h2>
+<ul>
+<li>长列表文本优先减少每帧内容变化。</li>
+<li>中文混排场景观察 FontCache miss 和 shaped sequence 重建。</li>
+<li>富文本卡顿时检查 Run 是否频繁重建。</li>
+<li>字体丢字时确认 CompositeFont 和 fallback 链路。</li>
+</ul>
+<h2 id="源码流程框架">源码流程框架</h2>
+<ol>
+<li><code>STextBlock</code> 或富文本控件的文本属性变化后，会触发 TextLayout 更新或缓存失效。</li>
+<li><code>FTextLayout</code> 负责组织 Line、Run、Wrapping、Justification 等布局结果。</li>
+<li>测量阶段会通过 <code>FSlateFontMeasure</code> 查询字符串尺寸，内部依赖字体信息和 shaped glyph。</li>
+<li>复杂文本会进入 <code>FSlateTextShaper</code>，结合 HarfBuzz 做 glyph shaping，中文混排、emoji、fallback 都可能走更复杂路径。</li>
+<li><code>FSlateFontCache</code> 保存字体、字形和 atlas 相关数据；glyph 缺失时会生成并更新缓存。</li>
+<li>Paint 阶段的 <code>MakeText</code> / <code>MakeShapedText</code> 只是把已准备好的文本绘制描述交给 ElementBatcher。</li>
+</ol>
+<h2 id="几个细节拆开看">几个细节拆开看</h2>
+<h3 id="文本变化比绘制更贵">文本变化比绘制更贵</h3>
+<p>频繁 SetText 的长列表很容易卡，不只是因为每帧多画几个字，而是 TextLayout、测量、塑形缓存可能都被打掉。能不变就不变，能复用 Run 就复用，这是文本 UI 的第一条优化。</p>
+<h3 id="中文问题常在-fallback-和-shaping">中文问题常在 fallback 和 shaping</h3>
+<p>中文、英文、数字、图标字体混排时，字体 fallback 链会频繁参与。一个字符串里不同字形可能来自不同字体资源，最后不只是测量变复杂，批处理资源也可能变复杂。</p>
+<h3 id="FontCache-miss-是关键观察点">FontCache miss 是关键观察点</h3>
+<p>如果性能尖峰伴随 glyph 生成或 atlas 更新，那优化方向就不是减少控件，而是预热字体、减少动态文本范围、控制字号和字体组合。</p>
+<h2 id="先把文字当系统读">先把文字当系统读</h2>
+<p>文本系统先记住这个分层：内容变化、布局重建、塑形、字体缓存、绘制元素。卡顿在哪层，优化手段完全不同。</p>
+<p>下一篇看样式和资源。文本靠字体缓存，普通图标和动态图片靠 StyleSet 与 Brush；资源生命周期不清楚，UI 就很容易变成随机失踪案。</p>
+
+        </div>
+
+        <div class="copyright-box">
+            <strong>版权声明：</strong>除特别说明外，本站文章均采用
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
+            协议发布。
+        </div>
+
+        
+        <section class="series-navigation">
+            <div class="series-navigation-head">
+                <div>
+                    <p class="series-navigation-kicker">专栏内导航</p>
+                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
+                </div>
+                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
+            </div>
+
+            <div class="series-navigation-grid">
+                
+                <a href="/2025/03/08/ue-slate-source-notes/ue-slate-source-10-clip-transform-dpi/" class="series-nav-card is-prev">
+                    <span class="series-nav-direction">← 上一讲</span>
+                    <span class="series-nav-order">第 10 篇</span>
+                    <strong class="series-nav-title">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉</strong>
+                </a>
+                
+
+                
+                <a href="/2025/03/22/ue-slate-source-notes/ue-slate-source-12-style-brush-resource/" class="series-nav-card is-next">
+                    <span class="series-nav-direction">下一讲 →</span>
+                    <span class="series-nav-order">第 12 篇</span>
+                    <strong class="series-nav-title">样式和资源系统：FSlateStyleSet、Brush、动态图片与资源生命周期</strong>
+                </a>
+                
+            </div>
+        </section>
+        
+    </article>
+
+    
+    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
+        <div class="post-toc-head">
+            <p class="post-toc-kicker">阅读导航</p>
+            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
+        </div>
+        <nav class="post-toc-nav" aria-label="文章目录">
+            <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%87%E6%9C%AC%E7%9A%84%E6%88%90%E6%9C%AC%E4%B8%8D%E5%8F%AA%E5%9C%A8%E7%94%BB%E5%AD%97"><span class="post-toc-list-text">文本的成本不只在画字</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E7%9C%8B%E6%B5%8B%E9%87%8F%E3%80%81%E5%A1%91%E5%BD%A2%E5%92%8C%E7%BC%93%E5%AD%98"><span class="post-toc-list-text">这篇看测量、塑形和缓存</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AE%B5%E6%96%87%E5%AD%97%E4%BC%9A%E8%BF%99%E6%A0%B7%E8%B5%B0"><span class="post-toc-list-text">一段文字会这样走</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%87%E6%9C%AC%E7%B3%BB%E7%BB%9F%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">文本系统入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E5%8F%AA%E7%9B%AF-OnPaint"><span class="post-toc-list-text">别只盯 OnPaint</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%AD%E6%96%87%E5%92%8C%E5%AF%8C%E6%96%87%E6%9C%AC"><span class="post-toc-list-text">中文和富文本</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%96%87%E6%9C%AC%E5%8F%98%E5%8C%96%E6%AF%94%E7%BB%98%E5%88%B6%E6%9B%B4%E8%B4%B5"><span class="post-toc-list-text">文本变化比绘制更贵</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%B8%AD%E6%96%87%E9%97%AE%E9%A2%98%E5%B8%B8%E5%9C%A8-fallback-%E5%92%8C-shaping"><span class="post-toc-list-text">中文问题常在 fallback 和 shaping</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FontCache-miss-%E6%98%AF%E5%85%B3%E9%94%AE%E8%A7%82%E5%AF%9F%E7%82%B9"><span class="post-toc-list-text">FontCache miss 是关键观察点</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E6%96%87%E5%AD%97%E5%BD%93%E7%B3%BB%E7%BB%9F%E8%AF%BB"><span class="post-toc-list-text">先把文字当系统读</span></a></li></ol>
+        </nav>
+    </aside>
+    
+</div>
+
+
+        <div class="global-footer">
+            &copy; 2026 Claude.<br>
+                    由 <a href="https://hexo.io/" target="_blank">Hexo</a> 驱动。
+                    <a href="/font-license">字体授权</a>
+        </div>
+
+        
+            <script src="/js/mermaid-render.js?v=20260419a"></script>
+            <script src="/js/codeblocks.js?v=20260419a"></script>
+            <script src="/js/toc.js?v=20260419a"></script>
+            
+        
+
+        <script>
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const fontToggleBtn = document.getElementById('font-toggle');
+
+            const syncFontToggle = () => {
+                const isLocalFont = document.documentElement.getAttribute('data-font') === 'local';
+                fontToggleBtn.classList.toggle('is-local', isLocalFont);
+                fontToggleBtn.setAttribute('aria-label', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+                fontToggleBtn.setAttribute('title', isLocalFont ? '当前为本机字体，点击切换为内置字体' : '当前为内置字体，点击切换为本机字体');
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            fontToggleBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.getAttribute('data-font') === 'local') {
+                    html.removeAttribute('data-font');
+                    localStorage.setItem('font-mode', 'embedded');
+                } else {
+                    html.setAttribute('data-font', 'local');
+                    localStorage.setItem('font-mode', 'local');
+                }
+                syncFontToggle();
+            });
+
+            syncFontToggle();
+        </script>
+</body>
+
+</html>
