@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>哪些区域允许被画：OpenGL 模板测试与物体描边 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/opengl/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">哪些区域允许被画：OpenGL 模板测试与物体描边</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2022.06.20
-            
-            /
-            
-            <span style="color: var(--accent);">#OpenGL</span>
-            
-            <span style="color: var(--accent);">#LearnOpenGL</span>
-            
-            <span style="color: var(--accent);">#图形学</span>
-            
-            <span style="color: var(--accent);">#Stencil Testing</span>
-            
-            <span style="color: var(--accent);">#Stencil Buffer</span>
-            
-            <span style="color: var(--accent);">#Object Outline</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">OpenGL 学习专栏</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">哪些区域允许被画：OpenGL 模板测试与物体描边</h1>
+            <div class="note-post-meta">
+                <time datetime="2022-06-20">2022.06.20</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># OpenGL</span><span># LearnOpenGL</span><span># 图形学</span><span># Stencil Testing</span><span># Stencil Buffer</span><span># Object Outline</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
-            <div class="series-meta">
-                <span>第 8 篇</span>
-                <span>已发布 13 / 12</span>
-                
-                <span>阶段：高级 OpenGL</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 67%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/opengl/">OpenGL 学习</a>
+                <span>第 8 篇 · 已发布 13 篇</span>
             </div>
-            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/opengl/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、模板测试解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">二、模板缓冲是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%90%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">三、开启模板测试</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81glStencilFunc%EF%BC%9A%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E6%80%8E%E4%B9%88%E6%AF%94%E8%BE%83"><span class="post-toc-list-text">四、glStencilFunc：模板测试怎么比较</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81glStencilOp%EF%BC%9A%E6%B5%8B%E8%AF%95%E4%B9%8B%E5%90%8E%E6%A8%A1%E6%9D%BF%E5%80%BC%E6%80%8E%E4%B9%88%E6%94%B9"><span class="post-toc-list-text">五、glStencilOp：测试之后模板值怎么改</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81glStencilMask%EF%BC%9A%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E8%83%BD%E4%B8%8D%E8%83%BD%E5%86%99"><span class="post-toc-list-text">六、glStencilMask：模板缓冲能不能写</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E5%B8%A7%E8%A6%81%E6%B8%85%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">七、为什么每帧要清模板缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%89%A9%E4%BD%93%E6%8F%8F%E8%BE%B9%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">八、物体描边的完整流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E7%94%BB%E5%9C%B0%E6%9D%BF%EF%BC%8C%E4%BD%86%E4%B8%8D%E5%86%99%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">第一步：画地板，但不写模板</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%AD%A3%E5%B8%B8%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%B9%B6%E6%8A%8A%E7%AE%B1%E5%AD%90%E5%8C%BA%E5%9F%9F%E5%86%99%E6%88%90-1"><span class="post-toc-list-text">第二步：画正常箱子，并把箱子区域写成 1</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%94%BE%E5%A4%A7%E7%9A%84%E7%BA%AF%E8%89%B2%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%8F%AA%E7%94%BB-stencil-1-%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="post-toc-list-text">第三步：画放大的纯色箱子，只画 stencil !&#x3D; 1 的地方</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E6%8F%8F%E8%BE%B9%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="post-toc-list-text">九、描边流程图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%81%A2%E5%A4%8D%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">十、为什么要恢复状态</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十一、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-glStencilFunc-%E5%92%8C-glStencilOp-%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">1. glStencilFunc 和 glStencilOp 不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-glStencilMask-%E4%B8%8D%E6%98%AF%E6%AF%94%E8%BE%83%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">2. glStencilMask 不是比较条件</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8F%8F%E8%BE%B9%E4%B8%8D%E6%98%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E7%9A%84%E5%94%AF%E4%B8%80%E7%94%A8%E9%80%94"><span class="post-toc-list-text">3. 描边不是模板测试的唯一用途</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十二、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十三、总结</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -317,49 +293,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2022/06/13/graphics-notes/opengl-07-depth-testing/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 7 篇</span>
-                    <strong class="series-nav-title">谁应该显示在最前面：OpenGL 深度测试到底解决了什么</strong>
-                </a>
-                
-
-                
-                <a href="/2022/06/27/graphics-notes/opengl-09-face-culling/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 9 篇</span>
-                    <strong class="series-nav-title">哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2022/06/13/graphics-notes/opengl-07-depth-testing/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>谁应该显示在最前面：OpenGL 深度测试到底解决了什么</strong>
+            </a>
+            
+            
+            <a href="/2022/06/27/graphics-notes/opengl-09-face-culling/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/opengl/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、模板测试解决的是什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">二、模板缓冲是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%90%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">三、开启模板测试</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81glStencilFunc%EF%BC%9A%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E6%80%8E%E4%B9%88%E6%AF%94%E8%BE%83"><span class="post-toc-list-text">四、glStencilFunc：模板测试怎么比较</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81glStencilOp%EF%BC%9A%E6%B5%8B%E8%AF%95%E4%B9%8B%E5%90%8E%E6%A8%A1%E6%9D%BF%E5%80%BC%E6%80%8E%E4%B9%88%E6%94%B9"><span class="post-toc-list-text">五、glStencilOp：测试之后模板值怎么改</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81glStencilMask%EF%BC%9A%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2%E8%83%BD%E4%B8%8D%E8%83%BD%E5%86%99"><span class="post-toc-list-text">六、glStencilMask：模板缓冲能不能写</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E5%B8%A7%E8%A6%81%E6%B8%85%E6%A8%A1%E6%9D%BF%E7%BC%93%E5%86%B2"><span class="post-toc-list-text">七、为什么每帧要清模板缓冲</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81%E7%89%A9%E4%BD%93%E6%8F%8F%E8%BE%B9%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">八、物体描边的完整流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E7%94%BB%E5%9C%B0%E6%9D%BF%EF%BC%8C%E4%BD%86%E4%B8%8D%E5%86%99%E6%A8%A1%E6%9D%BF"><span class="post-toc-list-text">第一步：画地板，但不写模板</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%AD%A3%E5%B8%B8%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%B9%B6%E6%8A%8A%E7%AE%B1%E5%AD%90%E5%8C%BA%E5%9F%9F%E5%86%99%E6%88%90-1"><span class="post-toc-list-text">第二步：画正常箱子，并把箱子区域写成 1</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E7%94%BB%E6%94%BE%E5%A4%A7%E7%9A%84%E7%BA%AF%E8%89%B2%E7%AE%B1%E5%AD%90%EF%BC%8C%E5%8F%AA%E7%94%BB-stencil-1-%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="post-toc-list-text">第三步：画放大的纯色箱子，只画 stencil !&#x3D; 1 的地方</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81%E6%8F%8F%E8%BE%B9%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="post-toc-list-text">九、描边流程图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%81%A2%E5%A4%8D%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">十、为什么要恢复状态</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E7%82%B9"><span class="post-toc-list-text">十一、这一节最容易混淆的点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-glStencilFunc-%E5%92%8C-glStencilOp-%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="post-toc-list-text">1. glStencilFunc 和 glStencilOp 不是一回事</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-glStencilMask-%E4%B8%8D%E6%98%AF%E6%AF%94%E8%BE%83%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">2. glStencilMask 不是比较条件</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8F%8F%E8%BE%B9%E4%B8%8D%E6%98%AF%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95%E7%9A%84%E5%94%AF%E4%B8%80%E7%94%A8%E9%80%94"><span class="post-toc-list-text">3. 描边不是模板测试的唯一用途</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%BA%94%E8%AF%A5%E8%83%BD%E5%9B%9E%E7%AD%94%E7%9A%84%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">十二、这一节应该能回答的问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%80%BB%E7%BB%93"><span class="post-toc-list-text">十三、总结</span></a></li></ol>
         </nav>
@@ -377,8 +339,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

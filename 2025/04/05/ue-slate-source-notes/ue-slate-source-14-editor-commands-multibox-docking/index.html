@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,70 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-slate-source/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2025.04.05
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#Slate</span>
-            
-            <span style="color: var(--accent);">#SlateCore</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 Slate 原理与源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器</h1>
+            <div class="note-post-meta">
+                <time datetime="2025-04-05">2025.04.05</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># Slate</span><span># SlateCore</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
-            <div class="series-meta">
-                <span>第 14 篇</span>
-                <span>已发布 16 / 16</span>
-                
-                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 88%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-slate-source/">UE5 Slate 源码</a>
+                <span>第 14 篇 · 已发布 16 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-slate-source/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-slate-source/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8-UI-%E4%B8%8D%E6%98%AF%E4%B8%80%E6%A3%B5%E6%89%8B%E5%86%99%E6%A0%91"><span class="post-toc-list-text">编辑器 UI 不是一棵手写树</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E7%9C%8B%E6%89%A9%E5%B1%95%E9%AA%A8%E6%9E%B6"><span class="post-toc-list-text">这篇看扩展骨架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E5%85%A5%E5%8F%A3%E4%B8%80%E8%88%AC%E8%BF%99%E4%B9%88%E6%8E%A5"><span class="post-toc-list-text">编辑器入口一般这么接</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8-Slate-%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">编辑器 Slate 入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8A%8A%E6%89%A9%E5%B1%95%E5%86%99%E6%88%90%E5%AD%A4%E5%B2%9B"><span class="post-toc-list-text">别把扩展写成孤岛</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%8F%9C%E5%8D%95%E3%80%81%E5%BF%AB%E6%8D%B7%E9%94%AE%E3%80%81Tab"><span class="post-toc-list-text">菜单、快捷键、Tab</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#CommandInfo-%E5%92%8C-CommandList-%E5%88%86%E5%BC%80%E6%98%AF%E6%9C%89%E7%94%A8%E7%9A%84"><span class="post-toc-list-text">CommandInfo 和 CommandList 分开是有用的</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MultiBox-%E4%B8%8D%E6%98%AF%E7%AE%80%E5%8D%95-AddButton"><span class="post-toc-list-text">MultiBox 不是简单 AddButton</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Tab-%E6%81%A2%E5%A4%8D%E4%BE%9D%E8%B5%96%E7%A8%B3%E5%AE%9A%E6%A0%87%E8%AF%86"><span class="post-toc-list-text">Tab 恢复依赖稳定标识</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E8%BF%99%E5%B1%82%E5%85%88%E5%88%B0%E8%BF%99%E9%87%8C"><span class="post-toc-list-text">编辑器这层先到这里</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -192,49 +172,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-slate-source/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2025/03/29/ue-slate-source-notes/ue-slate-source-13-window-menu-popup-tooltip/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 13 篇</span>
-                    <strong class="series-nav-title">窗口、菜单与弹层：SWindow、MenuStack、Popup、Tooltip 的层级管理</strong>
-                </a>
-                
-
-                
-                <a href="/2025/04/12/ue-slate-source-notes/ue-slate-source-15-performance-debugging/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 15 篇</span>
-                    <strong class="series-nav-title">Slate 性能诊断：Stat Slate、Widget Reflector、ConsoleSlateDebugger 与回归基线</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2025/03/29/ue-slate-source-notes/ue-slate-source-13-window-menu-popup-tooltip/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>窗口、菜单与弹层：SWindow、MenuStack、Popup、Tooltip 的层级管理</strong>
+            </a>
+            
+            
+            <a href="/2025/04/12/ue-slate-source-notes/ue-slate-source-15-performance-debugging/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>Slate 性能诊断：Stat Slate、Widget Reflector、ConsoleSlateDebugger 与回归基线</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-slate-source/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8-UI-%E4%B8%8D%E6%98%AF%E4%B8%80%E6%A3%B5%E6%89%8B%E5%86%99%E6%A0%91"><span class="post-toc-list-text">编辑器 UI 不是一棵手写树</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E7%9C%8B%E6%89%A9%E5%B1%95%E9%AA%A8%E6%9E%B6"><span class="post-toc-list-text">这篇看扩展骨架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E5%85%A5%E5%8F%A3%E4%B8%80%E8%88%AC%E8%BF%99%E4%B9%88%E6%8E%A5"><span class="post-toc-list-text">编辑器入口一般这么接</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8-Slate-%E5%85%A5%E5%8F%A3"><span class="post-toc-list-text">编辑器 Slate 入口</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%AB%E6%8A%8A%E6%89%A9%E5%B1%95%E5%86%99%E6%88%90%E5%AD%A4%E5%B2%9B"><span class="post-toc-list-text">别把扩展写成孤岛</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%8F%9C%E5%8D%95%E3%80%81%E5%BF%AB%E6%8D%B7%E9%94%AE%E3%80%81Tab"><span class="post-toc-list-text">菜单、快捷键、Tab</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E6%B5%81%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="post-toc-list-text">源码流程框架</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E6%8B%86%E5%BC%80%E7%9C%8B"><span class="post-toc-list-text">几个细节拆开看</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#CommandInfo-%E5%92%8C-CommandList-%E5%88%86%E5%BC%80%E6%98%AF%E6%9C%89%E7%94%A8%E7%9A%84"><span class="post-toc-list-text">CommandInfo 和 CommandList 分开是有用的</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MultiBox-%E4%B8%8D%E6%98%AF%E7%AE%80%E5%8D%95-AddButton"><span class="post-toc-list-text">MultiBox 不是简单 AddButton</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#Tab-%E6%81%A2%E5%A4%8D%E4%BE%9D%E8%B5%96%E7%A8%B3%E5%AE%9A%E6%A0%87%E8%AF%86"><span class="post-toc-list-text">Tab 恢复依赖稳定标识</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E8%BF%99%E5%B1%82%E5%85%88%E5%88%B0%E8%BF%99%E9%87%8C"><span class="post-toc-list-text">编辑器这层先到这里</span></a></li></ol>
         </nav>
@@ -252,8 +218,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

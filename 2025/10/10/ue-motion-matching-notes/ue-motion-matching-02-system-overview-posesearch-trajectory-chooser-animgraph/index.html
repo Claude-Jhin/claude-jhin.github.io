@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UE5 Motion Matching 体系总览：PoseSearch、Trajectory、Chooser、AnimGraph 如何协作 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-motion-matching/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">UE5 Motion Matching 体系总览：PoseSearch、Trajectory、Chooser、AnimGraph 如何协作</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2025.10.10
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#Motion Matching</span>
-            
-            <span style="color: var(--accent);">#Pose Search</span>
-            
-            <span style="color: var(--accent);">#Trajectory</span>
-            
-            <span style="color: var(--accent);">#Chooser</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 Motion Matching 源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">UE5 Motion Matching 体系总览：PoseSearch、Trajectory、Chooser、AnimGraph 如何协作</h1>
+            <div class="note-post-meta">
+                <time datetime="2025-10-10">2025.10.10</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># Motion Matching</span><span># Pose Search</span><span># Trajectory</span><span># Chooser</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.4/5.5 的 PoseSearch 与 Motion Matching 体系，从范式认知、Schema 与索引构建、运行时查询到调优排障，打通一条可落地的源码学习主线。</p>
-            <div class="series-meta">
-                <span>第 2 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：5.4/5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 25%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-motion-matching/">Motion Matching</a>
+                <span>第 2 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-motion-matching/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-motion-matching/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E5%9B%BE%E6%99%AF%E6%90%AD%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">先把图景搭起来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E6%B5%81%EF%BC%89"><span class="post-toc-list-text">主线图（系统数据流）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E6%A8%A1%E5%9D%97%E8%BE%B9%E7%95%8C%E8%AF%B4%E6%B8%85%E6%A5%9A"><span class="post-toc-list-text">先把模块边界说清楚</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-PoseSearch%EF%BC%9A%E6%A3%80%E7%B4%A2%E6%A1%86%E6%9E%B6%E6%9C%AC%E4%BD%93"><span class="post-toc-list-text">1. PoseSearch：检索框架本体</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Trajectory-Pose-History%EF%BC%9A%E6%9F%A5%E8%AF%A2%E8%BE%93%E5%85%A5%E6%8F%90%E4%BE%9B%E8%80%85"><span class="post-toc-list-text">2. Trajectory &#x2F; Pose History：查询输入提供者</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Chooser%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E5%86%B3%E7%AD%96%E5%B1%82"><span class="post-toc-list-text">3. Chooser：上下文决策层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-AnimGraph%EF%BC%88FAnimNode-MotionMatching%EF%BC%89%EF%BC%9A%E8%BF%90%E8%A1%8C%E6%97%B6%E6%89%A7%E8%A1%8C%E5%B1%82"><span class="post-toc-list-text">4. AnimGraph（FAnimNode_MotionMatching）：运行时执行层</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%B8%A7%E9%87%8C%E8%BF%99%E4%BA%9B%E6%A8%A1%E5%9D%97%E5%A6%82%E4%BD%95%E6%8E%A5%E5%8A%9B"><span class="post-toc-list-text">一帧里这些模块如何接力</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%88%A4%EF%BC%9A%E6%8A%8A%E9%80%89%E5%BA%93%E9%97%AE%E9%A2%98%E5%BD%93%E6%88%90%E5%8C%B9%E9%85%8D%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">常见误判：把选库问题当成匹配问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%A8%E6%BA%90%E7%A0%81%E5%90%8D%E8%AF%8D%E5%BB%BA%E7%AB%8B%E9%98%85%E8%AF%BB%E5%9C%B0%E5%9B%BE"><span class="post-toc-list-text">用源码名词建立阅读地图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%BB%BA%E8%AE%AE%E7%9A%84%E9%AA%8C%E8%AF%81%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">我建议的验证方式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E7%BA%A7%E6%A8%A1%E5%9D%97%E5%85%B3%E7%B3%BB%E8%A1%A8%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">源码级模块关系表（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%B8%A7%E7%9C%9F%E5%AE%9E%E6%97%B6%E5%BA%8F%EF%BC%88%E5%87%BD%E6%95%B0%E5%90%8D%E7%89%88%EF%BC%89"><span class="post-toc-list-text">一帧真实时序（函数名版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -237,49 +213,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-motion-matching/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2025/10/03/ue-motion-matching-notes/ue-motion-matching-01-why-query-driven-animation/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 1 篇</span>
-                    <strong class="series-nav-title">为什么是 Motion Matching：从状态机 / BlendSpace 到查询式动画</strong>
-                </a>
-                
-
-                
-                <a href="/2025/10/17/ue-motion-matching-notes/ue-motion-matching-03-schema-channels-sampling-and-cost/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 3 篇</span>
-                    <strong class="series-nav-title">Pose Search Schema 深入：Channel、采样、权重与代价函数语义</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2025/10/03/ue-motion-matching-notes/ue-motion-matching-01-why-query-driven-animation/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>为什么是 Motion Matching：从状态机 / BlendSpace 到查询式动画</strong>
+            </a>
+            
+            
+            <a href="/2025/10/17/ue-motion-matching-notes/ue-motion-matching-03-schema-channels-sampling-and-cost/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>Pose Search Schema 深入：Channel、采样、权重与代价函数语义</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-motion-matching/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E5%9B%BE%E6%99%AF%E6%90%AD%E8%B5%B7%E6%9D%A5"><span class="post-toc-list-text">先把图景搭起来</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E6%B5%81%EF%BC%89"><span class="post-toc-list-text">主线图（系统数据流）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E6%A8%A1%E5%9D%97%E8%BE%B9%E7%95%8C%E8%AF%B4%E6%B8%85%E6%A5%9A"><span class="post-toc-list-text">先把模块边界说清楚</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-PoseSearch%EF%BC%9A%E6%A3%80%E7%B4%A2%E6%A1%86%E6%9E%B6%E6%9C%AC%E4%BD%93"><span class="post-toc-list-text">1. PoseSearch：检索框架本体</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Trajectory-Pose-History%EF%BC%9A%E6%9F%A5%E8%AF%A2%E8%BE%93%E5%85%A5%E6%8F%90%E4%BE%9B%E8%80%85"><span class="post-toc-list-text">2. Trajectory &#x2F; Pose History：查询输入提供者</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Chooser%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E5%86%B3%E7%AD%96%E5%B1%82"><span class="post-toc-list-text">3. Chooser：上下文决策层</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-AnimGraph%EF%BC%88FAnimNode-MotionMatching%EF%BC%89%EF%BC%9A%E8%BF%90%E8%A1%8C%E6%97%B6%E6%89%A7%E8%A1%8C%E5%B1%82"><span class="post-toc-list-text">4. AnimGraph（FAnimNode_MotionMatching）：运行时执行层</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%B8%A7%E9%87%8C%E8%BF%99%E4%BA%9B%E6%A8%A1%E5%9D%97%E5%A6%82%E4%BD%95%E6%8E%A5%E5%8A%9B"><span class="post-toc-list-text">一帧里这些模块如何接力</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%88%A4%EF%BC%9A%E6%8A%8A%E9%80%89%E5%BA%93%E9%97%AE%E9%A2%98%E5%BD%93%E6%88%90%E5%8C%B9%E9%85%8D%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">常见误判：把选库问题当成匹配问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%94%A8%E6%BA%90%E7%A0%81%E5%90%8D%E8%AF%8D%E5%BB%BA%E7%AB%8B%E9%98%85%E8%AF%BB%E5%9C%B0%E5%9B%BE"><span class="post-toc-list-text">用源码名词建立阅读地图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%BB%BA%E8%AE%AE%E7%9A%84%E9%AA%8C%E8%AF%81%E6%96%B9%E5%BC%8F"><span class="post-toc-list-text">我建议的验证方式</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E7%BA%A7%E6%A8%A1%E5%9D%97%E5%85%B3%E7%B3%BB%E8%A1%A8%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">源码级模块关系表（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%B8%A7%E7%9C%9F%E5%AE%9E%E6%97%B6%E5%BA%8F%EF%BC%88%E5%87%BD%E6%95%B0%E5%90%8D%E7%89%88%EF%BC%89"><span class="post-toc-list-text">一帧真实时序（函数名版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
         </nav>
@@ -297,8 +259,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

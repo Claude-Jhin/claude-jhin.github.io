@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>空间化、衰减、遮挡的执行时机：3D 声音为何“像真的” - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,70 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-audio-source/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">空间化、衰减、遮挡的执行时机：3D 声音为何“像真的”</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2026.01.24
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#Spatialization</span>
-            
-            <span style="color: var(--accent);">#Attenuation</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 音频系统原理与源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">空间化、衰减、遮挡的执行时机：3D 声音为何“像真的”</h1>
+            <div class="note-post-meta">
+                <time datetime="2026-01-24">2026.01.24</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># Spatialization</span><span># Attenuation</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
-            <div class="series-meta">
-                <span>第 6 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：UE5.7 Audio Mixer 主线</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 75%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-audio-source/">UE5 音频源码</a>
+                <span>第 6 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-audio-source/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-audio-source/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E5%85%88%E7%AE%97%E9%94%99%EF%BC%8C%E5%90%8E%E9%9D%A2%E5%B0%B1%E5%8F%AA%E4%BC%9A%E7%A8%B3%E5%AE%9A%E5%9C%B0%E9%94%99"><span class="post-toc-list-text">先给结论：先算错，后面就只会稳定地错</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%82%E6%95%B0%E9%93%BE%E6%8B%86%E8%A7%A3%EF%BC%9A3D-%E5%90%AC%E6%84%9F%E6%98%AF%E6%80%8E%E4%B9%88%E5%BD%A2%E6%88%90%E7%9A%84"><span class="post-toc-list-text">参数链拆解：3D 听感是怎么形成的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%85%88%E5%AE%9A%E8%A7%84%E5%88%99%EF%BC%9A%E7%94%A8%E5%93%AA%E5%A5%97%E8%A1%B0%E5%87%8F%E9%85%8D%E7%BD%AE"><span class="post-toc-list-text">1) 先定规则：用哪套衰减配置</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%86%8D%E7%AE%97%E5%BD%93%E5%89%8D%E5%B8%A7%EF%BC%9A%E7%9B%91%E5%90%AC%E5%99%A8%E4%B8%8E%E5%A3%B0%E6%BA%90%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">2) 再算当前帧：监听器与声源关系</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8C%81%E7%BB%AD%E6%9B%B4%E6%96%B0%EF%BC%9A%E8%AE%A9%E5%8F%82%E6%95%B0%E8%B7%9F%E7%9D%80%E5%9C%BA%E6%99%AF%E5%8F%98%E5%8C%96"><span class="post-toc-list-text">3) 持续更新：让参数跟着场景变化</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%9C%80%E5%90%8E%E5%90%88%E5%B9%B6%EF%BC%9A%E9%81%AE%E6%8C%A1%E7%BB%93%E6%9E%9C%E5%B9%B6%E5%85%A5"><span class="post-toc-list-text">4) 最后合并：遮挡结果并入</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E5%AE%9A%E4%BD%8D-3D-%E5%90%AC%E6%84%9F%E5%BC%82%E5%B8%B8"><span class="post-toc-list-text">我会怎么定位 3D 听感异常</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -201,49 +181,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-audio-source/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2026/01/10/ue-audio-source-notes/ue-audio-source-05-audio-mixer-rendering-mainline/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 5 篇</span>
-                    <strong class="series-nav-title">Audio Mixer 渲染主线：Source -&gt; Submix -&gt; Endpoint</strong>
-                </a>
-                
-
-                
-                <a href="/2026/02/07/ue-audio-source-notes/ue-audio-source-07-submix-effects-and-audio-bus-routing/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 7 篇</span>
-                    <strong class="series-nav-title">Submix Effect 与 Audio Bus：DSP 路由与总线思维</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2026/01/10/ue-audio-source-notes/ue-audio-source-05-audio-mixer-rendering-mainline/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>Audio Mixer 渲染主线：Source -&gt; Submix -&gt; Endpoint</strong>
+            </a>
+            
+            
+            <a href="/2026/02/07/ue-audio-source-notes/ue-audio-source-07-submix-effects-and-audio-bus-routing/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>Submix Effect 与 Audio Bus：DSP 路由与总线思维</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-audio-source/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">本文问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%BB%99%E7%BB%93%E8%AE%BA%EF%BC%9A%E5%85%88%E7%AE%97%E9%94%99%EF%BC%8C%E5%90%8E%E9%9D%A2%E5%B0%B1%E5%8F%AA%E4%BC%9A%E7%A8%B3%E5%AE%9A%E5%9C%B0%E9%94%99"><span class="post-toc-list-text">先给结论：先算错，后面就只会稳定地错</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E6%96%87%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4"><span class="post-toc-list-text">本文讨论范围</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%82%E6%95%B0%E9%93%BE%E6%8B%86%E8%A7%A3%EF%BC%9A3D-%E5%90%AC%E6%84%9F%E6%98%AF%E6%80%8E%E4%B9%88%E5%BD%A2%E6%88%90%E7%9A%84"><span class="post-toc-list-text">参数链拆解：3D 听感是怎么形成的</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%85%88%E5%AE%9A%E8%A7%84%E5%88%99%EF%BC%9A%E7%94%A8%E5%93%AA%E5%A5%97%E8%A1%B0%E5%87%8F%E9%85%8D%E7%BD%AE"><span class="post-toc-list-text">1) 先定规则：用哪套衰减配置</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%86%8D%E7%AE%97%E5%BD%93%E5%89%8D%E5%B8%A7%EF%BC%9A%E7%9B%91%E5%90%AC%E5%99%A8%E4%B8%8E%E5%A3%B0%E6%BA%90%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">2) 再算当前帧：监听器与声源关系</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8C%81%E7%BB%AD%E6%9B%B4%E6%96%B0%EF%BC%9A%E8%AE%A9%E5%8F%82%E6%95%B0%E8%B7%9F%E7%9D%80%E5%9C%BA%E6%99%AF%E5%8F%98%E5%8C%96"><span class="post-toc-list-text">3) 持续更新：让参数跟着场景变化</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%9C%80%E5%90%8E%E5%90%88%E5%B9%B6%EF%BC%9A%E9%81%AE%E6%8C%A1%E7%BB%93%E6%9E%9C%E5%B9%B6%E5%85%A5"><span class="post-toc-list-text">4) 最后合并：遮挡结果并入</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E7%B1%BB%E5%9E%8B"><span class="post-toc-list-text">关键类型</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E5%AE%9A%E4%BD%8D-3D-%E5%90%AC%E6%84%9F%E5%BC%82%E5%B8%B8"><span class="post-toc-list-text">我会怎么定位 3D 听感异常</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li></ol>
         </nav>
@@ -261,8 +227,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

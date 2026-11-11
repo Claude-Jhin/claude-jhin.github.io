@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>生命周期与绑定成本：Initialize/Construct/Tick/Binding 真相 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,70 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-umg-source/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">生命周期与绑定成本：Initialize/Construct/Tick/Binding 真相</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2025.04.27
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#UMG</span>
-            
-            <span style="color: var(--accent);">#生命周期</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 UMG 原理与源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">生命周期与绑定成本：Initialize/Construct/Tick/Binding 真相</h1>
+            <div class="note-post-meta">
+                <time datetime="2025-04-27">2025.04.27</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># UMG</span><span># 生命周期</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.5 UMG/Slate 体系，从创建、实例化、输入路由、生命周期、布局、渲染、池化到崩溃排障，形成一条可复用的源码学习与工程落地主线。</p>
-            <div class="series-meta">
-                <span>第 5 篇</span>
-                <span>已发布 9 / 9</span>
-                
-                <span>阶段：2025.03 - 2025.06 旗舰连载</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 56%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-umg-source/">UE5 UMG 源码</a>
+                <span>第 5 篇 · 已发布 9 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-umg-source/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-umg-source/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E7%BB%91%E5%AE%9A%E6%94%B9%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E5%89%8D%E5%90%8E%E5%AF%B9%E6%AF%94"><span class="post-toc-list-text">实验 A：绑定改事件驱动前后对比</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9AConstruct-%E9%87%8C%E5%86%99%E4%B8%80%E6%AC%A1%E6%80%A7%E5%88%9D%E5%A7%8B%E5%8C%96%E6%9C%80%E7%A8%B3"><span class="post-toc-list-text">坑 1：Construct 里写一次性初始化最稳</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%89%80%E6%9C%89%E6%98%BE%E7%A4%BA%E5%AD%97%E6%AE%B5%E9%83%BD%E7%94%A8-Binding-%E6%9C%80%E4%BC%98%E9%9B%85"><span class="post-toc-list-text">坑 2：所有显示字段都用 Binding 最优雅</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9AUI-Tick-%E5%BC%80%E7%9D%80%E4%B9%9F%E6%B2%A1%E4%BA%8B%EF%BC%8C%E5%8F%8D%E6%AD%A3%E9%80%BB%E8%BE%91%E5%BE%88%E8%BD%BB"><span class="post-toc-list-text">坑 3：UI Tick 开着也没事，反正逻辑很轻</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -198,49 +178,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-umg-source/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2025/04/13/ue-umg-source-notes/ue-umg-source-04-input-routing-and-focus-system/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 4 篇</span>
-                    <strong class="series-nav-title">输入路由与焦点系统：事件如何到达 UMG</strong>
-                </a>
-                
-
-                
-                <a href="/2025/05/11/ue-umg-source-notes/ue-umg-source-06-layout-prepass-geometry-dpi/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 6 篇</span>
-                    <strong class="series-nav-title">布局内核：Prepass、DesiredSize、Geometry、DPI 缩放</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2025/04/13/ue-umg-source-notes/ue-umg-source-04-input-routing-and-focus-system/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>输入路由与焦点系统：事件如何到达 UMG</strong>
+            </a>
+            
+            
+            <a href="/2025/05/11/ue-umg-source-notes/ue-umg-source-06-layout-prepass-geometry-dpi/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>布局内核：Prepass、DesiredSize、Geometry、DPI 缩放</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-umg-source/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E4%B8%BB%E7%BA%BF%E6%8B%89%E7%9B%B4"><span class="post-toc-list-text">先把主线拉直</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9A%84%E6%BA%90%E7%A0%81%E4%BD%8D%E7%BD%AE%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">本篇我会盯的源码位置（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%B8%B8%E7%94%A8%E7%9A%84%E6%96%AD%E7%82%B9%E8%B5%B0%E6%B3%95"><span class="post-toc-list-text">我常用的断点走法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%80%E6%AE%B5%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">先看这一段源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%EF%BC%88%E5%90%AB%E5%8F%8D%E8%AF%81%EF%BC%89"><span class="post-toc-list-text">最小复现实验（含反证）</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AE%9E%E9%AA%8C-A%EF%BC%9A%E7%BB%91%E5%AE%9A%E6%94%B9%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E5%89%8D%E5%90%8E%E5%AF%B9%E6%AF%94"><span class="post-toc-list-text">实验 A：绑定改事件驱动前后对比</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E9%A1%B9%E7%9B%AE%E9%87%8C%E5%8F%8D%E5%A4%8D%E8%A7%81%E5%88%B0%E7%9A%84-3-%E4%B8%AA%E5%9D%91"><span class="post-toc-list-text">我在项目里反复见到的 3 个坑</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-1%EF%BC%9AConstruct-%E9%87%8C%E5%86%99%E4%B8%80%E6%AC%A1%E6%80%A7%E5%88%9D%E5%A7%8B%E5%8C%96%E6%9C%80%E7%A8%B3"><span class="post-toc-list-text">坑 1：Construct 里写一次性初始化最稳</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-2%EF%BC%9A%E6%89%80%E6%9C%89%E6%98%BE%E7%A4%BA%E5%AD%97%E6%AE%B5%E9%83%BD%E7%94%A8-Binding-%E6%9C%80%E4%BC%98%E9%9B%85"><span class="post-toc-list-text">坑 2：所有显示字段都用 Binding 最优雅</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%9D%91-3%EF%BC%9AUI-Tick-%E5%BC%80%E7%9D%80%E4%B9%9F%E6%B2%A1%E4%BA%8B%EF%BC%8C%E5%8F%8D%E6%AD%A3%E9%80%BB%E8%BE%91%E5%BE%88%E8%BD%BB"><span class="post-toc-list-text">坑 3：UI Tick 开着也没事，反正逻辑很轻</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%8E%B0%E5%9C%BA%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">现场排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E8%A6%81%E5%B8%A6%E8%B5%B0%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇要带走什么</span></a></li></ol>
         </nav>
@@ -258,8 +224,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

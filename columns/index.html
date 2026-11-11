@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    
+    <link rel="stylesheet" href="/css/note-index.css?v=20261111c">
+    
 
         
                 <script>
@@ -61,359 +65,217 @@
     </a>
 </div>
 
-<article class="post-container module columns-shell">
-    <header class="columns-hero">
-        <p class="columns-kicker">内容组织</p>
-        <h1 class="columns-title">专栏</h1>
-        <p class="columns-summary">这里收纳的是带主线、带顺序、可持续更新的系列内容。和分类不同，专栏更强调一条完整的学习或实践路线。</p>
-    </header>
+<article class="post-container module note-index note-sheet note-notebooks">
+    <header class="note-index-header">
+    <div class="note-index-title">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            
+            <path d="M12 5c-3-2-6-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V4c-4-1-7-1-10 1Zm0 0v15" />
+            
+        </svg>
+        <h1>专栏</h1>
+    </div>
+    <div class="note-index-intro">
+        <p>一个主题，一本笔记。从目录开始，沿着线索读下去。</p>
+        <span>11 本主题笔记</span>
+    </div>
+</header>
 
+    <div class="note-notebook-grid">
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-opengl">
+            <div class="note-notebook-label">
+                <span>笔记 01</span>
+                <span>连载中 · 13 篇</span>
+            </div>
+            <h2 id="notebook-opengl">OpenGL 学习专栏</h2>
+            <p class="note-notebook-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+            <p class="note-notebook-stage">高级 OpenGL</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/opengl/" aria-label="打开笔记本：OpenGL 学习专栏">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2022/07/25/graphics-notes/opengl-13-advanced-glsl-interface-blocks-ubo/" aria-label="OpenGL 学习专栏，最新一篇：从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-rendering">
+            <div class="note-notebook-label">
+                <span>笔记 02</span>
+                <span>连载中 · 5 篇</span>
+            </div>
+            <h2 id="notebook-ue-rendering">UE 渲染源码拆解</h2>
+            <p class="note-notebook-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
+            <p class="note-notebook-stage">主线梳理</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-rendering/" aria-label="打开笔记本：UE 渲染源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2024/12/30/ue-rendering-notes/ue-rendering-05-rdg-rhi-shader-bridge/" aria-label="UE 渲染源码拆解，最新一篇：UE引擎中的 RDG 与 RHI：一帧渲染是怎样真正提交到 GPU 的">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-motion-matching">
+            <div class="note-notebook-label">
+                <span>笔记 03</span>
+                <span>连载中 · 8 篇</span>
+            </div>
+            <h2 id="notebook-ue-motion-matching">UE5 Motion Matching 源码拆解</h2>
+            <p class="note-notebook-summary">围绕 UE5.4/5.5 的 PoseSearch 与 Motion Matching 体系，从范式认知、Schema 与索引构建、运行时查询到调优排障，打通一条可落地的源码学习主线。</p>
+            <p class="note-notebook-stage">5.4/5.5 主线梳理</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-motion-matching/" aria-label="打开笔记本：UE5 Motion Matching 源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2025/11/21/ue-motion-matching-notes/ue-motion-matching-08-performance-stability-and-troubleshooting/" aria-label="UE5 Motion Matching 源码拆解，最新一篇：性能与稳定性实战：数据库规模、采样密度、查询成本与排障清单">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-movement">
+            <div class="note-notebook-label">
+                <span>笔记 04</span>
+                <span>连载中 · 6 篇</span>
+            </div>
+            <h2 id="notebook-ue-movement">UE5 移动系统源码拆解</h2>
+            <p class="note-notebook-summary">围绕 UE5.4/5.5 的 CharacterMovementComponent 主线，从输入向量积累、每帧移动执行、Walking/Falling 分支到 MOVE_Custom 与网络同步，形成一条可落地的问题定位路径。</p>
+            <p class="note-notebook-stage">5.4/5.5 主线梳理</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-movement/" aria-label="打开笔记本：UE5 移动系统源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2022/10/16/ue-movement-notes/ue-movement-06-network-prediction-and-correction/" aria-label="UE5 移动系统源码拆解，最新一篇：网络同步与纠偏：SavedMove、客户端预测、服务器校正与平滑">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-animation-system">
+            <div class="note-notebook-label">
+                <span>笔记 05</span>
+                <span>连载中 · 8 篇</span>
+            </div>
+            <h2 id="notebook-ue-animation-system">UE5 动画系统源码拆解</h2>
+            <p class="note-notebook-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
+            <p class="note-notebook-stage">5.5 主线梳理</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-animation-system/" aria-label="打开笔记本：UE5 动画系统源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2023/06/18/ue-animation-system-notes/ue-animation-system-08-performance-stability-and-debugging-loop/" aria-label="UE5 动画系统源码拆解，最新一篇：性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-audio-source">
+            <div class="note-notebook-label">
+                <span>笔记 06</span>
+                <span>连载中 · 8 篇</span>
+            </div>
+            <h2 id="notebook-ue-audio-source">UE5 音频系统原理与源码拆解</h2>
+            <p class="note-notebook-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
+            <p class="note-notebook-stage">UE5.7 Audio Mixer 主线</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-audio-source/" aria-label="打开笔记本：UE5 音频系统原理与源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2026/02/21/ue-audio-source-notes/ue-audio-source-08-quartz-and-audio-debugging-system/" aria-label="UE5 音频系统原理与源码拆解，最新一篇：Quartz 与音频调试体系：样本级时序与性能定位">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-network-sync">
+            <div class="note-notebook-label">
+                <span>笔记 07</span>
+                <span>连载中 · 8 篇</span>
+            </div>
+            <h2 id="notebook-ue-network-sync">UE5 网络同步源码拆解</h2>
+            <p class="note-notebook-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
+            <p class="note-notebook-stage">5.5 主线梳理</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-network-sync/" aria-label="打开笔记本：UE5 网络同步源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2023/12/24/ue-network-sync-notes/ue-network-sync-08-troubleshooting-and-regression-baseline/" aria-label="UE5 网络同步源码拆解，最新一篇：排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-gas">
+            <div class="note-notebook-label">
+                <span>笔记 08</span>
+                <span>已完结 · 6 篇</span>
+            </div>
+            <h2 id="notebook-ue-gas">UE4 Gameplay Ability System 学习专栏</h2>
+            <p class="note-notebook-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
+            <p class="note-notebook-stage">2022.05 - 2022.10 学习整理</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-gas/" aria-label="打开笔记本：UE4 Gameplay Ability System 学习专栏">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2022/10/23/ue-gas-notes/ue-gas-06-debug-optimization-troubleshooting-and-changelog/" aria-label="UE4 Gameplay Ability System 学习专栏，最新一篇：上线前闭环：调试、优化、排障与版本演进">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-gamefeature">
+            <div class="note-notebook-label">
+                <span>笔记 09</span>
+                <span>已完结 · 8 篇</span>
+            </div>
+            <h2 id="notebook-ue-gamefeature">UE5 GameFeature 原理与源码拆解</h2>
+            <p class="note-notebook-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
+            <p class="note-notebook-stage">2025.07 - 2025.12 旗舰连载</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-gamefeature/" aria-label="打开笔记本：UE5 GameFeature 原理与源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2025/12/21/ue-gamefeature-notes/ue-gamefeature-08-cook-hotfix-troubleshooting-and-regression-checklist/" aria-label="UE5 GameFeature 原理与源码拆解，最新一篇：打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-slate-source">
+            <div class="note-notebook-label">
+                <span>笔记 10</span>
+                <span>已完结 · 16 篇</span>
+            </div>
+            <h2 id="notebook-ue-slate-source">UE5 Slate 原理与源码拆解</h2>
+            <p class="note-notebook-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
+            <p class="note-notebook-stage">2025.01 - 2025.04 旗舰连载</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-slate-source/" aria-label="打开笔记本：UE5 Slate 原理与源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2025/04/19/ue-slate-source-notes/ue-slate-source-16-custom-widget-troubleshooting/" aria-label="UE5 Slate 原理与源码拆解，最新一篇：工程收官：自定义 Slate 控件、崩溃/泄漏/焦点灾难排障手册">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+        
+        <article class="note-notebook" aria-labelledby="notebook-ue-umg-source">
+            <div class="note-notebook-label">
+                <span>笔记 11</span>
+                <span>已完结 · 9 篇</span>
+            </div>
+            <h2 id="notebook-ue-umg-source">UE5 UMG 原理与源码拆解</h2>
+            <p class="note-notebook-summary">围绕 UE5.5 UMG/Slate 体系，从创建、实例化、输入路由、生命周期、布局、渲染、池化到崩溃排障，形成一条可复用的源码学习与工程落地主线。</p>
+            <p class="note-notebook-stage">2025.03 - 2025.06 旗舰连载</p>
+            <div class="note-notebook-actions">
+                <a class="note-notebook-open" href="/columns/ue-umg-source/" aria-label="打开笔记本：UE5 UMG 原理与源码拆解">打开笔记本 <span aria-hidden="true">→</span></a>
+                
+                <a class="note-notebook-latest" href="/2025/06/22/ue-umg-source-notes/ue-umg-source-09-crash-leak-threading-troubleshooting-playbook/" aria-label="UE5 UMG 原理与源码拆解，最新一篇：工程收官：UMG 常见崩溃/泄漏/线程越界排障总手册">最新一篇 <span aria-hidden="true">↗</span></a>
+                
+            </div>
+        </article>
+        
+    </div>
     
-    <section class="columns-grid">
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">OpenGL 学习专栏</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：高级 OpenGL</span>
-                <span>已发布 13 / 12</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2022/07/25/graphics-notes/opengl-13-advanced-glsl-interface-blocks-ubo/">从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/opengl/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE 渲染源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">按一帧主线梳理 Unreal Engine 渲染源码，从视图准备、Deferred Renderer、后处理、线程协作到 RDG/RHI 如何把渲染工作真正提交到 GPU。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：主线梳理</span>
-                <span>已发布 5 / 5</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2024/12/30/ue-rendering-notes/ue-rendering-05-rdg-rhi-shader-bridge/">UE引擎中的 RDG 与 RHI：一帧渲染是怎样真正提交到 GPU 的</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-rendering/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 Motion Matching 源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">围绕 UE5.4/5.5 的 PoseSearch 与 Motion Matching 体系，从范式认知、Schema 与索引构建、运行时查询到调优排障，打通一条可落地的源码学习主线。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：5.4/5.5 主线梳理</span>
-                <span>已发布 8 / 8</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2025/11/21/ue-motion-matching-notes/ue-motion-matching-08-performance-stability-and-troubleshooting/">性能与稳定性实战：数据库规模、采样密度、查询成本与排障清单</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-motion-matching/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 移动系统源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">围绕 UE5.4/5.5 的 CharacterMovementComponent 主线，从输入向量积累、每帧移动执行、Walking/Falling 分支到 MOVE_Custom 与网络同步，形成一条可落地的问题定位路径。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：5.4/5.5 主线梳理</span>
-                <span>已发布 6 / 6</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2022/10/16/ue-movement-notes/ue-movement-06-network-prediction-and-correction/">网络同步与纠偏：SavedMove、客户端预测、服务器校正与平滑</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-movement/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 动画系统源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：5.5 主线梳理</span>
-                <span>已发布 8 / 8</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2023/06/18/ue-animation-system-notes/ue-animation-system-08-performance-stability-and-debugging-loop/">性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-animation-system/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 音频系统原理与源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">围绕 UE5.7 Audio Mixer 执行链，从播放请求、ActiveSound 生命周期、并发虚拟化、解码与缓存、Submix 路由到 Quartz 与调试，形成一条可复用的音频源码学习主线。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：UE5.7 Audio Mixer 主线</span>
-                <span>已发布 8 / 8</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2026/02/21/ue-audio-source-notes/ue-audio-source-08-quartz-and-audio-debugging-system/">Quartz 与音频调试体系：样本级时序与性能定位</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-audio-source/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 网络同步源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：5.5 主线梳理</span>
-                <span>已发布 8 / 8</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2023/12/24/ue-network-sync-notes/ue-network-sync-08-troubleshooting-and-regression-baseline/">排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-network-sync/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE4 Gameplay Ability System 学习专栏</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：2022.05 - 2022.10 学习整理</span>
-                <span>已发布 6 / 6</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2022/10/23/ue-gas-notes/ue-gas-06-debug-optimization-troubleshooting-and-changelog/">上线前闭环：调试、优化、排障与版本演进</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-gas/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 GameFeature 原理与源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
-                <span>已发布 8 / 8</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2025/12/21/ue-gamefeature-notes/ue-gamefeature-08-cook-hotfix-troubleshooting-and-regression-checklist/">打包热更与排障闭环：Cook/Chunk、AssetManager、日志与回归清单</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-gamefeature/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 Slate 原理与源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">围绕 UE5.7 Slate / SlateCore / SlateRHIRenderer 内核，从模块边界、一帧主循环、SWidget 生命周期、布局、输入、绘制、失效、文本、样式、窗口到调试排障，形成一条偏原理和源码的纯 Slate 学习主线。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：2025.01 - 2025.04 旗舰连载</span>
-                <span>已发布 16 / 16</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2025/04/19/ue-slate-source-notes/ue-slate-source-16-custom-widget-troubleshooting/">工程收官：自定义 Slate 控件、崩溃/泄漏/焦点灾难排障手册</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-slate-source/">进入专栏 -></a>
-        </article>
-        
-        
-        <article class="column-card">
-            <div class="column-card-top">
-                <div>
-                    <p class="column-card-kicker">专栏</p>
-                    <h2 class="column-card-title">UE5 UMG 原理与源码拆解</h2>
-                </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-
-            <p class="column-card-summary">围绕 UE5.5 UMG/Slate 体系，从创建、实例化、输入路由、生命周期、布局、渲染、池化到崩溃排障，形成一条可复用的源码学习与工程落地主线。</p>
-
-            <div class="column-card-meta">
-                <span>阶段：2025.03 - 2025.06 旗舰连载</span>
-                <span>已发布 9 / 9</span>
-            </div>
-
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
-            </div>
-
-            
-            <p class="column-card-latest">
-                最新文章：
-                <a href="/2025/06/22/ue-umg-source-notes/ue-umg-source-09-crash-leak-threading-troubleshooting-playbook/">工程收官：UMG 常见崩溃/泄漏/线程越界排障总手册</a>
-            </p>
-            
-
-            <a class="column-card-link" href="/columns/ue-umg-source/">进入专栏 -></a>
-        </article>
-        
-    </section>
-    
+    <footer class="note-index-footer">
+        <span>Claude’s Desk</span>
+        <a href="/archives/">按时间浏览 <span aria-hidden="true">→</span></a>
+    </footer>
 </article>
 
 
@@ -426,8 +288,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

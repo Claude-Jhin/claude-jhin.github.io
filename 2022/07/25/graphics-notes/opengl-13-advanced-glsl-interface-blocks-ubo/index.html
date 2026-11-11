@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/opengl/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2022.07.25
-            
-            /
-            
-            <span style="color: var(--accent);">#OpenGL</span>
-            
-            <span style="color: var(--accent);">#LearnOpenGL</span>
-            
-            <span style="color: var(--accent);">#图形学</span>
-            
-            <span style="color: var(--accent);">#GLSL</span>
-            
-            <span style="color: var(--accent);">#Interface Block</span>
-            
-            <span style="color: var(--accent);">#Uniform Buffer Object</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">OpenGL 学习专栏</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象</h1>
+            <div class="note-post-meta">
+                <time datetime="2022-07-25">2022.07.25</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># OpenGL</span><span># LearnOpenGL</span><span># GLSL</span><span># 图形学</span><span># Interface Block</span><span># Uniform Buffer Object</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
-            <div class="series-meta">
-                <span>第 13 篇</span>
-                <span>已发布 13 / 12</span>
-                
-                <span>阶段：高级 OpenGL</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/opengl/">OpenGL 学习</a>
+                <span>第 13 篇 · 已发布 13 篇</span>
             </div>
-            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/opengl/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E8%8A%82%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、这节要解决什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81GLSL-%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">二、GLSL 的内建变量</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">三、顶点着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-Position"><span class="post-toc-list-text">1. gl_Position</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-PointSize"><span class="post-toc-list-text">2. gl_PointSize</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-VertexID"><span class="post-toc-list-text">3. gl_VertexID</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E7%89%87%E6%AE%B5%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">四、片段着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-FragCoord"><span class="post-toc-list-text">1. gl_FragCoord</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-FrontFacing"><span class="post-toc-list-text">2. gl_FrontFacing</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-FragDepth"><span class="post-toc-list-text">3. gl_FragDepth</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E6%8E%A5%E5%8F%A3%E5%9D%97-Interface-Block"><span class="post-toc-list-text">五、接口块 Interface Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81Uniform-%E7%BC%93%E5%86%B2%E5%AF%B9%E8%B1%A1-UBO"><span class="post-toc-list-text">六、Uniform 缓冲对象 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E5%9C%A8-GLSL-%E4%B8%AD%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">七、在 GLSL 中声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81std140-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">八、std140 是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81UBO-%E7%9A%84%E4%B8%89%E4%B8%AA%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">九、UBO 的三个角色</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81UBO-%E7%9A%84%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十、UBO 的使用流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%9C%A8-shader-%E9%87%8C%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">1. 在 shader 里声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%88%9B%E5%BB%BA%E5%B9%B6%E5%88%86%E9%85%8D-UBO"><span class="post-toc-list-text">2. 创建并分配 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8A%8A-UBO-%E7%BB%91%E5%AE%9A%E5%88%B0-binding-point"><span class="post-toc-list-text">3. 把 UBO 绑定到 binding point</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%8A%8A-shader-%E7%9A%84-Uniform-Block-%E7%BB%91%E5%AE%9A%E5%88%B0%E5%90%8C%E4%B8%80%E4%B8%AA-binding-point"><span class="post-toc-list-text">4. 把 shader 的 Uniform Block 绑定到同一个 binding point</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%9B%B4%E6%96%B0-UBO-%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">十一、更新 UBO 数据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81UBO-%E5%92%8C%E6%99%AE%E9%80%9A-uniform-%E6%80%8E%E4%B9%88%E9%85%8D%E5%90%88"><span class="post-toc-list-text">十二、UBO 和普通 uniform 怎么配合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%92%8C%E5%89%8D%E5%90%8E%E7%AB%A0%E8%8A%82%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">十三、这一节和前后章节的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">十四、容易踩的坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E8%BF%99%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">十五、这节可以做的练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十六、本节小结</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -465,48 +441,30 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2022/07/18/graphics-notes/opengl-12-advanced-data/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 12 篇</span>
-                    <strong class="series-nav-title">如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局</strong>
-                </a>
-                
-
-                
-                <div class="series-nav-card is-empty">
-                    <span class="series-nav-direction">当前已经读到系列末尾</span>
-                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
-                </div>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2022/07/18/graphics-notes/opengl-12-advanced-data/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局</strong>
+            </a>
+            
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/opengl/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E8%8A%82%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">一、这节要解决什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%8C%E3%80%81GLSL-%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">二、GLSL 的内建变量</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%89%E3%80%81%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">三、顶点着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-Position"><span class="post-toc-list-text">1. gl_Position</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-PointSize"><span class="post-toc-list-text">2. gl_PointSize</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-VertexID"><span class="post-toc-list-text">3. gl_VertexID</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%9B%9B%E3%80%81%E7%89%87%E6%AE%B5%E7%9D%80%E8%89%B2%E5%99%A8%E4%B8%AD%E7%9A%84%E5%86%85%E5%BB%BA%E5%8F%98%E9%87%8F"><span class="post-toc-list-text">四、片段着色器中的内建变量</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-gl-FragCoord"><span class="post-toc-list-text">1. gl_FragCoord</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-gl-FrontFacing"><span class="post-toc-list-text">2. gl_FrontFacing</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-gl-FragDepth"><span class="post-toc-list-text">3. gl_FragDepth</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BA%94%E3%80%81%E6%8E%A5%E5%8F%A3%E5%9D%97-Interface-Block"><span class="post-toc-list-text">五、接口块 Interface Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AD%E3%80%81Uniform-%E7%BC%93%E5%86%B2%E5%AF%B9%E8%B1%A1-UBO"><span class="post-toc-list-text">六、Uniform 缓冲对象 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%83%E3%80%81%E5%9C%A8-GLSL-%E4%B8%AD%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">七、在 GLSL 中声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%AB%E3%80%81std140-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">八、std140 是什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B9%9D%E3%80%81UBO-%E7%9A%84%E4%B8%89%E4%B8%AA%E8%A7%92%E8%89%B2"><span class="post-toc-list-text">九、UBO 的三个角色</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E3%80%81UBO-%E7%9A%84%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="post-toc-list-text">十、UBO 的使用流程</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E5%9C%A8-shader-%E9%87%8C%E5%A3%B0%E6%98%8E-Uniform-Block"><span class="post-toc-list-text">1. 在 shader 里声明 Uniform Block</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E5%88%9B%E5%BB%BA%E5%B9%B6%E5%88%86%E9%85%8D-UBO"><span class="post-toc-list-text">2. 创建并分配 UBO</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%8A%8A-UBO-%E7%BB%91%E5%AE%9A%E5%88%B0-binding-point"><span class="post-toc-list-text">3. 把 UBO 绑定到 binding point</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E6%8A%8A-shader-%E7%9A%84-Uniform-Block-%E7%BB%91%E5%AE%9A%E5%88%B0%E5%90%8C%E4%B8%80%E4%B8%AA-binding-point"><span class="post-toc-list-text">4. 把 shader 的 Uniform Block 绑定到同一个 binding point</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%9B%B4%E6%96%B0-UBO-%E6%95%B0%E6%8D%AE"><span class="post-toc-list-text">十一、更新 UBO 数据</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81UBO-%E5%92%8C%E6%99%AE%E9%80%9A-uniform-%E6%80%8E%E4%B9%88%E9%85%8D%E5%90%88"><span class="post-toc-list-text">十二、UBO 和普通 uniform 怎么配合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E8%BF%99%E4%B8%80%E8%8A%82%E5%92%8C%E5%89%8D%E5%90%8E%E7%AB%A0%E8%8A%82%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="post-toc-list-text">十三、这一节和前后章节的关系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="post-toc-list-text">十四、容易踩的坑</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E8%BF%99%E8%8A%82%E5%8F%AF%E4%BB%A5%E5%81%9A%E7%9A%84%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">十五、这节可以做的练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E6%9C%AC%E8%8A%82%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">十六、本节小结</span></a></li></ol>
         </nav>
@@ -524,8 +482,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

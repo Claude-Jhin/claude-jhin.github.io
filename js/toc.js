@@ -34,6 +34,8 @@
         allTocLinks.forEach((link) => {
             const isMatch = decodeURIComponent(link.getAttribute('href') || '') === hash;
             link.classList.toggle('is-active', isMatch);
+            if (isMatch) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
         });
 
         if (!sidebar || !sidebarLinks.length) return;
@@ -47,10 +49,11 @@
         const linkTop = activeSidebarLink.offsetTop - 10;
         const linkBottom = activeSidebarLink.offsetTop + activeSidebarLink.offsetHeight + 10;
 
+        const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
         if (linkTop < containerTop) {
-            sidebar.scrollTo({ top: linkTop, behavior: 'smooth' });
+            sidebar.scrollTo({ top: linkTop, behavior });
         } else if (linkBottom > containerBottom) {
-            sidebar.scrollTo({ top: linkBottom - sidebar.clientHeight, behavior: 'smooth' });
+            sidebar.scrollTo({ top: linkBottom - sidebar.clientHeight, behavior });
         }
     };
 

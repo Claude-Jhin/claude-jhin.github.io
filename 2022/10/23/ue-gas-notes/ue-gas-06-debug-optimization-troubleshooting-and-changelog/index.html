@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>上线前闭环：调试、优化、排障与版本演进 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-gas/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">上线前闭环：调试、优化、排障与版本演进</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2022.10.23
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#Gameplay Ability System</span>
-            
-            <span style="color: var(--accent);">#GAS</span>
-            
-            <span style="color: var(--accent);">#调试</span>
-            
-            <span style="color: var(--accent);">#优化</span>
-            
-            <span style="color: var(--accent);">#Troubleshooting</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE4 Gameplay Ability System 学习专栏</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">上线前闭环：调试、优化、排障与版本演进</h1>
+            <div class="note-post-meta">
+                <time datetime="2022-10-23">2022.10.23</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># GAS</span><span># Gameplay Ability System</span><span># 调试</span><span># 优化</span><span># Troubleshooting</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
-            <div class="series-meta">
-                <span>第 6 篇</span>
-                <span>已发布 6 / 6</span>
-                
-                <span>阶段：2022.05 - 2022.10 学习整理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 100%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-gas/">UE GAS</a>
+                <span>第 6 篇 · 已发布 6 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-gas/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-gas/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E5%85%88%E8%A1%8C%EF%BC%8C%E4%B8%8D%E8%A6%81%E7%AD%89%E5%87%BA%E9%97%AE%E9%A2%98%E6%89%8D%E8%A1%A5%E5%B7%A5%E5%85%B7"><span class="post-toc-list-text">调试先行，不要等出问题才补工具</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#showdebug-abilitysystem%EF%BC%9A%E7%AC%AC%E4%B8%80%E7%8E%B0%E5%9C%BA%E5%B7%A5%E5%85%B7"><span class="post-toc-list-text">showdebug abilitysystem：第一现场工具</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Gameplay-Debugger%EF%BC%9A%E8%A7%82%E5%AF%9F%E5%88%AB%E4%BA%BA%E8%BA%AB%E4%B8%8A%E7%9A%84%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">Gameplay Debugger：观察别人身上的状态</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%A5%E5%BF%97%E5%88%86%E7%BA%A7%EF%BC%9A%E6%8A%8A%E5%99%AA%E9%9F%B3%E5%8F%98%E4%BF%A1%E6%81%AF"><span class="post-toc-list-text">日志分级：把噪音变信息</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E5%B8%A6%E5%AE%BD%E4%BC%98%E5%8C%96%E4%B8%BB%E7%BA%BF"><span class="post-toc-list-text">性能与带宽优化主线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%A4%E4%B8%AA%E9%AB%98%E4%BB%B7%E5%80%BC%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">两个高价值工程化建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%AB%98%E9%A2%91%E6%95%85%E9%9A%9C%E7%9A%84%E6%9C%80%E5%B0%8F%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">高频故障的最小排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%89%88%E6%9C%AC%E6%BC%94%E8%BF%9B%E5%85%B3%E6%B3%A8%E7%82%B9%EF%BC%884-24-4-27%EF%BC%89"><span class="post-toc-list-text">版本演进关注点（4.24 -&gt; 4.27）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E4%B8%93%E6%A0%8F%E6%94%B6%E6%9D%9F"><span class="post-toc-list-text">本专栏收束</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -193,48 +169,30 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-gas/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2022/09/18/ue-gas-notes/ue-gas-05-gameplaycue-prediction-and-targeting/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 5 篇</span>
-                    <strong class="series-nav-title">表现与网络体验：GameplayCue、Prediction、Targeting</strong>
-                </a>
-                
-
-                
-                <div class="series-nav-card is-empty">
-                    <span class="series-nav-direction">当前已经读到系列末尾</span>
-                    <strong class="series-nav-title">后续更新会继续挂回这条专栏主线</strong>
-                </div>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2022/09/18/ue-gas-notes/ue-gas-05-gameplaycue-prediction-and-targeting/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>表现与网络体验：GameplayCue、Prediction、Targeting</strong>
+            </a>
+            
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-gas/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E5%85%88%E8%A1%8C%EF%BC%8C%E4%B8%8D%E8%A6%81%E7%AD%89%E5%87%BA%E9%97%AE%E9%A2%98%E6%89%8D%E8%A1%A5%E5%B7%A5%E5%85%B7"><span class="post-toc-list-text">调试先行，不要等出问题才补工具</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#showdebug-abilitysystem%EF%BC%9A%E7%AC%AC%E4%B8%80%E7%8E%B0%E5%9C%BA%E5%B7%A5%E5%85%B7"><span class="post-toc-list-text">showdebug abilitysystem：第一现场工具</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Gameplay-Debugger%EF%BC%9A%E8%A7%82%E5%AF%9F%E5%88%AB%E4%BA%BA%E8%BA%AB%E4%B8%8A%E7%9A%84%E7%8A%B6%E6%80%81"><span class="post-toc-list-text">Gameplay Debugger：观察别人身上的状态</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%A5%E5%BF%97%E5%88%86%E7%BA%A7%EF%BC%9A%E6%8A%8A%E5%99%AA%E9%9F%B3%E5%8F%98%E4%BF%A1%E6%81%AF"><span class="post-toc-list-text">日志分级：把噪音变信息</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E5%B8%A6%E5%AE%BD%E4%BC%98%E5%8C%96%E4%B8%BB%E7%BA%BF"><span class="post-toc-list-text">性能与带宽优化主线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%A4%E4%B8%AA%E9%AB%98%E4%BB%B7%E5%80%BC%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">两个高价值工程化建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%AB%98%E9%A2%91%E6%95%85%E9%9A%9C%E7%9A%84%E6%9C%80%E5%B0%8F%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">高频故障的最小排查顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%89%88%E6%9C%AC%E6%BC%94%E8%BF%9B%E5%85%B3%E6%B3%A8%E7%82%B9%EF%BC%884-24-4-27%EF%BC%89"><span class="post-toc-list-text">版本演进关注点（4.24 -&gt; 4.27）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E4%B8%93%E6%A0%8F%E6%94%B6%E6%9D%9F"><span class="post-toc-list-text">本专栏收束</span></a></li></ol>
         </nav>
@@ -252,8 +210,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

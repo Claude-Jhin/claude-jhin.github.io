@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>从认知到落地：GAS 是什么、能做什么、该怎么起步 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,72 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-gas/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">从认知到落地：GAS 是什么、能做什么、该怎么起步</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2022.05.08
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#Gameplay Ability System</span>
-            
-            <span style="color: var(--accent);">#GAS</span>
-            
-            <span style="color: var(--accent);">#网络同步</span>
-            
-            <span style="color: var(--accent);">#工程实践</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE4 Gameplay Ability System 学习专栏</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">从认知到落地：GAS 是什么、能做什么、该怎么起步</h1>
+            <div class="note-post-meta">
+                <time datetime="2022-05-08">2022.05.08</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># GAS</span><span># Gameplay Ability System</span><span># 网络同步</span><span># 工程实践</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">基于 2022 年 5 月到 10 月的学习笔记，围绕 GAS 的核心建模、技能执行、预测同步、表现系统与工程排障，整理成一条从入门到可落地的实践主线。</p>
-            <div class="series-meta">
-                <span>第 1 篇</span>
-                <span>已发布 6 / 6</span>
-                
-                <span>阶段：2022.05 - 2022.10 学习整理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 17%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-gas/">UE GAS</a>
+                <span>第 1 篇 · 已发布 6 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-gas/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-gas/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-GAS"><span class="post-toc-list-text">为什么是 GAS</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%83%BD%E5%8A%9B%E8%BE%B9%E7%95%8C%E4%B8%8E%E7%8E%B0%E5%AE%9E%E9%A2%84%E6%9C%9F"><span class="post-toc-list-text">能力边界与现实预期</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A4%BA%E4%BE%8B%E9%A1%B9%E7%9B%AE%E7%BB%99%E5%87%BA%E7%9A%84%E5%85%B3%E9%94%AE%E5%90%AF%E5%8F%91"><span class="post-toc-list-text">示例项目给出的关键启发</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E8%B5%B7%E6%AD%A5%E6%B8%85%E5%8D%95%EF%BC%88%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%EF%BC%89"><span class="post-toc-list-text">项目起步清单（最小可运行）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%B3%BB%E5%88%97%E7%9A%84%E5%B7%A5%E7%A8%8B%E7%BA%A6%E5%AE%9A"><span class="post-toc-list-text">本系列的工程约定</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -180,48 +158,30 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-gas/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <div class="series-nav-card is-empty">
-                    <span class="series-nav-direction">当前是本专栏的起点</span>
-                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
-                </div>
-                
-
-                
-                <a href="/2022/06/12/ue-gas-notes/ue-gas-02-asc-tags-attributes-and-attributeset/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 2 篇</span>
-                    <strong class="series-nav-title">GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            
+            <a href="/2022/06/12/ue-gas-notes/ue-gas-02-asc-tags-attributes-and-attributeset/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>GAS 核心地基：ASC、GameplayTag、Attribute 与 AttributeSet</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-gas/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-GAS"><span class="post-toc-list-text">为什么是 GAS</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%83%BD%E5%8A%9B%E8%BE%B9%E7%95%8C%E4%B8%8E%E7%8E%B0%E5%AE%9E%E9%A2%84%E6%9C%9F"><span class="post-toc-list-text">能力边界与现实预期</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A4%BA%E4%BE%8B%E9%A1%B9%E7%9B%AE%E7%BB%99%E5%87%BA%E7%9A%84%E5%85%B3%E9%94%AE%E5%90%AF%E5%8F%91"><span class="post-toc-list-text">示例项目给出的关键启发</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E8%B5%B7%E6%AD%A5%E6%B8%85%E5%8D%95%EF%BC%88%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%EF%BC%89"><span class="post-toc-list-text">项目起步清单（最小可运行）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%B3%BB%E5%88%97%E7%9A%84%E5%B7%A5%E7%A8%8B%E7%BA%A6%E5%AE%9A"><span class="post-toc-list-text">本系列的工程约定</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
         </nav>
@@ -239,8 +199,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

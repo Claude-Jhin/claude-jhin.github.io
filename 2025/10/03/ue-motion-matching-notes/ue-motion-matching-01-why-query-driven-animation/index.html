@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>为什么是 Motion Matching：从状态机 / BlendSpace 到查询式动画 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,70 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-motion-matching/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">为什么是 Motion Matching：从状态机 / BlendSpace 到查询式动画</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2025.10.03
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#Motion Matching</span>
-            
-            <span style="color: var(--accent);">#Pose Search</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 Motion Matching 源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">为什么是 Motion Matching：从状态机 / BlendSpace 到查询式动画</h1>
+            <div class="note-post-meta">
+                <time datetime="2025-10-03">2025.10.03</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># Motion Matching</span><span># Pose Search</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.4/5.5 的 PoseSearch 与 Motion Matching 体系，从范式认知、Schema 与索引构建、运行时查询到调优排障，打通一条可落地的源码学习主线。</p>
-            <div class="series-meta">
-                <span>第 1 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：5.4/5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 13%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-motion-matching/">Motion Matching</a>
+                <span>第 1 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-motion-matching/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-motion-matching/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AF%B4%E6%88%91%E7%9A%84%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">先说我的判断</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E8%8C%83%E5%BC%8F%E5%AF%B9%E6%AF%94%EF%BC%89"><span class="post-toc-list-text">主线图（范式对比）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%E4%BC%9A%E5%9C%A8%E9%AB%98%E8%87%AA%E7%94%B1%E5%BA%A6%E7%A7%BB%E5%8A%A8%E9%87%8C%E5%8F%98%E9%87%8D"><span class="post-toc-list-text">为什么传统方案会在高自由度移动里变重</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Motion-Matching-%E6%8A%8A%E5%A4%8D%E6%9D%82%E5%BA%A6%E6%90%AC%E5%88%B0%E4%BA%86%E5%93%AA%E9%87%8C"><span class="post-toc-list-text">Motion Matching 把复杂度搬到了哪里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%BA%94%E8%AF%A5%E7%94%A8%EF%BC%8C%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E8%AF%A5%E7%94%A8"><span class="post-toc-list-text">什么时候应该用，什么时候不该用</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E5%B7%A5%E7%A8%8B%E8%A7%92%E5%BA%A6%E7%9C%8B%E8%BF%99%E6%AC%A1%E8%8C%83%E5%BC%8F%E8%BF%81%E7%A7%BB"><span class="post-toc-list-text">从工程角度看这次范式迁移</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E5%B7%A5%E7%A8%8B%E9%87%8C%E4%BC%9A%E8%BF%99%E6%A0%B7%E9%AA%8C%E8%AF%81"><span class="post-toc-list-text">我在工程里会这样验证</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%99%E5%90%8E%E7%BB%AD%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%AE%9A%E4%B8%80%E4%B8%AA%E5%9D%90%E6%A0%87%E7%B3%BB"><span class="post-toc-list-text">给后续源码阅读定一个坐标系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E8%90%BD%E7%82%B9%EF%BC%88UE-5-5%EF%BC%8C%E6%9C%AC%E6%9C%BA-C-Epic%EF%BC%89"><span class="post-toc-list-text">源码落点（UE_5.5，本机 C:\Epic）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E8%B7%9F%E8%AF%BB%E5%AE%9E%E9%AA%8C%EF%BC%8810-%E5%88%86%E9%92%9F%EF%BC%89"><span class="post-toc-list-text">最小跟读实验（10 分钟）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -257,48 +237,30 @@ Motion Matching 的核心价值不是“看起来更丝滑”，而是把动画�
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-motion-matching/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <div class="series-nav-card is-empty">
-                    <span class="series-nav-direction">当前是本专栏的起点</span>
-                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
-                </div>
-                
-
-                
-                <a href="/2025/10/10/ue-motion-matching-notes/ue-motion-matching-02-system-overview-posesearch-trajectory-chooser-animgraph/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 2 篇</span>
-                    <strong class="series-nav-title">UE5 Motion Matching 体系总览：PoseSearch、Trajectory、Chooser、AnimGraph 如何协作</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            
+            <a href="/2025/10/10/ue-motion-matching-notes/ue-motion-matching-02-system-overview-posesearch-trajectory-chooser-animgraph/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>UE5 Motion Matching 体系总览：PoseSearch、Trajectory、Chooser、AnimGraph 如何协作</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-motion-matching/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AF%B4%E6%88%91%E7%9A%84%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">先说我的判断</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E8%8C%83%E5%BC%8F%E5%AF%B9%E6%AF%94%EF%BC%89"><span class="post-toc-list-text">主线图（范式对比）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%E4%BC%9A%E5%9C%A8%E9%AB%98%E8%87%AA%E7%94%B1%E5%BA%A6%E7%A7%BB%E5%8A%A8%E9%87%8C%E5%8F%98%E9%87%8D"><span class="post-toc-list-text">为什么传统方案会在高自由度移动里变重</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Motion-Matching-%E6%8A%8A%E5%A4%8D%E6%9D%82%E5%BA%A6%E6%90%AC%E5%88%B0%E4%BA%86%E5%93%AA%E9%87%8C"><span class="post-toc-list-text">Motion Matching 把复杂度搬到了哪里</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%BA%94%E8%AF%A5%E7%94%A8%EF%BC%8C%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E8%AF%A5%E7%94%A8"><span class="post-toc-list-text">什么时候应该用，什么时候不该用</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E5%B7%A5%E7%A8%8B%E8%A7%92%E5%BA%A6%E7%9C%8B%E8%BF%99%E6%AC%A1%E8%8C%83%E5%BC%8F%E8%BF%81%E7%A7%BB"><span class="post-toc-list-text">从工程角度看这次范式迁移</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%9C%A8%E5%B7%A5%E7%A8%8B%E9%87%8C%E4%BC%9A%E8%BF%99%E6%A0%B7%E9%AA%8C%E8%AF%81"><span class="post-toc-list-text">我在工程里会这样验证</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%99%E5%90%8E%E7%BB%AD%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%AE%9A%E4%B8%80%E4%B8%AA%E5%9D%90%E6%A0%87%E7%B3%BB"><span class="post-toc-list-text">给后续源码阅读定一个坐标系</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E8%90%BD%E7%82%B9%EF%BC%88UE-5-5%EF%BC%8C%E6%9C%AC%E6%9C%BA-C-Epic%EF%BC%89"><span class="post-toc-list-text">源码落点（UE_5.5，本机 C:\Epic）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E8%B7%9F%E8%AF%BB%E5%AE%9E%E9%AA%8C%EF%BC%8810-%E5%88%86%E9%92%9F%EF%BC%89"><span class="post-toc-list-text">最小跟读实验（10 分钟）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
         </nav>
@@ -316,8 +278,7 @@ Motion Matching 的核心价值不是“看起来更丝滑”，而是把动画�
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

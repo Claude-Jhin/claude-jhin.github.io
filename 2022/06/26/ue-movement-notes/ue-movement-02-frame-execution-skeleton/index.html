@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CharacterMovement 一帧执行骨架：TickComponent、PerformMovement、StartNewPhysics - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,72 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-movement/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">CharacterMovement 一帧执行骨架：TickComponent、PerformMovement、StartNewPhysics</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2022.06.26
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#Character Movement</span>
-            
-            <span style="color: var(--accent);">#TickComponent</span>
-            
-            <span style="color: var(--accent);">#StartNewPhysics</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 移动系统源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">CharacterMovement 一帧执行骨架：TickComponent、PerformMovement、StartNewPhysics</h1>
+            <div class="note-post-meta">
+                <time datetime="2022-06-26">2022.06.26</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># Character Movement</span><span># TickComponent</span><span># StartNewPhysics</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.4/5.5 的 CharacterMovementComponent 主线，从输入向量积累、每帧移动执行、Walking/Falling 分支到 MOVE_Custom 与网络同步，形成一条可落地的问题定位路径。</p>
-            <div class="series-meta">
-                <span>第 2 篇</span>
-                <span>已发布 6 / 6</span>
-                
-                <span>阶段：5.4/5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 33%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-movement/">UE5 移动系统</a>
+                <span>第 2 篇 · 已发布 6 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-movement/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-movement/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9A%E8%BF%99%E4%B8%80%E5%B8%A7%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">深入一层：这一帧到底是怎么跑起来的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%BA%90%E7%A0%81%E8%90%BD%E7%82%B9%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">关键源码落点（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#TickComponent-%E7%9A%84%E5%87%A0%E4%B8%AA%E5%85%B3%E9%94%AE%E5%89%8D%E7%BD%AE%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">TickComponent 的几个关键前置判断</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#PerformMovement-%E5%B9%B6%E4%B8%8D%E5%8F%AA%E6%98%AF%E2%80%9C%E8%B0%83%E7%94%A8-Phys%E2%80%9D"><span class="post-toc-list-text">PerformMovement 并不只是“调用 Phys”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#StartNewPhysics-%E7%9A%84%E8%BE%B9%E7%95%8C%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">StartNewPhysics 的边界条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%92%E8%89%B2%E8%BA%AB%E4%BB%BD%EF%BC%88Role%EF%BC%89%E5%AF%B9%E4%B8%BB%E9%93%BE%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="post-toc-list-text">角色身份（Role）对主链的影响</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%AF%8A%E6%96%AD%E9%A1%BA%E5%BA%8F%EF%BC%9A%E5%85%88%E5%A4%A7%E5%88%86%E6%94%AF%EF%BC%8C%E5%90%8E%E5%B0%8F%E5%88%86%E6%94%AF"><span class="post-toc-list-text">诊断顺序：先大分支，后小分支</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E2%80%9C%E7%9C%8B%E8%B5%B7%E6%9D%A5%E5%83%8F%E5%8F%82%E6%95%B0%E9%97%AE%E9%A2%98%EF%BC%8C%E5%AE%9E%E9%99%85%E6%98%AF%E9%AA%A8%E6%9E%B6%E9%97%AE%E9%A2%98%E2%80%9D%E7%9A%84-case"><span class="post-toc-list-text">常见“看起来像参数问题，实际是骨架问题”的 case</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-1%EF%BC%9A%E6%94%B9%E4%BA%86%E5%BE%88%E5%A4%9A-MaxWalkSpeed-%E4%BD%86%E8%A7%92%E8%89%B2%E8%BF%98%E6%98%AF%E4%B8%8D%E5%8A%A8"><span class="post-toc-list-text">case 1：改了很多 MaxWalkSpeed 但角色还是不动</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-2%EF%BC%9A%E8%81%94%E6%9C%BA%E4%B8%8B%E5%81%B6%E5%8F%91%E2%80%9C%E7%9E%AC%E5%81%9C%E2%80%9D"><span class="post-toc-list-text">case 2：联机下偶发“瞬停”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-3%EF%BC%9A%E8%87%AA%E5%AE%9A%E4%B9%89%E7%BB%84%E4%BB%B6%E8%A6%86%E5%86%99%E5%90%8E%E5%BD%BB%E5%BA%95%E5%A4%B1%E6%95%88"><span class="post-toc-list-text">case 3：自定义组件覆写后彻底失效</span></a></li></ol></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -267,49 +245,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-movement/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2022/06/05/ue-movement-notes/ue-movement-01-input-to-movement-request/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 1 篇</span>
-                    <strong class="series-nav-title">输入如何变成移动请求：从 Enhanced Input 到 AddMovementInput</strong>
-                </a>
-                
-
-                
-                <a href="/2022/07/24/ue-movement-notes/ue-movement-03-walking-and-feel/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 3 篇</span>
-                    <strong class="series-nav-title">地面移动与手感来源：PhysWalking 的速度解算与参数作用点</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2022/06/05/ue-movement-notes/ue-movement-01-input-to-movement-request/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>输入如何变成移动请求：从 Enhanced Input 到 AddMovementInput</strong>
+            </a>
+            
+            
+            <a href="/2022/07/24/ue-movement-notes/ue-movement-03-walking-and-feel/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>地面移动与手感来源：PhysWalking 的速度解算与参数作用点</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-movement/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81"><span class="post-toc-list-text">我会怎么跟源码</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%94%B6%E5%B0%BE"><span class="post-toc-list-text">收尾</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%85%A5%E4%B8%80%E5%B1%82%EF%BC%9A%E8%BF%99%E4%B8%80%E5%B8%A7%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84"><span class="post-toc-list-text">深入一层：这一帧到底是怎么跑起来的</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%BA%90%E7%A0%81%E8%90%BD%E7%82%B9%EF%BC%88UE-5-5%EF%BC%89"><span class="post-toc-list-text">关键源码落点（UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#TickComponent-%E7%9A%84%E5%87%A0%E4%B8%AA%E5%85%B3%E9%94%AE%E5%89%8D%E7%BD%AE%E5%88%A4%E6%96%AD"><span class="post-toc-list-text">TickComponent 的几个关键前置判断</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#PerformMovement-%E5%B9%B6%E4%B8%8D%E5%8F%AA%E6%98%AF%E2%80%9C%E8%B0%83%E7%94%A8-Phys%E2%80%9D"><span class="post-toc-list-text">PerformMovement 并不只是“调用 Phys”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#StartNewPhysics-%E7%9A%84%E8%BE%B9%E7%95%8C%E6%9D%A1%E4%BB%B6"><span class="post-toc-list-text">StartNewPhysics 的边界条件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%92%E8%89%B2%E8%BA%AB%E4%BB%BD%EF%BC%88Role%EF%BC%89%E5%AF%B9%E4%B8%BB%E9%93%BE%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="post-toc-list-text">角色身份（Role）对主链的影响</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%AF%8A%E6%96%AD%E9%A1%BA%E5%BA%8F%EF%BC%9A%E5%85%88%E5%A4%A7%E5%88%86%E6%94%AF%EF%BC%8C%E5%90%8E%E5%B0%8F%E5%88%86%E6%94%AF"><span class="post-toc-list-text">诊断顺序：先大分支，后小分支</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E2%80%9C%E7%9C%8B%E8%B5%B7%E6%9D%A5%E5%83%8F%E5%8F%82%E6%95%B0%E9%97%AE%E9%A2%98%EF%BC%8C%E5%AE%9E%E9%99%85%E6%98%AF%E9%AA%A8%E6%9E%B6%E9%97%AE%E9%A2%98%E2%80%9D%E7%9A%84-case"><span class="post-toc-list-text">常见“看起来像参数问题，实际是骨架问题”的 case</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-1%EF%BC%9A%E6%94%B9%E4%BA%86%E5%BE%88%E5%A4%9A-MaxWalkSpeed-%E4%BD%86%E8%A7%92%E8%89%B2%E8%BF%98%E6%98%AF%E4%B8%8D%E5%8A%A8"><span class="post-toc-list-text">case 1：改了很多 MaxWalkSpeed 但角色还是不动</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-2%EF%BC%9A%E8%81%94%E6%9C%BA%E4%B8%8B%E5%81%B6%E5%8F%91%E2%80%9C%E7%9E%AC%E5%81%9C%E2%80%9D"><span class="post-toc-list-text">case 2：联机下偶发“瞬停”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#case-3%EF%BC%9A%E8%87%AA%E5%AE%9A%E4%B9%89%E7%BB%84%E4%BB%B6%E8%A6%86%E5%86%99%E5%90%8E%E5%BD%BB%E5%BA%95%E5%A4%B1%E6%95%88"><span class="post-toc-list-text">case 3：自定义组件覆写后彻底失效</span></a></li></ol></li></ol>
         </nav>
@@ -327,8 +291,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

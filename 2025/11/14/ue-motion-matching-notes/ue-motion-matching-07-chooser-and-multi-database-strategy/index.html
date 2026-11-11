@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chooser 与多数据库切换：如何做可扩展的动作上下文决策 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,72 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-motion-matching/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">Chooser 与多数据库切换：如何做可扩展的动作上下文决策</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2025.11.14
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#Motion Matching</span>
-            
-            <span style="color: var(--accent);">#Pose Search</span>
-            
-            <span style="color: var(--accent);">#Chooser</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 Motion Matching 源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">Chooser 与多数据库切换：如何做可扩展的动作上下文决策</h1>
+            <div class="note-post-meta">
+                <time datetime="2025-11-14">2025.11.14</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># Motion Matching</span><span># Pose Search</span><span># Chooser</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.4/5.5 的 PoseSearch 与 Motion Matching 体系，从范式认知、Schema 与索引构建、运行时查询到调优排障，打通一条可落地的源码学习主线。</p>
-            <div class="series-meta">
-                <span>第 7 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：5.4/5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 88%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-motion-matching/">Motion Matching</a>
+                <span>第 7 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-motion-matching/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-motion-matching/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AF%B4%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">先说结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E4%B8%8A%E4%B8%8B%E6%96%87%E5%86%B3%E7%AD%96%E9%93%BE%EF%BC%89"><span class="post-toc-list-text">主线图（上下文决策链）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E9%97%AE%E9%A2%98%E5%AE%9A%E6%80%A7%EF%BC%9A%E5%A4%9A%E5%BA%93%E4%B8%8D%E6%98%AF%E5%8F%AF%E9%80%89%E9%A1%B9%EF%BC%8C%E8%80%8C%E6%98%AF%E8%A7%84%E6%A8%A1%E5%8C%96%E5%BF%85%E9%80%89%E9%A1%B9"><span class="post-toc-list-text">先把问题定性：多库不是可选项，而是规模化必选项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Chooser-%E5%9C%A8%E8%BF%99%E9%87%8C%E7%9A%84%E7%9C%9F%E5%AE%9E%E4%BB%B7%E5%80%BC"><span class="post-toc-list-text">Chooser 在这里的真实价值</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%9E%E7%94%A8%E7%9A%84%E5%88%86%E5%BA%93%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">一个实用的分库策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%87%E5%BA%93%E7%AD%96%E7%95%A5%E7%9A%84%E4%B8%89%E4%B8%AA%E7%BA%A2%E7%BA%BF"><span class="post-toc-list-text">切库策略的三个红线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E5%85%B8%E5%9E%8B%E8%B0%83%E7%94%A8%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">一次典型调用顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%BB%BA%E8%AE%AE%E4%BD%A0%E8%BF%99%E6%A0%B7%E9%AA%8C%E8%AF%81"><span class="post-toc-list-text">我建议你这样验证</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%8F%E4%BD%9C%E5%BB%BA%E8%AE%AE%EF%BC%9A%E7%A8%8B%E5%BA%8F%E3%80%81TA%E3%80%81%E5%8A%A8%E7%94%BB%E4%B8%89%E6%96%B9%E5%A6%82%E4%BD%95%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">协作建议：程序、TA、动画三方如何分工</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E7%BA%A7%E5%86%B3%E7%AD%96%E8%B7%AF%E5%BE%84%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">源码级决策路径（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AE%83%E5%A6%82%E4%BD%95%E6%8E%A5%E5%88%B0%E5%8A%A8%E7%94%BB%E8%8A%82%E7%82%B9"><span class="post-toc-list-text">它如何接到动画节点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%EF%BC%88%E5%88%87%E5%BA%93%E7%A8%B3%E5%AE%9A%E6%80%A7%E7%89%88%EF%BC%89"><span class="post-toc-list-text">最小验证（切库稳定性版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -224,49 +202,35 @@ Chooser 负责“先决定搜索空间”，Motion Matching 再在该空间中�
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-motion-matching/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2025/11/07/ue-motion-matching-notes/ue-motion-matching-06-trajectory-and-pose-history-input-quality/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 6 篇</span>
-                    <strong class="series-nav-title">Trajectory 与 Pose History：查询输入质量如何决定结果上限</strong>
-                </a>
-                
-
-                
-                <a href="/2025/11/21/ue-motion-matching-notes/ue-motion-matching-08-performance-stability-and-troubleshooting/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 8 篇</span>
-                    <strong class="series-nav-title">性能与稳定性实战：数据库规模、采样密度、查询成本与排障清单</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2025/11/07/ue-motion-matching-notes/ue-motion-matching-06-trajectory-and-pose-history-input-quality/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>Trajectory 与 Pose History：查询输入质量如何决定结果上限</strong>
+            </a>
+            
+            
+            <a href="/2025/11/21/ue-motion-matching-notes/ue-motion-matching-08-performance-stability-and-troubleshooting/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>性能与稳定性实战：数据库规模、采样密度、查询成本与排障清单</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-motion-matching/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="post-toc-list-text">写在前面</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AF%B4%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">先说结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE%EF%BC%88%E4%B8%8A%E4%B8%8B%E6%96%87%E5%86%B3%E7%AD%96%E9%93%BE%EF%BC%89"><span class="post-toc-list-text">主线图（上下文决策链）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E6%8A%8A%E9%97%AE%E9%A2%98%E5%AE%9A%E6%80%A7%EF%BC%9A%E5%A4%9A%E5%BA%93%E4%B8%8D%E6%98%AF%E5%8F%AF%E9%80%89%E9%A1%B9%EF%BC%8C%E8%80%8C%E6%98%AF%E8%A7%84%E6%A8%A1%E5%8C%96%E5%BF%85%E9%80%89%E9%A1%B9"><span class="post-toc-list-text">先把问题定性：多库不是可选项，而是规模化必选项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Chooser-%E5%9C%A8%E8%BF%99%E9%87%8C%E7%9A%84%E7%9C%9F%E5%AE%9E%E4%BB%B7%E5%80%BC"><span class="post-toc-list-text">Chooser 在这里的真实价值</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%9E%E7%94%A8%E7%9A%84%E5%88%86%E5%BA%93%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">一个实用的分库策略</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%87%E5%BA%93%E7%AD%96%E7%95%A5%E7%9A%84%E4%B8%89%E4%B8%AA%E7%BA%A2%E7%BA%BF"><span class="post-toc-list-text">切库策略的三个红线</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E5%85%B8%E5%9E%8B%E8%B0%83%E7%94%A8%E9%A1%BA%E5%BA%8F"><span class="post-toc-list-text">一次典型调用顺序</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E5%BB%BA%E8%AE%AE%E4%BD%A0%E8%BF%99%E6%A0%B7%E9%AA%8C%E8%AF%81"><span class="post-toc-list-text">我建议你这样验证</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8D%8F%E4%BD%9C%E5%BB%BA%E8%AE%AE%EF%BC%9A%E7%A8%8B%E5%BA%8F%E3%80%81TA%E3%80%81%E5%8A%A8%E7%94%BB%E4%B8%89%E6%96%B9%E5%A6%82%E4%BD%95%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">协作建议：程序、TA、动画三方如何分工</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E7%BA%A7%E5%86%B3%E7%AD%96%E8%B7%AF%E5%BE%84%EF%BC%88UE5-5%EF%BC%89"><span class="post-toc-list-text">源码级决策路径（UE5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AE%83%E5%A6%82%E4%BD%95%E6%8E%A5%E5%88%B0%E5%8A%A8%E7%94%BB%E8%8A%82%E7%82%B9"><span class="post-toc-list-text">它如何接到动画节点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%EF%BC%88%E5%88%87%E5%BA%93%E7%A8%B3%E5%AE%9A%E6%80%A7%E7%89%88%EF%BC%89"><span class="post-toc-list-text">最小验证（切库稳定性版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%90%8E"><span class="post-toc-list-text">最后</span></a></li></ol>
         </nav>
@@ -284,8 +248,7 @@ Chooser 负责“先决定搜索空间”，Motion Matching 再在该空间中�
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

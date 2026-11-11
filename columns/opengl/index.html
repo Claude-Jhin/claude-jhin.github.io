@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    
+    <link rel="stylesheet" href="/css/note-index.css?v=20261111c">
+    
 
         
                 <script>
@@ -61,354 +65,241 @@
     </a>
 </div>
 
-<article class="post-container module column-shell">
+<article class="post-container module note-index note-sheet note-series-detail">
     
-    <header class="column-hero">
-        <div class="column-hero-top">
-            <div>
-                <p class="columns-kicker">系列内容</p>
-                <h1 class="columns-title">OpenGL 学习专栏</h1>
-            </div>
-            <span class="column-badge is-complete">已完结</span>
-        </div>
-
-        <p class="columns-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
-
-        <div class="column-overview-meta">
-            <span>当前阶段：高级 OpenGL</span>
-            <span>已发布 13 / 12</span>
-        </div>
-
-        <div class="column-progress large" aria-hidden="true">
-            <span style="width: 100%"></span>
-        </div>
-    </header>
+    <header class="note-index-header">
+    <div class="note-index-title">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            
+            <path d="M12 5c-3-2-6-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V4c-4-1-7-1-10 1Zm0 0v15" />
+            
+        </svg>
+        <h1>OpenGL 学习专栏</h1>
+    </div>
+    <div class="note-index-intro">
+        <p>从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
+        <span>连载中 · 13 篇文章</span>
+    </div>
+</header>
 
     
-    <section class="column-section">
-        <h2 class="column-section-title">这一栏想解决什么</h2>
-        <ul class="column-goals">
-            
-            <li>建立从窗口、上下文到渲染输出的完整认知</li>
-            
-            <li>用系列文章的方式沉淀 LearnOpenGL 的学习过程</li>
-            
-            <li>为后续纹理、变换、摄像机、光照和模型加载打基础</li>
-            
+    <section class="note-series-goals">
+        <h2>这组笔记聊什么</h2>
+        <ul>
+            <li>建立从窗口、上下文到渲染输出的完整认知</li><li>用系列文章的方式沉淀 LearnOpenGL 的学习过程</li><li>为后续纹理、变换、摄像机、光照和模型加载打基础</li>
         </ul>
     </section>
     
-
-    
-    <section class="column-section">
-        <div class="column-section-head">
-            <h2 class="column-section-title">系列大纲</h2>
-            <p class="column-section-note">后续文章会沿着这条路线持续补齐。</p>
+    <section class="note-reading" aria-labelledby="reading-title">
+        <div class="note-reading-heading">
+            <h2 id="reading-title">阅读顺序</h2>
+            <span>高级 OpenGL</span>
         </div>
-
-        <div class="column-outline">
+        <ol class="note-reading-list">
             
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">1</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">从窗口到第一个三角形</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">创建窗口、初始化 GLAD、理解渲染循环，以及第一个三角形是如何被画出来的。</p>
+            <li>
+                <span class="note-series-number" aria-hidden="true">01</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/05/02/graphics-notes/opengl-01-from-window-to-triangle/">从创建窗口到第一个三角形：我的 OpenGL 入门笔记</a>
+                        
+                    </h3>
+                    <p>创建窗口、初始化 GLAD、理解渲染循环，以及第一个三角形是如何被画出来的。</p>
                     
-                    <a class="column-outline-link" href="/2022/05/02/graphics-notes/opengl-01-from-window-to-triangle/">从创建窗口到第一个三角形：我的 OpenGL 入门笔记 -></a>
-                    
-                </div>
-            </article>
-            
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">2</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">着色器、顶点属性与 Uniform</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">从外部 Shader 文件、属性布局和 uniform 传值入手，真正理解 CPU 与 GPU 是如何协作画图的。</p>
-                    
-                    <a class="column-outline-link" href="/2022/05/09/graphics-notes/opengl-02-shaders-attributes-uniform/">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门 -></a>
+                    <time datetime="2022-05-02">2022.05.02</time>
                     
                 </div>
-            </article>
+            </li>
             
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">3</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">纹理、采样器与 stb_image</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">从纹理坐标、图片加载、纹理对象到 sampler2D，理解图像是如何被上传、采样并混合到片元颜色里的。</p>
+            <li>
+                <span class="note-series-number" aria-hidden="true">02</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/05/09/graphics-notes/opengl-02-shaders-attributes-uniform/">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</a>
+                        
+                    </h3>
+                    <p>从外部 Shader 文件、属性布局和 uniform 传值入手，真正理解 CPU 与 GPU 是如何协作画图的。</p>
                     
-                    <a class="column-outline-link" href="/2022/05/16/graphics-notes/opengl-03-textures-stb-image-and-samplers/">从颜色到贴图：OpenGL 纹理、采样器与 stb_image 入门 -></a>
-                    
-                </div>
-            </article>
-            
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">4</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">变换、坐标系统与摄像机</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">从 model/view/projection 到 glm::lookAt 和交互相机，理解物体、空间与观察者是怎样通过矩阵组织起来的。</p>
-                    
-                    <a class="column-outline-link" href="/2022/05/23/graphics-notes/opengl-04-transformations-coordinate-systems-camera/">从矩阵到视角：OpenGL 变换、坐标系统与摄像机 -></a>
+                    <time datetime="2022-05-09">2022.05.09</time>
                     
                 </div>
-            </article>
+            </li>
             
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">5</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">从颜色到多光源</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">从光源颜色、基础光照到材质、贴图、投光物与多光源，把整条光照主线连成一个完整的理解框架。</p>
+            <li>
+                <span class="note-series-number" aria-hidden="true">03</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/05/16/graphics-notes/opengl-03-textures-stb-image-and-samplers/">从颜色到贴图：OpenGL 纹理、采样器与 stb_image 入门</a>
+                        
+                    </h3>
+                    <p>从纹理坐标、图片加载、纹理对象到 sampler2D，理解图像是如何被上传、采样并混合到片元颜色里的。</p>
                     
-                    <a class="column-outline-link" href="/2022/05/30/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/">从颜色到多光源：OpenGL 光照学习笔记 -></a>
-                    
-                </div>
-            </article>
-            
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">6</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">模型加载与渲染</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">从单个三角形走向真实模型，理解资源组织与渲染流程。</p>
-                    
-                    <a class="column-outline-link" href="/2022/06/06/graphics-notes/opengl-06-model-loading-assimp-mesh-model/">把模型从文件带进场景：OpenGL 模型加载、Mesh 与 Model -></a>
+                    <time datetime="2022-05-16">2022.05.16</time>
                     
                 </div>
-            </article>
+            </li>
             
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">7</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">深度测试与深度缓冲</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">理解颜色缓冲之外的深度信息，建立“谁应该显示在最前面”的遮挡判断直觉。</p>
+            <li>
+                <span class="note-series-number" aria-hidden="true">04</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/05/23/graphics-notes/opengl-04-transformations-coordinate-systems-camera/">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</a>
+                        
+                    </h3>
+                    <p>从 model/view/projection 到 glm::lookAt 和交互相机，理解物体、空间与观察者是怎样通过矩阵组织起来的。</p>
                     
-                    <a class="column-outline-link" href="/2022/06/13/graphics-notes/opengl-07-depth-testing/">谁应该显示在最前面：OpenGL 深度测试到底解决了什么 -></a>
-                    
-                </div>
-            </article>
-            
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">8</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">模板测试与物体描边</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">从模板缓冲、模板函数和模板写入控制入手，理解如何用屏幕区域标记实现物体描边。</p>
-                    
-                    <a class="column-outline-link" href="/2022/06/20/graphics-notes/opengl-08-stencil-testing/">哪些区域允许被画：OpenGL 模板测试与物体描边 -></a>
+                    <time datetime="2022-05-23">2022.05.23</time>
                     
                 </div>
-            </article>
+            </li>
             
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">9</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">面剔除、环绕顺序与不可见面优化</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">理解正面与背面的判断规则、面剔除发生的位置，以及它为什么能在光栅化前减少无意义绘制。</p>
+            <li>
+                <span class="note-series-number" aria-hidden="true">05</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/05/30/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/">从颜色到多光源：OpenGL 光照学习笔记</a>
+                        
+                    </h3>
+                    <p>从光源颜色、基础光照到材质、贴图、投光物与多光源，把整条光照主线连成一个完整的理解框架。</p>
                     
-                    <a class="column-outline-link" href="/2022/06/27/graphics-notes/opengl-09-face-culling/">哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化 -></a>
-                    
-                </div>
-            </article>
-            
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">10</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">帧缓冲、离屏渲染与后处理</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">理解默认帧缓冲与自定义 FBO 的区别，掌握把场景先渲染到纹理，再通过屏幕四边形做后处理的两阶段渲染思路。</p>
-                    
-                    <a class="column-outline-link" href="/2022/07/04/graphics-notes/opengl-10-framebuffers-offscreen-rendering-post-processing/">从离屏到后处理：OpenGL 帧缓冲、屏幕纹理与两阶段渲染 -></a>
+                    <time datetime="2022-05-30">2022.05.30</time>
                     
                 </div>
-            </article>
+            </li>
             
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">11</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">立方体贴图、天空盒与环境反射</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">理解 cubemap 的六面方向采样方式，掌握天空盒为什么要去掉 view 平移，以及环境反射如何用方向向量从环境中取色。</p>
+            <li>
+                <span class="note-series-number" aria-hidden="true">06</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/06/06/graphics-notes/opengl-06-model-loading-assimp-mesh-model/">把模型从文件带进场景：OpenGL 模型加载、Mesh 与 Model</a>
+                        
+                    </h3>
+                    <p>从单个三角形走向真实模型，理解资源组织与渲染流程。</p>
                     
-                    <a class="column-outline-link" href="/2022/07/11/graphics-notes/opengl-11-cubemaps-skybox-environment-reflection/">从天空盒到环境反射：OpenGL 立方体贴图与方向采样 -></a>
-                    
-                </div>
-            </article>
-            
-            
-            <article class="column-outline-item is-complete">
-                <div class="column-outline-index">12</div>
-                <div class="column-outline-body">
-                    <div class="column-outline-top">
-                        <h3 class="column-outline-title">高级数据、缓冲更新与顶点属性布局</h3>
-                        <span class="column-outline-state">已发布</span>
-                    </div>
-                    <p class="column-outline-summary">理解 Buffer 只是 GPU 内存，掌握 glBufferData、glBufferSubData、glMapBuffer、glCopyBufferSubData 与交错布局、分批属性之间的关系。</p>
-                    
-                    <a class="column-outline-link" href="/2022/07/18/graphics-notes/opengl-12-advanced-data/">如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局 -></a>
+                    <time datetime="2022-06-06">2022.06.06</time>
                     
                 </div>
-            </article>
+            </li>
             
-        </div>
-    </section>
-    
-
-    <section class="column-section">
-        <div class="column-section-head">
-            <h2 class="column-section-title">已发布文章</h2>
-            <p class="column-section-note">按专栏顺序排列，适合从上往下连续阅读。</p>
-        </div>
-
-        
-        <div class="archive-list column-post-list">
-            
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 1 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/05/02/graphics-notes/opengl-01-from-window-to-triangle/">从创建窗口到第一个三角形：我的 OpenGL 入门笔记</a>
-                    <span class="post-meta">2022.05.02</span>
+            <li>
+                <span class="note-series-number" aria-hidden="true">07</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/06/13/graphics-notes/opengl-07-depth-testing/">谁应该显示在最前面：OpenGL 深度测试到底解决了什么</a>
+                        
+                    </h3>
+                    <p>理解颜色缓冲之外的深度信息，建立“谁应该显示在最前面”的遮挡判断直觉。</p>
+                    
+                    <time datetime="2022-06-13">2022.06.13</time>
+                    
                 </div>
-            </div>
+            </li>
             
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 2 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/05/09/graphics-notes/opengl-02-shaders-attributes-uniform/">从字符串到屏幕颜色：OpenGL 着色器、顶点属性与 Uniform 入门</a>
-                    <span class="post-meta">2022.05.09</span>
+            <li>
+                <span class="note-series-number" aria-hidden="true">08</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/06/20/graphics-notes/opengl-08-stencil-testing/">哪些区域允许被画：OpenGL 模板测试与物体描边</a>
+                        
+                    </h3>
+                    <p>从模板缓冲、模板函数和模板写入控制入手，理解如何用屏幕区域标记实现物体描边。</p>
+                    
+                    <time datetime="2022-06-20">2022.06.20</time>
+                    
                 </div>
-            </div>
+            </li>
             
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 3 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/05/16/graphics-notes/opengl-03-textures-stb-image-and-samplers/">从颜色到贴图：OpenGL 纹理、采样器与 stb_image 入门</a>
-                    <span class="post-meta">2022.05.16</span>
+            <li>
+                <span class="note-series-number" aria-hidden="true">09</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/06/27/graphics-notes/opengl-09-face-culling/">哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化</a>
+                        
+                    </h3>
+                    <p>理解正面与背面的判断规则、面剔除发生的位置，以及它为什么能在光栅化前减少无意义绘制。</p>
+                    
+                    <time datetime="2022-06-27">2022.06.27</time>
+                    
                 </div>
-            </div>
+            </li>
             
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 4 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/05/23/graphics-notes/opengl-04-transformations-coordinate-systems-camera/">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</a>
-                    <span class="post-meta">2022.05.23</span>
+            <li>
+                <span class="note-series-number" aria-hidden="true">10</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/07/04/graphics-notes/opengl-10-framebuffers-offscreen-rendering-post-processing/">从离屏到后处理：OpenGL 帧缓冲、屏幕纹理与两阶段渲染</a>
+                        
+                    </h3>
+                    <p>理解默认帧缓冲与自定义 FBO 的区别，掌握把场景先渲染到纹理，再通过屏幕四边形做后处理的两阶段渲染思路。</p>
+                    
+                    <time datetime="2022-07-04">2022.07.04</time>
+                    
                 </div>
-            </div>
+            </li>
             
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 5 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/05/30/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/">从颜色到多光源：OpenGL 光照学习笔记</a>
-                    <span class="post-meta">2022.05.30</span>
+            <li>
+                <span class="note-series-number" aria-hidden="true">11</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/07/11/graphics-notes/opengl-11-cubemaps-skybox-environment-reflection/">从天空盒到环境反射：OpenGL 立方体贴图与方向采样</a>
+                        
+                    </h3>
+                    <p>理解 cubemap 的六面方向采样方式，掌握天空盒为什么要去掉 view 平移，以及环境反射如何用方向向量从环境中取色。</p>
+                    
+                    <time datetime="2022-07-11">2022.07.11</time>
+                    
                 </div>
-            </div>
+            </li>
             
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 6 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/06/06/graphics-notes/opengl-06-model-loading-assimp-mesh-model/">把模型从文件带进场景：OpenGL 模型加载、Mesh 与 Model</a>
-                    <span class="post-meta">2022.06.06</span>
+            <li>
+                <span class="note-series-number" aria-hidden="true">12</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/07/18/graphics-notes/opengl-12-advanced-data/">如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局</a>
+                        
+                    </h3>
+                    <p>理解 Buffer 只是 GPU 内存，掌握 glBufferData、glBufferSubData、glMapBuffer、glCopyBufferSubData 与交错布局、分批属性之间的关系。</p>
+                    
+                    <time datetime="2022-07-18">2022.07.18</time>
+                    
                 </div>
-            </div>
+            </li>
             
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 7 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/06/13/graphics-notes/opengl-07-depth-testing/">谁应该显示在最前面：OpenGL 深度测试到底解决了什么</a>
-                    <span class="post-meta">2022.06.13</span>
+            <li>
+                <span class="note-series-number" aria-hidden="true">13</span>
+                <div>
+                    <h3>
+                        
+                        <a href="/2022/07/25/graphics-notes/opengl-13-advanced-glsl-interface-blocks-ubo/">从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象</a>
+                        
+                    </h3>
+                    
+                    
+                    <time datetime="2022-07-25">2022.07.25</time>
+                    
                 </div>
-            </div>
+            </li>
             
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 8 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/06/20/graphics-notes/opengl-08-stencil-testing/">哪些区域允许被画：OpenGL 模板测试与物体描边</a>
-                    <span class="post-meta">2022.06.20</span>
-                </div>
-            </div>
-            
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 9 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/06/27/graphics-notes/opengl-09-face-culling/">哪些面应该被丢弃：OpenGL 面剔除、环绕顺序与不可见面优化</a>
-                    <span class="post-meta">2022.06.27</span>
-                </div>
-            </div>
-            
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 10 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/07/04/graphics-notes/opengl-10-framebuffers-offscreen-rendering-post-processing/">从离屏到后处理：OpenGL 帧缓冲、屏幕纹理与两阶段渲染</a>
-                    <span class="post-meta">2022.07.04</span>
-                </div>
-            </div>
-            
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 11 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/07/11/graphics-notes/opengl-11-cubemaps-skybox-environment-reflection/">从天空盒到环境反射：OpenGL 立方体贴图与方向采样</a>
-                    <span class="post-meta">2022.07.11</span>
-                </div>
-            </div>
-            
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 12 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/07/18/graphics-notes/opengl-12-advanced-data/">如何组织 GPU 缓冲：OpenGL 高级数据、缓冲更新与顶点属性布局</a>
-                    <span class="post-meta">2022.07.18</span>
-                </div>
-            </div>
-            
-            <div class="archive-item column-post-item">
-                <span class="column-post-order">第 13 篇</span>
-                <div class="column-post-main">
-                    <a href="/2022/07/25/graphics-notes/opengl-13-advanced-glsl-interface-blocks-ubo/">从零散变量到共享数据：OpenGL 高级 GLSL、接口块与 Uniform 缓冲对象</a>
-                    <span class="post-meta">2022.07.25</span>
-                </div>
-            </div>
-            
-        </div>
+        </ol>
         
     </section>
     
+    <footer class="note-index-footer">
+        <span>Claude’s Desk</span>
+        <a href="/columns/">浏览其他专栏 <span aria-hidden="true">→</span></a>
+    </footer>
 </article>
 
 
@@ -421,8 +312,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

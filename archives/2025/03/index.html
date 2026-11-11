@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    
+    <link rel="stylesheet" href="/css/note-index.css?v=20261111c">
+    
 
         
                 <script>
@@ -61,104 +65,95 @@
     </a>
 </div>
 
-<article class="post-container module archive-page-shell"
-    style="position: relative; margin: 80px auto; transform: none; max-width: 920px; width: 92%; cursor: auto;">
-    <header class="archive-page-hero">
-        <div class="archive-page-head">
-            <div>
-                <p class="archive-page-kicker">时间索引</p>
-                <h1 class="archive-page-title">归档 <span>(98 篇)</span></h1>
-            </div>
-            <div class="archive-page-meta">
-                <span>1 个年份分组</span>
-                <span>共 8 篇</span>
-            </div>
-        </div>
-        <p class="archive-page-summary">
-            这里按时间回看博客的写作轨迹。顺着这一页时间轴向下滚动，会更容易看到主题是怎样从博客搭建延伸到 OpenGL 和 UE 渲染源码梳理的。
-        </p>
-    </header>
+<article class="post-container module note-index note-sheet note-archive">
+    <header class="note-index-header">
+    <div class="note-index-title">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 11h18M7 15h3M7 18h6" />
+            
+        </svg>
+        <h1>2025年 3月</h1>
+    </div>
+    <div class="note-index-intro">
+        <p>按年月翻阅，找到那时写下的笔记。</p>
+        <span>8 篇文章 · 由近到远</span>
+    </div>
+</header>
 
-    <section class="archive-timeline" aria-label="归档时间轴">
+    <div class="note-archive-layout">
+    
+    <nav class="note-year-index" aria-label="按年份跳转">
+        <span class="note-year-index-label">年份索引</span>
         
-        <section class="archive-year-block">
-            <div class="archive-year-rail">
-                <span class="archive-year-label">2025</span>
-            </div>
-
-            <div class="archive-year-content">
+        <a href="#year-2025"><span>2025</span><small>8 篇</small></a>
+        
+    </nav>
+    
+    <div class="note-timeline">
+        
+        <section class="note-year" aria-labelledby="year-2025">
+            <h2 id="year-2025">2025<span>年</span></h2>
+            <div class="note-year-body">
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2025年 03月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2025年 03月">
+                    <h3>03 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.30</span>
-                            <a class="archive-timeline-card" href="/2025/03/30/ue-umg-source-notes/ue-umg-source-03-rebuildwidget-and-takewidget-contract/">
-                                <span class="archive-timeline-title">RebuildWidget 深潜：UWidget 包装 SWidget 的协议</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-30">03.30</time>
+                            <a href="/2025/03/30/ue-umg-source-notes/ue-umg-source-03-rebuildwidget-and-takewidget-contract/">RebuildWidget 深潜：UWidget 包装 SWidget 的协议</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.29</span>
-                            <a class="archive-timeline-card" href="/2025/03/29/ue-slate-source-notes/ue-slate-source-13-window-menu-popup-tooltip/">
-                                <span class="archive-timeline-title">窗口、菜单与弹层：SWindow、MenuStack、Popup、Tooltip 的层级管理</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-29">03.29</time>
+                            <a href="/2025/03/29/ue-slate-source-notes/ue-slate-source-13-window-menu-popup-tooltip/">窗口、菜单与弹层：SWindow、MenuStack、Popup、Tooltip 的层级管理</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.22</span>
-                            <a class="archive-timeline-card" href="/2025/03/22/ue-slate-source-notes/ue-slate-source-12-style-brush-resource/">
-                                <span class="archive-timeline-title">样式和资源系统：FSlateStyleSet、Brush、动态图片与资源生命周期</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-22">03.22</time>
+                            <a href="/2025/03/22/ue-slate-source-notes/ue-slate-source-12-style-brush-resource/">样式和资源系统：FSlateStyleSet、Brush、动态图片与资源生命周期</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.16</span>
-                            <a class="archive-timeline-card" href="/2025/03/16/ue-umg-source-notes/ue-umg-source-02-widgetblueprint-generatedclass-and-widgettree/">
-                                <span class="archive-timeline-title">WidgetBlueprint 运行时化：UWidgetBlueprintGeneratedClass 与 WidgetTree</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-16">03.16</time>
+                            <a href="/2025/03/16/ue-umg-source-notes/ue-umg-source-02-widgetblueprint-generatedclass-and-widgettree/">WidgetBlueprint 运行时化：UWidgetBlueprintGeneratedClass 与 WidgetTree</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.15</span>
-                            <a class="archive-timeline-card" href="/2025/03/15/ue-slate-source-notes/ue-slate-source-11-text-font-cache-layout/">
-                                <span class="archive-timeline-title">Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-15">03.15</time>
+                            <a href="/2025/03/15/ue-slate-source-notes/ue-slate-source-11-text-font-cache-layout/">Slate 文本系统深潜：FontCache、Shaping、TextLayout 与中文排版成本</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.08</span>
-                            <a class="archive-timeline-card" href="/2025/03/08/ue-slate-source-notes/ue-slate-source-10-clip-transform-dpi/">
-                                <span class="archive-timeline-title">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-08">03.08</time>
+                            <a href="/2025/03/08/ue-slate-source-notes/ue-slate-source-10-clip-transform-dpi/">Clip、Transform、DPI 与窗口缩放：为什么 UI 会错位、发虚、被裁掉</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.02</span>
-                            <a class="archive-timeline-card" href="/2025/03/02/ue-umg-source-notes/ue-umg-source-01-createwidget-to-first-frame/">
-                                <span class="archive-timeline-title">从 CreateWidget 到首帧上屏：UMG/Slate 桥接总线</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-02">03.02</time>
+                            <a href="/2025/03/02/ue-umg-source-notes/ue-umg-source-01-createwidget-to-first-frame/">从 CreateWidget 到首帧上屏：UMG/Slate 桥接总线</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.01</span>
-                            <a class="archive-timeline-card" href="/2025/03/01/ue-slate-source-notes/ue-slate-source-09-invalidation-fast-path/">
-                                <span class="archive-timeline-title">Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-03-01">03.01</time>
+                            <a href="/2025/03/01/ue-slate-source-notes/ue-slate-source-09-invalidation-fast-path/">Invalidation 的本质：Fast Path、WidgetProxy、缓存绘制与失效传播</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
             </div>
         </section>
         
-    </section>
+    </div>
+    </div>
+    
+    <footer class="note-index-footer">
+        <span>Claude’s Desk</span>
+        <a href="/archives/">全部归档 <span aria-hidden="true">→</span></a>
+    </footer>
 </article>
 
 
@@ -171,8 +166,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

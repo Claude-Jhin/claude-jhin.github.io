@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    
+    <link rel="stylesheet" href="/css/note-index.css?v=20261111c">
+    
 
         
                 <script>
@@ -61,69 +65,70 @@
     </a>
 </div>
 
-<article class="post-container module archive-page-shell"
-    style="position: relative; margin: 80px auto; transform: none; max-width: 920px; width: 92%; cursor: auto;">
-    <header class="archive-page-hero">
-        <div class="archive-page-head">
-            <div>
-                <p class="archive-page-kicker">时间索引</p>
-                <h1 class="archive-page-title">归档 <span>(98 篇)</span></h1>
-            </div>
-            <div class="archive-page-meta">
-                <span>1 个年份分组</span>
-                <span>共 3 篇</span>
-            </div>
-        </div>
-        <p class="archive-page-summary">
-            这里按时间回看博客的写作轨迹。顺着这一页时间轴向下滚动，会更容易看到主题是怎样从博客搭建延伸到 OpenGL 和 UE 渲染源码梳理的。
-        </p>
-    </header>
+<article class="post-container module note-index note-sheet note-archive">
+    <header class="note-index-header">
+    <div class="note-index-title">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 11h18M7 15h3M7 18h6" />
+            
+        </svg>
+        <h1>2023年 4月</h1>
+    </div>
+    <div class="note-index-intro">
+        <p>按年月翻阅，找到那时写下的笔记。</p>
+        <span>3 篇文章 · 由近到远</span>
+    </div>
+</header>
 
-    <section class="archive-timeline" aria-label="归档时间轴">
+    <div class="note-archive-layout">
+    
+    <nav class="note-year-index" aria-label="按年份跳转">
+        <span class="note-year-index-label">年份索引</span>
         
-        <section class="archive-year-block">
-            <div class="archive-year-rail">
-                <span class="archive-year-label">2023</span>
-            </div>
-
-            <div class="archive-year-content">
+        <a href="#year-2023"><span>2023</span><small>3 篇</small></a>
+        
+    </nav>
+    
+    <div class="note-timeline">
+        
+        <section class="note-year" aria-labelledby="year-2023">
+            <h2 id="year-2023">2023<span>年</span></h2>
+            <div class="note-year-body">
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 04月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 04月">
+                    <h3>04 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.23</span>
-                            <a class="archive-timeline-card" href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/">
-                                <span class="archive-timeline-title">RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-04-23">04.23</time>
+                            <a href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/">RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.16</span>
-                            <a class="archive-timeline-card" href="/2023/04/16/ue-animation-system-notes/ue-animation-system-04-state-machine-transition-order-and-jitter/">
-                                <span class="archive-timeline-title">状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-04-16">04.16</time>
+                            <a href="/2023/04/16/ue-animation-system-notes/ue-animation-system-04-state-machine-transition-order-and-jitter/">状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.02</span>
-                            <a class="archive-timeline-card" href="/2023/04/02/ue-animation-system-notes/ue-animation-system-03-animblueprint-compiled-runtime-structure/">
-                                <span class="archive-timeline-title">AnimBlueprint 编译产物：图节点如何变成运行时结构</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-04-02">04.02</time>
+                            <a href="/2023/04/02/ue-animation-system-notes/ue-animation-system-03-animblueprint-compiled-runtime-structure/">AnimBlueprint 编译产物：图节点如何变成运行时结构</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
             </div>
         </section>
         
-    </section>
+    </div>
+    </div>
+    
+    <footer class="note-index-footer">
+        <span>Claude’s Desk</span>
+        <a href="/archives/">全部归档 <span aria-hidden="true">→</span></a>
+    </footer>
 </article>
 
 
@@ -136,8 +141,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

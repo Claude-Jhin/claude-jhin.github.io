@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>复杂状态同步：子对象复制、FastArraySerializer 与高频容器变更策略 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-network-sync/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">复杂状态同步：子对象复制、FastArraySerializer 与高频容器变更策略</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2023.06.11
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#UE5</span>
-            
-            <span style="color: var(--accent);">#Networking</span>
-            
-            <span style="color: var(--accent);">#FastArraySerializer</span>
-            
-            <span style="color: var(--accent);">#Subobject Replication</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 网络同步源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">复杂状态同步：子对象复制、FastArraySerializer 与高频容器变更策略</h1>
+            <div class="note-post-meta">
+                <time datetime="2023-06-11">2023.06.11</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># UE5</span><span># Networking</span><span># FastArraySerializer</span><span># Subobject Replication</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
-            <div class="series-meta">
-                <span>第 4 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 50%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-network-sync/">UE5 网络同步</a>
+                <span>第 4 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-network-sync/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-network-sync/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这篇解决什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%86%B3%E5%AE%9A%E2%80%9C%E5%AF%B9%E8%B1%A1%E8%BE%B9%E7%95%8C%E2%80%9D%E5%86%8D%E5%86%99%E5%90%8C%E6%AD%A5"><span class="post-toc-list-text">先决定“对象边界”再写同步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%E4%B8%8E-FastArray-%E7%9A%84%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">子对象复制与 FastArray 的分工</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%EF%BC%88Subobject%EF%BC%89"><span class="post-toc-list-text">子对象复制（Subobject）</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FastArray"><span class="post-toc-list-text">FastArray</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%A4%E4%B8%AA%E6%A0%87%E8%AE%B0%E4%B8%80%E5%AE%9A%E8%A6%81%E5%BD%A2%E6%88%90%E5%9B%A2%E9%98%9F%E7%BA%AA%E5%BE%8B"><span class="post-toc-list-text">这两个标记一定要形成团队纪律</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkItemDirty"><span class="post-toc-list-text">MarkItemDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkArrayDirty"><span class="post-toc-list-text">MarkArrayDirty</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-1%EF%BC%9A%E6%8B%BF%E6%99%AE%E9%80%9A-TArray-%E5%A4%8D%E5%88%B6%E9%AB%98%E9%A2%91%E5%88%97%E8%A1%A8"><span class="post-toc-list-text">误区 1：拿普通 TArray 复制高频列表</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-2%EF%BC%9A%E6%8A%8A%E2%80%9C%E5%AD%97%E6%AE%B5%E6%9B%B4%E6%96%B0%E2%80%9D%E5%92%8C%E2%80%9C%E7%BB%93%E6%9E%84%E6%9B%B4%E6%96%B0%E2%80%9D%E6%B7%B7%E6%88%90%E4%B8%80%E4%B8%AA%E6%A0%87%E8%AE%B0"><span class="post-toc-list-text">误区 2：把“字段更新”和“结构更新”混成一个标记</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-3%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%9B%9E%E8%B0%83%E5%8F%AA%E5%A4%84%E7%90%86%E6%96%B0%E5%A2%9E%EF%BC%8C%E4%B8%8D%E5%A4%84%E7%90%86%E5%88%A0%E9%99%A4"><span class="post-toc-list-text">误区 3：客户端回调只处理新增，不处理删除</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%A4%8D%E6%9D%82%E7%8A%B6%E6%80%81%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（复杂状态排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E5%BB%BA%E6%A8%A1%E6%B8%85%E5%8D%95%EF%BC%88%E8%BF%99%E7%AF%87%E8%A6%81%E6%B2%89%E6%B7%80%E7%9A%84%E4%B8%9C%E8%A5%BF%EF%BC%89"><span class="post-toc-list-text">数据建模清单（这篇要沉淀的东西）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -258,49 +234,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-network-sync/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 3 篇</span>
-                    <strong class="series-nav-title">RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</strong>
-                </a>
-                
-
-                
-                <a href="/2023/07/30/ue-network-sync-notes/ue-network-sync-05-relevancy-priority-and-bandwidth/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 5 篇</span>
-                    <strong class="series-nav-title">带宽与可见性治理：Relevancy、Priority、NetUpdateFrequency、Dormancy 与 Replication Graph</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</strong>
+            </a>
+            
+            
+            <a href="/2023/07/30/ue-network-sync-notes/ue-network-sync-05-relevancy-priority-and-bandwidth/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>带宽与可见性治理：Relevancy、Priority、NetUpdateFrequency、Dormancy 与 Replication Graph</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-network-sync/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E7%AF%87%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这篇解决什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E5%86%B3%E5%AE%9A%E2%80%9C%E5%AF%B9%E8%B1%A1%E8%BE%B9%E7%95%8C%E2%80%9D%E5%86%8D%E5%86%99%E5%90%8C%E6%AD%A5"><span class="post-toc-list-text">先决定“对象边界”再写同步</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%E4%B8%8E-FastArray-%E7%9A%84%E5%88%86%E5%B7%A5"><span class="post-toc-list-text">子对象复制与 FastArray 的分工</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%AD%90%E5%AF%B9%E8%B1%A1%E5%A4%8D%E5%88%B6%EF%BC%88Subobject%EF%BC%89"><span class="post-toc-list-text">子对象复制（Subobject）</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#FastArray"><span class="post-toc-list-text">FastArray</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%A4%E4%B8%AA%E6%A0%87%E8%AE%B0%E4%B8%80%E5%AE%9A%E8%A6%81%E5%BD%A2%E6%88%90%E5%9B%A2%E9%98%9F%E7%BA%AA%E5%BE%8B"><span class="post-toc-list-text">这两个标记一定要形成团队纪律</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkItemDirty"><span class="post-toc-list-text">MarkItemDirty</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#MarkArrayDirty"><span class="post-toc-list-text">MarkArrayDirty</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">常见误区</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-1%EF%BC%9A%E6%8B%BF%E6%99%AE%E9%80%9A-TArray-%E5%A4%8D%E5%88%B6%E9%AB%98%E9%A2%91%E5%88%97%E8%A1%A8"><span class="post-toc-list-text">误区 1：拿普通 TArray 复制高频列表</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-2%EF%BC%9A%E6%8A%8A%E2%80%9C%E5%AD%97%E6%AE%B5%E6%9B%B4%E6%96%B0%E2%80%9D%E5%92%8C%E2%80%9C%E7%BB%93%E6%9E%84%E6%9B%B4%E6%96%B0%E2%80%9D%E6%B7%B7%E6%88%90%E4%B8%80%E4%B8%AA%E6%A0%87%E8%AE%B0"><span class="post-toc-list-text">误区 2：把“字段更新”和“结构更新”混成一个标记</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E8%AF%AF%E5%8C%BA-3%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%9B%9E%E8%B0%83%E5%8F%AA%E5%A4%84%E7%90%86%E6%96%B0%E5%A2%9E%EF%BC%8C%E4%B8%8D%E5%A4%84%E7%90%86%E5%88%A0%E9%99%A4"><span class="post-toc-list-text">误区 3：客户端回调只处理新增，不处理删除</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E5%A4%8D%E6%9D%82%E7%8A%B6%E6%80%81%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（复杂状态排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E5%BB%BA%E6%A8%A1%E6%B8%85%E5%8D%95%EF%BC%88%E8%BF%99%E7%AF%87%E8%A6%81%E6%B2%89%E6%B7%80%E7%9A%84%E4%B8%9C%E8%A5%BF%EF%BC%89"><span class="post-toc-list-text">数据建模清单（这篇要沉淀的东西）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
         </nav>
@@ -318,8 +280,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

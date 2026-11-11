@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-gamefeature/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2025.10.19
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#UE5</span>
-            
-            <span style="color: var(--accent);">#GameFeature</span>
-            
-            <span style="color: var(--accent);">#Lyra</span>
-            
-            <span style="color: var(--accent);">#ModularGameplay</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">组件注入主线（Lyra 案例 1）：AddComponents 与 ModularGameplay 桥接</h1>
+            <div class="note-post-meta">
+                <time datetime="2025-10-19">2025.10.19</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># UE5</span><span># GameFeature</span><span># Lyra</span><span># ModularGameplay</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
-            <div class="series-meta">
-                <span>第 5 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 63%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-gamefeature/">UE5 GameFeature</a>
+                <span>第 5 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-gamefeature/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B2%E4%B8%80%E4%B8%AA%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">先讲一个误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%9C%BA%E5%88%B6%EF%BC%9A%E8%AF%B7%E6%B1%82%E5%8F%A5%E6%9F%84%E8%80%8C%E4%B8%8D%E6%98%AF%E8%A3%B8%E7%BB%84%E4%BB%B6"><span class="post-toc-list-text">关键机制：请求句柄而不是裸组件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-5%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AAddComponents-%E7%9A%84%E5%85%B3%E9%94%AE%E4%B8%8D%E6%98%AF-Add%EF%BC%8C%E8%80%8C%E6%98%AF-Request"><span class="post-toc-list-text">原理下钻：AddComponents 的关键不是 Add，而是 Request</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E7%BB%84%E4%BB%B6%E6%A1%A5%E6%8E%A5%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（组件桥接）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">数据结构与生命周期建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C"><span class="post-toc-list-text">调试手册</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Receiver-%E5%8D%8F%E8%AE%AE%E5%AE%9E%E7%8E%B0%E5%BB%BA%E8%AE%AE%EF%BC%88%E9%95%BF%E6%96%87%E9%87%8D%E7%82%B9%EF%BC%89"><span class="post-toc-list-text">Receiver 协议实现建议（长文重点）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AB%9E%E6%80%81%E4%B8%8E%E5%B9%82%E7%AD%89"><span class="post-toc-list-text">竞态与幂等</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E4%BC%9A%E8%B8%A9%E5%9D%91%E7%9A%84%E7%BB%86%E8%8A%82%EF%BC%9AActor-%E7%94%9F%E6%88%90%E6%97%B6%E6%9C%BA%E4%B8%8E%E6%B3%A8%E5%85%A5%E6%97%B6%E6%9C%BA%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="post-toc-list-text">一次会踩坑的细节：Actor 生成时机与注入时机不一致</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A8%B3%E5%AE%9A%E8%90%BD%E5%9C%B0%E7%9A%84%E4%B8%89%E6%9D%A1%E7%BA%A6%E6%9D%9F"><span class="post-toc-list-text">稳定落地的三条约束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%82%E6%B5%8B%E6%8C%87%E6%A0%87%EF%BC%88%E5%BB%BA%E8%AE%AE%E5%9C%A8%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E9%87%8C%E5%B8%B8%E9%A9%BB%EF%BC%89"><span class="post-toc-list-text">观测指标（建议在调试工具里常驻）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BA%BF%E4%B8%8A%E4%BA%8B%E6%95%85%E9%A2%84%E9%98%B2%E6%9D%A1%E6%AC%BE%EF%BC%88%E7%BB%84%E4%BB%B6%E6%B3%A8%E5%85%A5%E4%B8%93%E9%A1%B9%EF%BC%89"><span class="post-toc-list-text">附录：线上事故预防条款（组件注入专项）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BB%99%E6%96%B0%E5%90%8C%E5%AD%A6%E7%9A%84%E4%B8%89%E5%A4%A9%E4%B8%8A%E6%89%8B%E4%BB%BB%E5%8A%A1"><span class="post-toc-list-text">附录：给新同学的三天上手任务</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -285,49 +261,35 @@ Receiver 协议说明</li>
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2025/09/21/ue-gamefeature-notes/ue-gamefeature-04-gamefeaturedata-and-action-framework/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 4 篇</span>
-                    <strong class="series-nav-title">GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制</strong>
-                </a>
-                
-
-                
-                <a href="/2025/11/09/ue-gamefeature-notes/ue-gamefeature-06-lyra-input-ui-ability-extension-points/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 6 篇</span>
-                    <strong class="series-nav-title">输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2025/09/21/ue-gamefeature-notes/ue-gamefeature-04-gamefeaturedata-and-action-framework/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>GameFeatureData 与 Action 框架：执行时机、上下文与顺序控制</strong>
+            </a>
+            
+            
+            <a href="/2025/11/09/ue-gamefeature-notes/ue-gamefeature-06-lyra-input-ui-ability-extension-points/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>输入/UI/能力注入（Lyra 案例 2）：从 Action 扩展点挂到体验层</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-gamefeature/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%88%E8%AE%B2%E4%B8%80%E4%B8%AA%E8%AF%AF%E5%8C%BA"><span class="post-toc-list-text">先讲一个误区</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E6%9C%BA%E5%88%B6%EF%BC%9A%E8%AF%B7%E6%B1%82%E5%8F%A5%E6%9F%84%E8%80%8C%E4%B8%8D%E6%98%AF%E8%A3%B8%E7%BB%84%E4%BB%B6"><span class="post-toc-list-text">关键机制：请求句柄而不是裸组件</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-5%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9AAddComponents-%E7%9A%84%E5%85%B3%E9%94%AE%E4%B8%8D%E6%98%AF-Add%EF%BC%8C%E8%80%8C%E6%98%AF-Request"><span class="post-toc-list-text">原理下钻：AddComponents 的关键不是 Add，而是 Request</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9B%B4%E7%BB%86%E6%BA%90%E7%A0%81%E9%94%9A%E7%82%B9%EF%BC%88%E7%BB%84%E4%BB%B6%E6%A1%A5%E6%8E%A5%EF%BC%89"><span class="post-toc-list-text">更细源码锚点（组件桥接）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">数据结构与生命周期建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E8%AF%95%E6%89%8B%E5%86%8C"><span class="post-toc-list-text">调试手册</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Receiver-%E5%8D%8F%E8%AE%AE%E5%AE%9E%E7%8E%B0%E5%BB%BA%E8%AE%AE%EF%BC%88%E9%95%BF%E6%96%87%E9%87%8D%E7%82%B9%EF%BC%89"><span class="post-toc-list-text">Receiver 协议实现建议（长文重点）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AB%9E%E6%80%81%E4%B8%8E%E5%B9%82%E7%AD%89"><span class="post-toc-list-text">竞态与幂等</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%9B%E9%98%B6%E7%BB%83%E4%B9%A0"><span class="post-toc-list-text">进阶练习</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E6%AC%A1%E4%BC%9A%E8%B8%A9%E5%9D%91%E7%9A%84%E7%BB%86%E8%8A%82%EF%BC%9AActor-%E7%94%9F%E6%88%90%E6%97%B6%E6%9C%BA%E4%B8%8E%E6%B3%A8%E5%85%A5%E6%97%B6%E6%9C%BA%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="post-toc-list-text">一次会踩坑的细节：Actor 生成时机与注入时机不一致</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%A8%B3%E5%AE%9A%E8%90%BD%E5%9C%B0%E7%9A%84%E4%B8%89%E6%9D%A1%E7%BA%A6%E6%9D%9F"><span class="post-toc-list-text">稳定落地的三条约束</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%A7%82%E6%B5%8B%E6%8C%87%E6%A0%87%EF%BC%88%E5%BB%BA%E8%AE%AE%E5%9C%A8%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E9%87%8C%E5%B8%B8%E9%A9%BB%EF%BC%89"><span class="post-toc-list-text">观测指标（建议在调试工具里常驻）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BA%BF%E4%B8%8A%E4%BA%8B%E6%95%85%E9%A2%84%E9%98%B2%E6%9D%A1%E6%AC%BE%EF%BC%88%E7%BB%84%E4%BB%B6%E6%B3%A8%E5%85%A5%E4%B8%93%E9%A1%B9%EF%BC%89"><span class="post-toc-list-text">附录：线上事故预防条款（组件注入专项）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E7%BB%99%E6%96%B0%E5%90%8C%E5%AD%A6%E7%9A%84%E4%B8%89%E5%A4%A9%E4%B8%8A%E6%89%8B%E4%BB%BB%E5%8A%A1"><span class="post-toc-list-text">附录：给新同学的三天上手任务</span></a></li></ol>
         </nav>
@@ -345,8 +307,7 @@ Receiver 协议说明</li>
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    
+    <link rel="stylesheet" href="/css/note-index.css?v=20261111c">
+    
 
         
                 <script>
@@ -61,83 +65,80 @@
     </a>
 </div>
 
-<article class="post-container module archive-page-shell"
-    style="position: relative; margin: 80px auto; transform: none; max-width: 920px; width: 92%; cursor: auto;">
-    <header class="archive-page-hero">
-        <div class="archive-page-head">
-            <div>
-                <p class="archive-page-kicker">时间索引</p>
-                <h1 class="archive-page-title">归档 <span>(98 篇)</span></h1>
-            </div>
-            <div class="archive-page-meta">
-                <span>1 个年份分组</span>
-                <span>共 5 篇</span>
-            </div>
-        </div>
-        <p class="archive-page-summary">
-            这里按时间回看博客的写作轨迹。顺着这一页时间轴向下滚动，会更容易看到主题是怎样从博客搭建延伸到 OpenGL 和 UE 渲染源码梳理的。
-        </p>
-    </header>
+<article class="post-container module note-index note-sheet note-archive">
+    <header class="note-index-header">
+    <div class="note-index-title">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 11h18M7 15h3M7 18h6" />
+            
+        </svg>
+        <h1>2025年 4月</h1>
+    </div>
+    <div class="note-index-intro">
+        <p>按年月翻阅，找到那时写下的笔记。</p>
+        <span>5 篇文章 · 由近到远</span>
+    </div>
+</header>
 
-    <section class="archive-timeline" aria-label="归档时间轴">
+    <div class="note-archive-layout">
+    
+    <nav class="note-year-index" aria-label="按年份跳转">
+        <span class="note-year-index-label">年份索引</span>
         
-        <section class="archive-year-block">
-            <div class="archive-year-rail">
-                <span class="archive-year-label">2025</span>
-            </div>
-
-            <div class="archive-year-content">
+        <a href="#year-2025"><span>2025</span><small>5 篇</small></a>
+        
+    </nav>
+    
+    <div class="note-timeline">
+        
+        <section class="note-year" aria-labelledby="year-2025">
+            <h2 id="year-2025">2025<span>年</span></h2>
+            <div class="note-year-body">
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2025年 04月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2025年 04月">
+                    <h3>04 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.27</span>
-                            <a class="archive-timeline-card" href="/2025/04/27/ue-umg-source-notes/ue-umg-source-05-lifecycle-tick-and-binding-cost/">
-                                <span class="archive-timeline-title">生命周期与绑定成本：Initialize/Construct/Tick/Binding 真相</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-04-27">04.27</time>
+                            <a href="/2025/04/27/ue-umg-source-notes/ue-umg-source-05-lifecycle-tick-and-binding-cost/">生命周期与绑定成本：Initialize/Construct/Tick/Binding 真相</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.19</span>
-                            <a class="archive-timeline-card" href="/2025/04/19/ue-slate-source-notes/ue-slate-source-16-custom-widget-troubleshooting/">
-                                <span class="archive-timeline-title">工程收官：自定义 Slate 控件、崩溃/泄漏/焦点灾难排障手册</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-04-19">04.19</time>
+                            <a href="/2025/04/19/ue-slate-source-notes/ue-slate-source-16-custom-widget-troubleshooting/">工程收官：自定义 Slate 控件、崩溃/泄漏/焦点灾难排障手册</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.13</span>
-                            <a class="archive-timeline-card" href="/2025/04/13/ue-umg-source-notes/ue-umg-source-04-input-routing-and-focus-system/">
-                                <span class="archive-timeline-title">输入路由与焦点系统：事件如何到达 UMG</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-04-13">04.13</time>
+                            <a href="/2025/04/13/ue-umg-source-notes/ue-umg-source-04-input-routing-and-focus-system/">输入路由与焦点系统：事件如何到达 UMG</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.12</span>
-                            <a class="archive-timeline-card" href="/2025/04/12/ue-slate-source-notes/ue-slate-source-15-performance-debugging/">
-                                <span class="archive-timeline-title">Slate 性能诊断：Stat Slate、Widget Reflector、ConsoleSlateDebugger 与回归基线</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-04-12">04.12</time>
+                            <a href="/2025/04/12/ue-slate-source-notes/ue-slate-source-15-performance-debugging/">Slate 性能诊断：Stat Slate、Widget Reflector、ConsoleSlateDebugger 与回归基线</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.05</span>
-                            <a class="archive-timeline-card" href="/2025/04/05/ue-slate-source-notes/ue-slate-source-14-editor-commands-multibox-docking/">
-                                <span class="archive-timeline-title">编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2025-04-05">04.05</time>
+                            <a href="/2025/04/05/ue-slate-source-notes/ue-slate-source-14-editor-commands-multibox-docking/">编辑器 Slate 架构：Commands、MultiBox、Docking、TabManager 如何拼出编辑器</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
             </div>
         </section>
         
-    </section>
+    </div>
+    </div>
+    
+    <footer class="note-index-footer">
+        <span>Claude’s Desk</span>
+        <a href="/archives/">全部归档 <span aria-hidden="true">→</span></a>
+    </footer>
 </article>
 
 
@@ -150,8 +151,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

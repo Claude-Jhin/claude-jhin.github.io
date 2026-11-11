@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>从矩阵到视角：OpenGL 变换、坐标系统与摄像机 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/opengl/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2022.05.23
-            
-            /
-            
-            <span style="color: var(--accent);">#OpenGL</span>
-            
-            <span style="color: var(--accent);">#LearnOpenGL</span>
-            
-            <span style="color: var(--accent);">#图形学</span>
-            
-            <span style="color: var(--accent);">#Transform</span>
-            
-            <span style="color: var(--accent);">#Camera</span>
-            
-            <span style="color: var(--accent);">#GLM</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">OpenGL 学习专栏</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">从矩阵到视角：OpenGL 变换、坐标系统与摄像机</h1>
+            <div class="note-post-meta">
+                <time datetime="2022-05-23">2022.05.23</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># OpenGL</span><span># LearnOpenGL</span><span># 图形学</span><span># Transform</span><span># Camera</span><span># GLM</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">从创建窗口、第一个三角形开始，逐步建立对 OpenGL 渲染流程、常见对象与后续图形学主题的系统理解。</p>
-            <div class="series-meta">
-                <span>第 4 篇</span>
-                <span>已发布 13 / 12</span>
-                
-                <span>阶段：高级 OpenGL</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 33%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/opengl/">OpenGL 学习</a>
+                <span>第 4 篇 · 已发布 13 篇</span>
             </div>
-            <a class="series-link" href="/columns/opengl/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/opengl/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%89%E8%8A%82%E5%BA%94%E8%AF%A5%E6%94%BE%E5%9C%A8%E4%B8%80%E8%B5%B7%E7%9C%8B"><span class="post-toc-list-text">为什么这三节应该放在一起看</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E5%8F%98%E6%8D%A2%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第一部分：变换到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GLM-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E9%87%8C%E5%BE%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">GLM 为什么在这里很重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%9F%A9%E9%98%B5%E9%A1%BA%E5%BA%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%BD%B1%E5%93%8D%E7%BB%93%E6%9E%9C"><span class="post-toc-list-text">矩阵顺序为什么会影响结果</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%80%E4%B8%AA%E9%A1%B6%E7%82%B9%E4%BC%9A%E7%BB%8F%E5%8E%86%E8%BF%99%E4%B9%88%E5%A4%9A%E7%A9%BA%E9%97%B4"><span class="post-toc-list-text">第二部分：为什么一个顶点会经历这么多空间</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#model%E3%80%81view%E3%80%81projection-%E5%88%B0%E5%BA%95%E5%90%84%E8%87%AA%E7%AE%A1%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">model、view、projection 到底各自管什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#model"><span class="post-toc-list-text">model</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#view"><span class="post-toc-list-text">view</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#projection"><span class="post-toc-list-text">projection</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E7%AA%81%E7%84%B6%E5%8F%98%E5%BE%97%E4%B8%8D%E5%8F%AF%E7%BC%BA%E5%B0%91"><span class="post-toc-list-text">深度测试为什么在这一节突然变得不可缺少</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%80%E8%8A%82%E5%BC%80%E5%A7%8B%E8%AE%A9%E6%88%91%E7%9C%9F%E6%AD%A3%E6%9C%89%E4%BA%86%E2%80%9C%E4%B8%89%E7%BB%B4%E2%80%9D%E7%9A%84%E6%84%9F%E8%A7%89"><span class="post-toc-list-text">为什么这一节开始让我真正有了“三维”的感觉</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E6%91%84%E5%83%8F%E6%9C%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E8%BF%99%E4%B8%89%E8%8A%82%E7%9A%84%E8%87%AA%E7%84%B6%E7%BB%88%E7%82%B9"><span class="post-toc-list-text">第三部分：摄像机为什么是这三节的自然终点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glm-lookAt-%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">glm::lookAt(...) 到底在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98%E3%80%81%E9%BC%A0%E6%A0%87%E3%80%81%E6%BB%9A%E8%BD%AE%E5%88%86%E5%88%AB%E5%9C%A8%E6%8E%A7%E5%88%B6%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">键盘、鼠标、滚轮分别在控制什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98"><span class="post-toc-list-text">键盘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%BC%A0%E6%A0%87"><span class="post-toc-list-text">鼠标</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%BB%9A%E8%BD%AE"><span class="post-toc-list-text">滚轮</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#deltaTime-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E6%91%84%E5%83%8F%E6%9C%BA%E9%87%8C%E6%9C%80%E5%AE%B9%E6%98%93%E8%A2%AB%E4%BD%8E%E4%BC%B0%E7%9A%84%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">deltaTime 为什么是摄像机里最容易被低估的细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%8C%E4%B8%89%E6%9D%A1%E7%BA%BF%E7%BB%88%E4%BA%8E%E5%90%88%E5%B9%B6%E4%BA%86"><span class="post-toc-list-text">到这里，三条线终于合并了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E7%9C%9F%E6%AD%A3%E6%89%93%E9%80%9A%E4%BA%86%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF"><span class="post-toc-list-text">这三节真正打通了哪条链路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这三节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-model%E3%80%81view%E3%80%81projection-%E9%83%BD%E6%98%AF%E7%9F%A9%E9%98%B5%EF%BC%8C%E4%BD%86%E8%81%8C%E8%B4%A3%E5%AE%8C%E5%85%A8%E4%B8%8D%E5%90%8C"><span class="post-toc-list-text">1. model、view、projection 都是矩阵，但职责完全不同</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%9B%B8%E6%9C%BA%E7%A7%BB%E5%8A%A8%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E4%B8%8D%E6%98%AF%E2%80%9C%E7%9B%B8%E6%9C%BA%E5%AF%B9%E8%B1%A1%E8%87%AA%E5%B7%B1%E7%9C%9F%E7%9A%84%E8%A2%AB%E7%94%BB%E5%87%BA%E6%9D%A5%E4%BA%86%E2%80%9D"><span class="post-toc-list-text">2. 相机移动，本质上不是“相机对象自己真的被画出来了”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%BB%9A%E8%BD%AE%E7%BC%A9%E6%94%BE%E4%B8%8D%E7%AD%89%E4%BA%8E%E7%9B%B8%E6%9C%BA%E5%89%8D%E8%BF%9B"><span class="post-toc-list-text">3. 滚轮缩放不等于相机前进</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E7%9C%9F%E6%AD%A3%E7%9A%84%E4%B8%89%E7%BB%B4%E5%9C%BA%E6%99%AF%E5%BF%85%E9%A1%BB%E8%80%83%E8%99%91%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">4. 真正的三维场景必须考虑深度测试</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">到目前为止，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -423,49 +399,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/opengl/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2022/05/16/graphics-notes/opengl-03-textures-stb-image-and-samplers/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 3 篇</span>
-                    <strong class="series-nav-title">从颜色到贴图：OpenGL 纹理、采样器与 stb_image 入门</strong>
-                </a>
-                
-
-                
-                <a href="/2022/05/30/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 5 篇</span>
-                    <strong class="series-nav-title">从颜色到多光源：OpenGL 光照学习笔记</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2022/05/16/graphics-notes/opengl-03-textures-stb-image-and-samplers/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>从颜色到贴图：OpenGL 纹理、采样器与 stb_image 入门</strong>
+            </a>
+            
+            
+            <a href="/2022/05/30/graphics-notes/opengl-05-lighting-from-colors-to-multiple-lights/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>从颜色到多光源：OpenGL 光照学习笔记</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/opengl/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%89%E8%8A%82%E5%BA%94%E8%AF%A5%E6%94%BE%E5%9C%A8%E4%B8%80%E8%B5%B7%E7%9C%8B"><span class="post-toc-list-text">为什么这三节应该放在一起看</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E5%8F%98%E6%8D%A2%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">第一部分：变换到底解决了什么问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#GLM-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E9%87%8C%E5%BE%88%E9%87%8D%E8%A6%81"><span class="post-toc-list-text">GLM 为什么在这里很重要</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%9F%A9%E9%98%B5%E9%A1%BA%E5%BA%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%BD%B1%E5%93%8D%E7%BB%93%E6%9E%9C"><span class="post-toc-list-text">矩阵顺序为什么会影响结果</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%80%E4%B8%AA%E9%A1%B6%E7%82%B9%E4%BC%9A%E7%BB%8F%E5%8E%86%E8%BF%99%E4%B9%88%E5%A4%9A%E7%A9%BA%E9%97%B4"><span class="post-toc-list-text">第二部分：为什么一个顶点会经历这么多空间</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#model%E3%80%81view%E3%80%81projection-%E5%88%B0%E5%BA%95%E5%90%84%E8%87%AA%E7%AE%A1%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">model、view、projection 到底各自管什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#model"><span class="post-toc-list-text">model</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#view"><span class="post-toc-list-text">view</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#projection"><span class="post-toc-list-text">projection</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8%E8%BF%99%E4%B8%80%E8%8A%82%E7%AA%81%E7%84%B6%E5%8F%98%E5%BE%97%E4%B8%8D%E5%8F%AF%E7%BC%BA%E5%B0%91"><span class="post-toc-list-text">深度测试为什么在这一节突然变得不可缺少</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%80%E8%8A%82%E5%BC%80%E5%A7%8B%E8%AE%A9%E6%88%91%E7%9C%9F%E6%AD%A3%E6%9C%89%E4%BA%86%E2%80%9C%E4%B8%89%E7%BB%B4%E2%80%9D%E7%9A%84%E6%84%9F%E8%A7%89"><span class="post-toc-list-text">为什么这一节开始让我真正有了“三维”的感觉</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E6%91%84%E5%83%8F%E6%9C%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E8%BF%99%E4%B8%89%E8%8A%82%E7%9A%84%E8%87%AA%E7%84%B6%E7%BB%88%E7%82%B9"><span class="post-toc-list-text">第三部分：摄像机为什么是这三节的自然终点</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#glm-lookAt-%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">glm::lookAt(...) 到底在做什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98%E3%80%81%E9%BC%A0%E6%A0%87%E3%80%81%E6%BB%9A%E8%BD%AE%E5%88%86%E5%88%AB%E5%9C%A8%E6%8E%A7%E5%88%B6%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">键盘、鼠标、滚轮分别在控制什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%94%AE%E7%9B%98"><span class="post-toc-list-text">键盘</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E9%BC%A0%E6%A0%87"><span class="post-toc-list-text">鼠标</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%BB%9A%E8%BD%AE"><span class="post-toc-list-text">滚轮</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#deltaTime-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E6%91%84%E5%83%8F%E6%9C%BA%E9%87%8C%E6%9C%80%E5%AE%B9%E6%98%93%E8%A2%AB%E4%BD%8E%E4%BC%B0%E7%9A%84%E7%BB%86%E8%8A%82"><span class="post-toc-list-text">deltaTime 为什么是摄像机里最容易被低估的细节</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%8C%E4%B8%89%E6%9D%A1%E7%BA%BF%E7%BB%88%E4%BA%8E%E5%90%88%E5%B9%B6%E4%BA%86"><span class="post-toc-list-text">到这里，三条线终于合并了</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E7%9C%9F%E6%AD%A3%E6%89%93%E9%80%9A%E4%BA%86%E5%93%AA%E6%9D%A1%E9%93%BE%E8%B7%AF"><span class="post-toc-list-text">这三节真正打通了哪条链路</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E8%8A%82%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="post-toc-list-text">这三节最容易混淆的几个点</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-model%E3%80%81view%E3%80%81projection-%E9%83%BD%E6%98%AF%E7%9F%A9%E9%98%B5%EF%BC%8C%E4%BD%86%E8%81%8C%E8%B4%A3%E5%AE%8C%E5%85%A8%E4%B8%8D%E5%90%8C"><span class="post-toc-list-text">1. model、view、projection 都是矩阵，但职责完全不同</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%9B%B8%E6%9C%BA%E7%A7%BB%E5%8A%A8%EF%BC%8C%E6%9C%AC%E8%B4%A8%E4%B8%8A%E4%B8%8D%E6%98%AF%E2%80%9C%E7%9B%B8%E6%9C%BA%E5%AF%B9%E8%B1%A1%E8%87%AA%E5%B7%B1%E7%9C%9F%E7%9A%84%E8%A2%AB%E7%94%BB%E5%87%BA%E6%9D%A5%E4%BA%86%E2%80%9D"><span class="post-toc-list-text">2. 相机移动，本质上不是“相机对象自己真的被画出来了”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-%E6%BB%9A%E8%BD%AE%E7%BC%A9%E6%94%BE%E4%B8%8D%E7%AD%89%E4%BA%8E%E7%9B%B8%E6%9C%BA%E5%89%8D%E8%BF%9B"><span class="post-toc-list-text">3. 滚轮缩放不等于相机前进</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E7%9C%9F%E6%AD%A3%E7%9A%84%E4%B8%89%E7%BB%B4%E5%9C%BA%E6%99%AF%E5%BF%85%E9%A1%BB%E8%80%83%E8%99%91%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="post-toc-list-text">4. 真正的三维场景必须考虑深度测试</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%B0%E7%9B%AE%E5%89%8D%E4%B8%BA%E6%AD%A2%EF%BC%8C%E6%88%91%E7%A1%AE%E8%AE%A4%E8%87%AA%E5%B7%B1%E5%B7%B2%E7%BB%8F%E6%8E%8C%E6%8F%A1%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="post-toc-list-text">到目前为止，我确认自己已经掌握的东西</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E7%BB%93%E8%AF%AD"><span class="post-toc-list-text">结语</span></a></li></ol>
         </nav>
@@ -483,8 +445,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

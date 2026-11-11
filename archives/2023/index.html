@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    
+    <link rel="stylesheet" href="/css/note-index.css?v=20261111c">
+    
 
         
                 <script>
@@ -61,248 +65,191 @@
     </a>
 </div>
 
-<article class="post-container module archive-page-shell"
-    style="position: relative; margin: 80px auto; transform: none; max-width: 920px; width: 92%; cursor: auto;">
-    <header class="archive-page-hero">
-        <div class="archive-page-head">
-            <div>
-                <p class="archive-page-kicker">时间索引</p>
-                <h1 class="archive-page-title">归档 <span>(98 篇)</span></h1>
-            </div>
-            <div class="archive-page-meta">
-                <span>1 个年份分组</span>
-                <span>共 16 篇</span>
-            </div>
-        </div>
-        <p class="archive-page-summary">
-            这里按时间回看博客的写作轨迹。顺着这一页时间轴向下滚动，会更容易看到主题是怎样从博客搭建延伸到 OpenGL 和 UE 渲染源码梳理的。
-        </p>
-    </header>
+<article class="post-container module note-index note-sheet note-archive">
+    <header class="note-index-header">
+    <div class="note-index-title">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 11h18M7 15h3M7 18h6" />
+            
+        </svg>
+        <h1>2023年归档</h1>
+    </div>
+    <div class="note-index-intro">
+        <p>按年月翻阅，找到那时写下的笔记。</p>
+        <span>16 篇文章 · 由近到远</span>
+    </div>
+</header>
 
-    <section class="archive-timeline" aria-label="归档时间轴">
+    <div class="note-archive-layout">
+    
+    <nav class="note-year-index" aria-label="按年份跳转">
+        <span class="note-year-index-label">年份索引</span>
         
-        <section class="archive-year-block">
-            <div class="archive-year-rail">
-                <span class="archive-year-label">2023</span>
-            </div>
-
-            <div class="archive-year-content">
+        <a href="#year-2023"><span>2023</span><small>16 篇</small></a>
+        
+    </nav>
+    
+    <div class="note-timeline">
+        
+        <section class="note-year" aria-labelledby="year-2023">
+            <h2 id="year-2023">2023<span>年</span></h2>
+            <div class="note-year-body">
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 12月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 12月">
+                    <h3>12 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">12.24</span>
-                            <a class="archive-timeline-card" href="/2023/12/24/ue-network-sync-notes/ue-network-sync-08-troubleshooting-and-regression-baseline/">
-                                <span class="archive-timeline-title">排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-12-24">12.24</time>
+                            <a href="/2023/12/24/ue-network-sync-notes/ue-network-sync-08-troubleshooting-and-regression-baseline/">排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 11月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 11月">
+                    <h3>11 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">11.05</span>
-                            <a class="archive-timeline-card" href="/2023/11/05/ue-network-sync-notes/ue-network-sync-07-combat-and-interaction-sync/">
-                                <span class="archive-timeline-title">战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-11-05">11.05</time>
+                            <a href="/2023/11/05/ue-network-sync-notes/ue-network-sync-07-combat-and-interaction-sync/">战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 09月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 09月">
+                    <h3>09 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">09.17</span>
-                            <a class="archive-timeline-card" href="/2023/09/17/ue-network-sync-notes/ue-network-sync-06-prediction-replay-and-correction/">
-                                <span class="archive-timeline-title">预测、重演与纠偏范式：客户端预测、服务器校正、重放与平滑机制</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-09-17">09.17</time>
+                            <a href="/2023/09/17/ue-network-sync-notes/ue-network-sync-06-prediction-replay-and-correction/">预测、重演与纠偏范式：客户端预测、服务器校正、重放与平滑机制</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 07月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 07月">
+                    <h3>07 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">07.30</span>
-                            <a class="archive-timeline-card" href="/2023/07/30/ue-network-sync-notes/ue-network-sync-05-relevancy-priority-and-bandwidth/">
-                                <span class="archive-timeline-title">带宽与可见性治理：Relevancy、Priority、NetUpdateFrequency、Dormancy 与 Replication Graph</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-07-30">07.30</time>
+                            <a href="/2023/07/30/ue-network-sync-notes/ue-network-sync-05-relevancy-priority-and-bandwidth/">带宽与可见性治理：Relevancy、Priority、NetUpdateFrequency、Dormancy 与 Replication Graph</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 06月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 06月">
+                    <h3>06 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">06.18</span>
-                            <a class="archive-timeline-card" href="/2023/06/18/ue-animation-system-notes/ue-animation-system-08-performance-stability-and-debugging-loop/">
-                                <span class="archive-timeline-title">性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-06-18">06.18</time>
+                            <a href="/2023/06/18/ue-animation-system-notes/ue-animation-system-08-performance-stability-and-debugging-loop/">性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">06.11</span>
-                            <a class="archive-timeline-card" href="/2023/06/11/ue-network-sync-notes/ue-network-sync-04-subobject-and-fastarray/">
-                                <span class="archive-timeline-title">复杂状态同步：子对象复制、FastArraySerializer 与高频容器变更策略</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-06-11">06.11</time>
+                            <a href="/2023/06/11/ue-network-sync-notes/ue-network-sync-04-subobject-and-fastarray/">复杂状态同步：子对象复制、FastArraySerializer 与高频容器变更策略</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">06.04</span>
-                            <a class="archive-timeline-card" href="/2023/06/04/ue-animation-system-notes/ue-animation-system-07-layered-animblueprint-architecture/">
-                                <span class="archive-timeline-title">动画蓝图分层架构：Linked Anim Layer、Sub Anim Instance、Post Process 的组合策略</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-06-04">06.04</time>
+                            <a href="/2023/06/04/ue-animation-system-notes/ue-animation-system-07-layered-animblueprint-architecture/">动画蓝图分层架构：Linked Anim Layer、Sub Anim Instance、Post Process 的组合策略</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 05月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 05月">
+                    <h3>05 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">05.21</span>
-                            <a class="archive-timeline-card" href="/2023/05/21/ue-animation-system-notes/ue-animation-system-06-montage-slot-notify-root-motion/">
-                                <span class="archive-timeline-title">Montage / Slot / Notify / Root Motion：技能动画如何进入主动画流</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-05-21">05.21</time>
+                            <a href="/2023/05/21/ue-animation-system-notes/ue-animation-system-06-montage-slot-notify-root-motion/">Montage / Slot / Notify / Root Motion：技能动画如何进入主动画流</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">05.07</span>
-                            <a class="archive-timeline-card" href="/2023/05/07/ue-animation-system-notes/ue-animation-system-05-blend-system-weight-propagation/">
-                                <span class="archive-timeline-title">Blend 体系内核：Sequence Player、BlendSpace、Layered Blend 的权重传播</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-05-07">05.07</time>
+                            <a href="/2023/05/07/ue-animation-system-notes/ue-animation-system-05-blend-system-weight-propagation/">Blend 体系内核：Sequence Player、BlendSpace、Layered Blend 的权重传播</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 04月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 04月">
+                    <h3>04 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.23</span>
-                            <a class="archive-timeline-card" href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/">
-                                <span class="archive-timeline-title">RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-04-23">04.23</time>
+                            <a href="/2023/04/23/ue-network-sync-notes/ue-network-sync-03-rpc-semantics-and-boundaries/">RPC 语义与边界：Server/Client/Multicast 的调用时机、可靠性与安全约束</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.16</span>
-                            <a class="archive-timeline-card" href="/2023/04/16/ue-animation-system-notes/ue-animation-system-04-state-machine-transition-order-and-jitter/">
-                                <span class="archive-timeline-title">状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-04-16">04.16</time>
+                            <a href="/2023/04/16/ue-animation-system-notes/ue-animation-system-04-state-machine-transition-order-and-jitter/">状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">04.02</span>
-                            <a class="archive-timeline-card" href="/2023/04/02/ue-animation-system-notes/ue-animation-system-03-animblueprint-compiled-runtime-structure/">
-                                <span class="archive-timeline-title">AnimBlueprint 编译产物：图节点如何变成运行时结构</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-04-02">04.02</time>
+                            <a href="/2023/04/02/ue-animation-system-notes/ue-animation-system-03-animblueprint-compiled-runtime-structure/">AnimBlueprint 编译产物：图节点如何变成运行时结构</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 03月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 03月">
+                    <h3>03 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.19</span>
-                            <a class="archive-timeline-card" href="/2023/03/19/ue-animation-system-notes/ue-animation-system-02-animinstance-lifecycle-and-proxy-model/">
-                                <span class="archive-timeline-title">AnimInstance 生命周期与 Proxy 模型：Initialize / Update / Evaluate 与多线程边界</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-03-19">03.19</time>
+                            <a href="/2023/03/19/ue-animation-system-notes/ue-animation-system-02-animinstance-lifecycle-and-proxy-model/">AnimInstance 生命周期与 Proxy 模型：Initialize / Update / Evaluate 与多线程边界</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.05</span>
-                            <a class="archive-timeline-card" href="/2023/03/05/ue-network-sync-notes/ue-network-sync-02-property-replication-and-repnotify/">
-                                <span class="archive-timeline-title">属性复制主线：GetLifetimeReplicatedProps、RepNotify、条件复制与状态一致性</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-03-05">03.05</time>
+                            <a href="/2023/03/05/ue-network-sync-notes/ue-network-sync-02-property-replication-and-repnotify/">属性复制主线：GetLifetimeReplicatedProps、RepNotify、条件复制与状态一致性</a>
+                        </li>
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">03.05</span>
-                            <a class="archive-timeline-card" href="/2023/03/05/ue-animation-system-notes/ue-animation-system-01-overview-tick-to-final-pose/">
-                                <span class="archive-timeline-title">总览与执行主线：从 USkeletalMeshComponent Tick 到最终 Pose 输出</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-03-05">03.05</time>
+                            <a href="/2023/03/05/ue-animation-system-notes/ue-animation-system-01-overview-tick-to-final-pose/">总览与执行主线：从 USkeletalMeshComponent Tick 到最终 Pose 输出</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
-                <section class="archive-month-group">
-                    <div class="archive-month-head">
-                        <span class="archive-month-dot" aria-hidden="true"></span>
-                        <h2 class="archive-month-label">2023年 01月</h2>
-                    </div>
-
-                    <div class="archive-timeline-list">
+                <section class="note-month" aria-label="2023年 01月">
+                    <h3>01 月</h3>
+                    <ul class="note-archive-list">
                         
-                        <article class="archive-timeline-item">
-                            <span class="archive-timeline-date">01.15</span>
-                            <a class="archive-timeline-card" href="/2023/01/15/ue-network-sync-notes/ue-network-sync-01-authority-ownership-and-replication-loop/">
-                                <span class="archive-timeline-title">网络同步全景与权威模型：服务器权威、Ownership、连接与复制主循环</span>
-                            </a>
-                        </article>
+                        <li>
+                            <time datetime="2023-01-15">01.15</time>
+                            <a href="/2023/01/15/ue-network-sync-notes/ue-network-sync-01-authority-ownership-and-replication-loop/">网络同步全景与权威模型：服务器权威、Ownership、连接与复制主循环</a>
+                        </li>
                         
-                    </div>
+                    </ul>
                 </section>
                 
             </div>
         </section>
         
-    </section>
+    </div>
+    </div>
+    
+    <footer class="note-index-footer">
+        <span>Claude’s Desk</span>
+        <a href="/archives/">全部归档 <span aria-hidden="true">→</span></a>
+    </footer>
 </article>
 
 
@@ -315,8 +262,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

@@ -1,0 +1,677 @@
+/* Index cards share the desktop's paper, ink and restrained borders. */
+.note-index {
+    padding: 32px;
+    gap: 0;
+}
+
+.note-index-header {
+    padding-bottom: 26px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.note-index-tabs {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.module.note-index .note-index-tabs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+}
+
+.module.note-index .note-index-tabs a[aria-current='page'],
+.module.note-index .note-index-tabs a[aria-current='true'] {
+    border-color: var(--text-main);
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.note-index-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.note-index-title .svg-icon {
+    flex-shrink: 0;
+    stroke-width: 1.5;
+}
+
+.note-index-title h1 {
+    font-size: 30px;
+    line-height: 1.3;
+}
+
+.note-index-intro {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: 14px;
+    color: var(--text-muted);
+}
+
+.note-index-intro p {
+    font-size: 15px;
+}
+
+.note-index-intro > span {
+    font-size: 13px;
+}
+
+.note-category-tree ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.note-category-tree > ul {
+    columns: 2;
+    column-gap: 40px;
+    padding: 28px 0 12px;
+}
+
+.note-category-tree > ul > li {
+    break-inside: avoid;
+    margin-bottom: 24px;
+}
+
+.note-category-tree .note-category-list-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 12px;
+}
+
+.module.note-index a.note-category-list-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    border-bottom: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.note-category-list-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.note-category-list-count::after {
+    content: ' 篇';
+}
+
+.note-category-tree .note-category-list-child {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+    padding-left: 16px;
+    border-left: 1px solid var(--border-color);
+}
+
+.module.note-index .note-category-list-child .note-category-list-link {
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.note-tag-section {
+    padding: 28px 0;
+}
+
+.note-tag-section + .note-tag-section {
+    border-top: 1px solid var(--border-color);
+}
+
+.note-tag-section h2 {
+    margin-bottom: 18px;
+    font-size: 17px;
+    line-height: 1.5;
+}
+
+.note-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.note-tag-list li {
+    max-width: 100%;
+}
+
+.module.note-index .note-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.note-tag-mark,
+.note-tag-count {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.note-tag-count {
+    padding-left: 8px;
+    border-left: 1px solid var(--border-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.module.note-index .note-tag:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--card-bg);
+}
+
+.note-index a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 3px;
+}
+
+.note-index-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.module.note-index .note-index-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: 8px;
+    border: 0;
+    color: var(--text-muted);
+}
+
+.note-index-empty {
+    padding: 28px 0;
+}
+
+/* Shared paper and typography, with distinct archive and notebook layouts. */
+.note-sheet {
+    position: relative;
+    width: min(92%, 920px);
+    margin: 80px auto 40px;
+    transform: none;
+    cursor: auto;
+}
+
+.note-sheet .note-index-title {
+    align-items: baseline;
+}
+
+.note-sheet .note-index-title h1 {
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+}
+
+.note-sheet .note-index-intro p {
+    max-width: 72ch;
+}
+
+.note-series-detail .note-index-intro {
+    display: block;
+}
+
+.note-series-detail .note-index-intro p {
+    max-width: 44em;
+    text-wrap: pretty;
+}
+
+.note-series-detail .note-index-intro > span {
+    display: block;
+    margin-top: 10px;
+}
+
+.note-year-index {
+    display: flex;
+    flex-direction: column;
+    align-self: start;
+    position: sticky;
+    top: 88px;
+    gap: 4px;
+    padding-right: 24px;
+}
+
+.module.note-index .note-year-index a {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: 0;
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+}
+
+.note-year-index-label,
+.note-year-index small {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.note-year-index-label {
+    margin-bottom: 12px;
+}
+
+.note-archive,
+.note-notebooks {
+    width: min(92%, 1040px);
+}
+
+.note-archive-layout {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 32px;
+}
+
+.note-timeline {
+    min-width: 0;
+}
+
+.note-year {
+    display: block;
+    padding: 32px 0;
+}
+
+.note-year:first-child {
+    padding-top: 0;
+}
+
+.note-year + .note-year {
+    border-top: 1px solid var(--border-color);
+}
+
+.note-year h2 {
+    margin-bottom: 20px;
+    font-size: 34px;
+    line-height: 1.5;
+    scroll-margin-top: 96px;
+    font-variant-numeric: tabular-nums;
+}
+
+.note-year h2 > span {
+    margin-left: 8px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.note-year-body {
+    border-left: 1px solid var(--border-color);
+    padding-left: 24px;
+    min-width: 0;
+}
+
+.note-month + .note-month {
+    margin-top: 26px;
+}
+
+.note-month h3 {
+    position: relative;
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-muted);
+}
+
+.note-month h3::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 9px;
+    width: 5px;
+    height: 5px;
+    border: 1px solid var(--text-muted);
+    border-radius: 50%;
+    background: var(--card-bg);
+}
+
+.note-archive-list,
+.note-reading-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.note-archive-list li {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: baseline;
+    gap: 14px;
+}
+
+.note-archive-list time,
+.note-reading-list time {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.module.note-index .note-archive-list a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: 8px;
+    box-sizing: border-box;
+    border: 0;
+    font-size: 15px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+}
+
+.note-series,
+.note-reading-list > li {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    column-gap: 20px;
+    padding: 26px 0;
+}
+
+.note-series + .note-series,
+.note-reading-list > li + li {
+    border-top: 1px solid var(--border-color);
+}
+
+.note-series-number {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    line-height: 44px;
+}
+
+.note-series-heading,
+.note-series-foot,
+.note-reading-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.note-series-heading h2,
+.note-reading-list h3 {
+    min-width: 0;
+    font-size: 20px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.module.note-index .note-series-heading a,
+.module.note-index .note-reading-list h3 a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border: 0;
+}
+
+.note-series-status,
+.note-series-foot,
+.note-reading-heading > span {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.note-series-summary,
+.note-reading-list p {
+    margin: 8px 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.85;
+}
+
+.note-series-foot {
+    align-items: center;
+    margin-top: 4px;
+}
+
+.module.note-index .note-series-foot a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: 8px;
+    border: 0;
+    color: var(--text-muted);
+}
+
+.note-series-goals {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.note-series-goals h2,
+.note-reading-heading h2 {
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+.note-series-goals ul {
+    margin: 16px 0 0;
+    padding-left: 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.85;
+}
+
+.note-series-goals li + li {
+    margin-top: 8px;
+}
+
+.note-reading-heading {
+    margin-top: 28px;
+}
+
+/* Notebook covers: a quiet binding line, a topic and a clear reading entry. */
+.note-notebook-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    padding: 32px 0;
+}
+
+.note-notebook {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 24px 24px 12px 34px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px 8px 8px 4px;
+    background: var(--box-bg);
+}
+
+.note-notebook::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 10px;
+    border-left: 1px solid var(--border-color);
+    pointer-events: none;
+}
+
+.note-notebook-label {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.note-notebook h2 {
+    margin-top: 22px;
+    font-size: 23px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+}
+
+.note-notebook-summary {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--text-muted);
+}
+
+.note-notebook-stage {
+    margin-top: auto;
+    padding: 22px 0 14px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text-muted);
+}
+
+.note-notebook-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 16px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 6px;
+}
+
+.module.note-index .note-notebook-actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    border: 0;
+    font-size: 14px;
+}
+
+.module.note-index a.note-notebook-latest {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+@media (max-width: 760px) {
+    .note-archive-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+        padding-top: 20px;
+    }
+
+    .note-year-index {
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px 24px;
+        padding: 0 0 18px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .note-year-index-label {
+        flex-basis: 100%;
+        margin-bottom: 4px;
+    }
+
+    .note-notebook-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+        padding-block: 24px;
+    }
+}
+
+@media (max-width: 640px) {
+    .note-notebook {
+        padding: 20px 18px 10px 28px;
+    }
+
+    .note-notebook h2 {
+        font-size: 21px;
+    }
+
+    .note-year {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        padding-block: 24px;
+    }
+
+    .note-year-body {
+        padding-left: 16px;
+        margin-left: 3px;
+    }
+
+    .note-month h3::before {
+        left: -20px;
+    }
+
+    .note-archive-list li {
+        grid-template-columns: 38px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .note-series,
+    .note-reading-list > li {
+        grid-template-columns: 24px minmax(0, 1fr);
+        column-gap: 12px;
+        padding-block: 22px;
+    }
+
+    .note-series-heading h2,
+    .note-reading-list h3 {
+        font-size: 18px;
+    }
+
+    .note-series-foot {
+        align-items: flex-start;
+    }
+
+    .note-index {
+        padding: 22px;
+    }
+
+    .note-index-title h1 {
+        font-size: 26px;
+    }
+
+    .note-index-tabs {
+        margin-bottom: 18px;
+    }
+
+    .note-category-tree > ul {
+        columns: 1;
+    }
+
+    .note-tag-list {
+        gap: 8px;
+    }
+
+    .module.note-index .note-tag {
+        padding-inline: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .note-index,
+    .note-index a {
+        transition: none;
+    }
+}

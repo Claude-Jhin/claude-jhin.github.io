@@ -1,0 +1,345 @@
+/* A reading sheet and a quiet index card, using the desktop's existing tokens. */
+.note-post-back {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 100;
+}
+
+.note-post-back .svg-icon {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.note-post-shell {
+    margin-top: 80px;
+}
+
+.note-post-shell .note-post {
+    min-width: 0;
+    padding: 32px;
+    gap: 0;
+}
+
+.note-post-header {
+    padding-bottom: 22px;
+}
+
+.note-post .post-title {
+    margin: 0 0 16px;
+    font-size: 30px;
+    line-height: 1.4;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+}
+
+.note-post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 20px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.8;
+}
+
+.note-post-meta time {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.note-post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+}
+
+.note-post-series {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding: 6px 0;
+    margin-bottom: 26px;
+    border-block: 1px solid var(--border-color);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.note-post-series > div {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 14px;
+}
+
+.note-post-series > div > span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.module.note-post .note-post-series a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    border: 0;
+}
+
+.module.note-post a.note-post-series-index {
+    color: var(--text-muted);
+}
+
+.note-post .post-content > :first-child {
+    margin-top: 0;
+}
+
+.note-post .post-content {
+    min-width: 0;
+}
+
+.note-post .post-content p {
+    font-size: 16px;
+    line-height: 1.9;
+}
+
+.note-post .post-content figure.highlight {
+    box-shadow: none;
+    max-width: 100%;
+}
+
+.note-post .post-content figure.highlight table {
+    table-layout: fixed;
+}
+
+.note-post .post-content figure.highlight pre {
+    overflow-x: auto;
+}
+
+.note-post-shell .note-post-toc {
+    top: 80px;
+    padding: 22px;
+    gap: 18px;
+    background: var(--card-bg);
+    max-height: calc(100dvh - 104px);
+}
+
+.note-post-toc > h2 {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 17px;
+}
+
+.note-post-shell .post-toc-nav {
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.note-post-shell .post-toc-list-item + .post-toc-list-item {
+    margin-top: 4px;
+}
+
+.note-post-shell .post-toc-list-link {
+    margin: 0;
+    padding: 8px;
+    border-radius: 4px;
+    overflow-wrap: anywhere;
+}
+
+.note-post-shell .post-toc-list-link.is-active {
+    background: var(--box-bg);
+    color: var(--accent);
+    box-shadow: inset 2px 0 var(--accent);
+}
+
+.note-post-shell .post-toc-list-child {
+    margin: 4px 0 4px 8px;
+    padding-left: 8px;
+}
+
+.note-post-toc-mobile {
+    background: transparent;
+    padding: 0;
+    border: 0;
+    border-block: 1px solid var(--border-color);
+    border-radius: 0;
+    margin-bottom: 24px;
+}
+
+.note-post-toc-mobile summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 48px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.note-post-toc-mobile summary::-webkit-details-marker {
+    display: none;
+}
+
+.note-post-toc-mobile .note-toc-expand,
+.note-post-toc-mobile .note-toc-collapse {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.note-post-toc-mobile .note-toc-collapse,
+.note-post-toc-mobile[open] .note-toc-expand {
+    display: none;
+}
+
+.note-post-toc-mobile[open] .note-toc-collapse {
+    display: inline;
+}
+
+.note-post-toc-mobile .post-toc-nav {
+    max-height: 50dvh;
+    overflow: auto;
+    padding: 4px 4px 14px;
+}
+
+.note-post-license {
+    margin-top: 32px;
+    padding-block: 18px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.note-post-navigation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    padding: 24px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.module.note-post .note-post-navigation a {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 44px;
+    border: 0;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+}
+
+.note-post-navigation a > span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.note-post-navigation strong {
+    font-size: 16px;
+}
+
+.note-post-next {
+    grid-column: 2;
+}
+
+.note-post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.module.note-post .note-post-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border: 0;
+    color: var(--text-muted);
+}
+
+.note-post-shell a:focus-visible,
+.note-post-shell button:focus-visible,
+.note-post-shell summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+}
+
+@media (max-width: 920px) {
+    .note-post-toc-mobile .post-toc-list-link {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 640px) {
+    .note-post-shell .note-post {
+        padding: 22px;
+    }
+
+    .note-post .post-title {
+        font-size: 24px;
+        line-height: 1.45;
+        text-wrap: pretty;
+    }
+
+    .note-post-series {
+        column-gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .note-post-series > div {
+        display: block;
+    }
+
+    .note-post-series > div > span {
+        display: block;
+        padding-bottom: 8px;
+    }
+
+    .note-post-navigation {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+    }
+
+    .note-post-next {
+        grid-column: auto;
+    }
+
+    .note-post .post-content figure.highlight .gutter {
+        width: 36px;
+    }
+
+    .note-post .post-content figure.highlight pre {
+        padding-inline: 10px;
+    }
+
+    .is-reading .font-toggle {
+        top: 24px;
+        right: 24px;
+    }
+
+    .is-reading .theme-toggle {
+        top: 24px;
+        right: 80px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .note-post-shell a,
+    .note-post-shell button {
+        transition: none;
+    }
+}

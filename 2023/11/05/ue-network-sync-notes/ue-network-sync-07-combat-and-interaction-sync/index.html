@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-network-sync/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2023.11.05
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#UE5</span>
-            
-            <span style="color: var(--accent);">#Networking</span>
-            
-            <span style="color: var(--accent);">#Combat</span>
-            
-            <span style="color: var(--accent);">#Lag Compensation</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 网络同步源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">战斗与交互同步实战：命中判定、投射物、技能状态与延迟补偿取舍</h1>
+            <div class="note-post-meta">
+                <time datetime="2023-11-05">2023.11.05</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># UE5</span><span># Networking</span><span># Combat</span><span># Lag Compensation</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">面向 UE5.5 C++ 多人项目，围绕服务器权威、属性复制、RPC、复杂状态同步、带宽治理与预测纠偏，形成一条可复用的网络同步排障主线。</p>
-            <div class="series-meta">
-                <span>第 7 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 88%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-network-sync/">UE5 网络同步</a>
+                <span>第 7 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-network-sync/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-network-sync/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E6%83%B3%E5%9B%9E%E7%AD%94%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇想回答什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E5%85%88%E5%AE%9A%E2%80%9C%E5%88%A4%E5%AE%9A%E5%B1%82%E7%BA%A7%E2%80%9D"><span class="post-toc-list-text">战斗同步先定“判定层级”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E4%B8%8E%E4%BC%A4%E5%AE%B3%E9%93%BE%E8%B7%AF%E6%80%8E%E4%B9%88%E6%8B%86"><span class="post-toc-list-text">命中与伤害链路怎么拆</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E5%88%A4%E5%AE%9A"><span class="post-toc-list-text">命中判定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%BC%A4%E5%AE%B3%E7%BB%93%E7%AE%97"><span class="post-toc-list-text">伤害结算</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BB%93%E6%9E%9C%E4%BC%A0%E6%92%AD"><span class="post-toc-list-text">结果传播</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%95%E5%B0%84%E7%89%A9%E5%90%8C%E6%AD%A5%EF%BC%9A%E5%88%AB%E5%8F%AA%E7%9C%8B%E4%BD%8D%E7%BD%AE"><span class="post-toc-list-text">投射物同步：别只看位置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BB%B6%E8%BF%9F%E8%A1%A5%E5%81%BF%E4%B8%8D%E6%98%AF%E5%BC%80%E5%85%B3%EF%BC%8C%E6%98%AF%E7%AD%96%E7%95%A5%E9%9B%86%E5%90%88"><span class="post-toc-list-text">延迟补偿不是开关，是策略集合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（战斗同步排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E8%90%BD%E5%9C%B0%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">工程落地建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -253,49 +229,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-network-sync/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2023/09/17/ue-network-sync-notes/ue-network-sync-06-prediction-replay-and-correction/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 6 篇</span>
-                    <strong class="series-nav-title">预测、重演与纠偏范式：客户端预测、服务器校正、重放与平滑机制</strong>
-                </a>
-                
-
-                
-                <a href="/2023/12/24/ue-network-sync-notes/ue-network-sync-08-troubleshooting-and-regression-baseline/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 8 篇</span>
-                    <strong class="series-nav-title">排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2023/09/17/ue-network-sync-notes/ue-network-sync-06-prediction-replay-and-correction/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>预测、重演与纠偏范式：客户端预测、服务器校正、重放与平滑机制</strong>
+            </a>
+            
+            
+            <a href="/2023/12/24/ue-network-sync-notes/ue-network-sync-08-troubleshooting-and-regression-baseline/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>排障与优化闭环：网络模拟、日志指标、Network Insights/Profiler 与回归基线</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-network-sync/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%80%E7%AF%87%E6%83%B3%E5%9B%9E%E7%AD%94%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">这一篇想回答什么</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">关键函数定位</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E5%85%88%E5%AE%9A%E2%80%9C%E5%88%A4%E5%AE%9A%E5%B1%82%E7%BA%A7%E2%80%9D"><span class="post-toc-list-text">战斗同步先定“判定层级”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E4%B8%8E%E4%BC%A4%E5%AE%B3%E9%93%BE%E8%B7%AF%E6%80%8E%E4%B9%88%E6%8B%86"><span class="post-toc-list-text">命中与伤害链路怎么拆</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%91%BD%E4%B8%AD%E5%88%A4%E5%AE%9A"><span class="post-toc-list-text">命中判定</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E4%BC%A4%E5%AE%B3%E7%BB%93%E7%AE%97"><span class="post-toc-list-text">伤害结算</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%BB%93%E6%9E%9C%E4%BC%A0%E6%92%AD"><span class="post-toc-list-text">结果传播</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8A%95%E5%B0%84%E7%89%A9%E5%90%8C%E6%AD%A5%EF%BC%9A%E5%88%AB%E5%8F%AA%E7%9C%8B%E4%BD%8D%E7%BD%AE"><span class="post-toc-list-text">投射物同步：别只看位置</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%BB%B6%E8%BF%9F%E8%A1%A5%E5%81%BF%E4%B8%8D%E6%98%AF%E5%BC%80%E5%85%B3%EF%BC%8C%E6%98%AF%E7%AD%96%E7%95%A5%E9%9B%86%E5%90%88"><span class="post-toc-list-text">延迟补偿不是开关，是策略集合</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%88%91%E4%BC%9A%E6%80%8E%E4%B9%88%E8%B7%9F%E6%BA%90%E7%A0%81%EF%BC%88%E6%88%98%E6%96%97%E5%90%8C%E6%AD%A5%E6%8E%92%E9%9A%9C%EF%BC%89"><span class="post-toc-list-text">我会怎么跟源码（战斗同步排障）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8F%AF%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98%E6%A1%88%E4%BE%8B"><span class="post-toc-list-text">可复现问题案例</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E5%A4%8D%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">复现步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E7%8E%B0%E8%B1%A1"><span class="post-toc-list-text">现象</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="post-toc-list-text">根因定位</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="post-toc-list-text">最小修复策略</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%8E%92%E6%9F%A5%E9%A1%BA%E5%BA%8F%EF%BC%88%E5%AE%9E%E6%88%98%E7%89%88%EF%BC%89"><span class="post-toc-list-text">排查顺序（实战版）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E8%90%BD%E5%9C%B0%E5%BB%BA%E8%AE%AE"><span class="post-toc-list-text">工程落地建议</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
         </nav>
@@ -313,8 +275,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

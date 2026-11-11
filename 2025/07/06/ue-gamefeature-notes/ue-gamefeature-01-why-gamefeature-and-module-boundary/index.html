@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>为什么是 GameFeature：模块化边界、运行时装配与对象关系图 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,72 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-gamefeature/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">为什么是 GameFeature：模块化边界、运行时装配与对象关系图</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2025.07.06
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#UE5</span>
-            
-            <span style="color: var(--accent);">#GameFeature</span>
-            
-            <span style="color: var(--accent);">#Lyra</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 GameFeature 原理与源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">为什么是 GameFeature：模块化边界、运行时装配与对象关系图</h1>
+            <div class="note-post-meta">
+                <time datetime="2025-07-06">2025.07.06</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># UE5</span><span># GameFeature</span><span># Lyra</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.5 GameFeature 体系，从插件发现、状态机转换、Action 执行到组件注入、多人边界与打包热更，形成一条可复用的原理与源码主线。</p>
-            <div class="series-meta">
-                <span>第 1 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：2025.07 - 2025.12 旗舰连载</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 13%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-gamefeature/">UE5 GameFeature</a>
+                <span>第 1 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-gamefeature/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-gamefeature/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%88%E8%AE%B2%E2%80%9C%E8%BE%B9%E7%95%8C%E2%80%9D"><span class="post-toc-list-text">为什么先讲“边界”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8E%E4%BC%A0%E7%BB%9F%E6%A8%A1%E5%9D%97-%E5%AD%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E5%B7%A5%E5%B7%AE%E5%BC%82"><span class="post-toc-list-text">与传统模块&#x2F;子系统的分工差异</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-1%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 1）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E5%9B%9B%E7%B1%BB%E5%AF%B9%E8%B1%A1%E5%A6%82%E4%BD%95%E5%88%86%E5%B1%82%E5%8D%8F%E4%BD%9C"><span class="post-toc-list-text">原理下钻：四类对象如何分层协作</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E7%BA%BF%EF%BC%88%E9%95%BF%E6%96%87%E9%98%85%E8%AF%BB%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">源码主线（长文阅读顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%BF%83%E6%99%BA%E6%A8%A1%E5%9E%8B%EF%BC%88%E4%BC%AA%E4%BB%A3%E7%A0%81%EF%BC%89"><span class="post-toc-list-text">工程化心智模型（伪代码）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E5%AE%9E%E5%BD%95%EF%BC%9A%E6%88%91%E4%BB%AC%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%86%B3%E5%AE%9A%E6%8A%8A%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%B0-GameFeature"><span class="post-toc-list-text">项目实录：我们什么时候决定把功能拆到 GameFeature</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E8%90%BD%E5%9C%B0%E7%9A%84%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%86%E6%B3%95"><span class="post-toc-list-text">一套可落地的功能拆分法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%97%E8%88%B0%E6%96%87%E9%98%85%E8%AF%BB%E4%BB%BB%E5%8A%A1%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%8C%89%E9%A1%BA%E5%BA%8F%E5%81%9A%EF%BC%89"><span class="post-toc-list-text">旗舰文阅读任务（建议按顺序做）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%88%E5%85%A5%E9%97%A8%E4%BD%86%E5%BE%88%E5%AE%9E%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">断点剧本（入门但很实用）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E8%BF%99%E7%AF%87%E7%9A%84%E4%BA%A4%E4%BB%98%E6%A0%87%E5%87%86%EF%BC%88%E7%BB%99%E5%9B%A2%E9%98%9F%E5%86%85%E9%83%A8%E5%AF%B9%E9%BD%90%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">附录：这篇的交付标准（给团队内部对齐用）</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -292,48 +270,30 @@ GameFeature 的价值就在这里：把功能上线、停用、回滚做成显�
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-gamefeature/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <div class="series-nav-card is-empty">
-                    <span class="series-nav-direction">当前是本专栏的起点</span>
-                    <strong class="series-nav-title">可以从这里开始顺着往后读</strong>
-                </div>
-                
-
-                
-                <a href="/2025/07/27/ue-gamefeature-notes/ue-gamefeature-02-discovery-policies-and-subsystem-bootstrap/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 2 篇</span>
-                    <strong class="series-nav-title">入口与发现链路：插件描述、Project Policies、Subsystem 启动路径</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            
+            <a href="/2025/07/27/ue-gamefeature-notes/ue-gamefeature-02-discovery-policies-and-subsystem-bootstrap/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>入口与发现链路：插件描述、Project Policies、Subsystem 启动路径</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-gamefeature/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%88%E8%AE%B2%E2%80%9C%E8%BE%B9%E7%95%8C%E2%80%9D"><span class="post-toc-list-text">为什么先讲“边界”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%B0%83%E7%94%A8%E9%93%BE%E5%9B%BE"><span class="post-toc-list-text">调用链图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%8E%E4%BC%A0%E7%BB%9F%E6%A8%A1%E5%9D%97-%E5%AD%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E5%B7%A5%E5%B7%AE%E5%BC%82"><span class="post-toc-list-text">与传统模块&#x2F;子系统的分工差异</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#UE5-5-%E6%BA%90%E7%A0%81%E5%9D%90%E6%A0%87%EF%BC%88C-Epic-UE-5-5%EF%BC%89"><span class="post-toc-list-text">UE5.5 源码坐标（C:\Epic\UE_5.5）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#Lyra-%E6%9C%80%E5%B0%8F%E5%A4%8D%E7%8E%B0%EF%BC%88%E5%AE%9E%E9%AA%8C-1%EF%BC%89"><span class="post-toc-list-text">Lyra 最小复现（实验 1）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%A3%80%E6%9F%A5%E9%A1%B9"><span class="post-toc-list-text">常见坑与检查项</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%8E%9F%E7%90%86%E4%B8%8B%E9%92%BB%EF%BC%9A%E5%9B%9B%E7%B1%BB%E5%AF%B9%E8%B1%A1%E5%A6%82%E4%BD%95%E5%88%86%E5%B1%82%E5%8D%8F%E4%BD%9C"><span class="post-toc-list-text">原理下钻：四类对象如何分层协作</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%BA%90%E7%A0%81%E4%B8%BB%E7%BA%BF%EF%BC%88%E9%95%BF%E6%96%87%E9%98%85%E8%AF%BB%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="post-toc-list-text">源码主线（长文阅读顺序）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%BF%83%E6%99%BA%E6%A8%A1%E5%9E%8B%EF%BC%88%E4%BC%AA%E4%BB%A3%E7%A0%81%EF%BC%89"><span class="post-toc-list-text">工程化心智模型（伪代码）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%AC%E7%AF%87%E7%BB%93%E8%AE%BA"><span class="post-toc-list-text">本篇结论</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%A1%B9%E7%9B%AE%E5%AE%9E%E5%BD%95%EF%BC%9A%E6%88%91%E4%BB%AC%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%86%B3%E5%AE%9A%E6%8A%8A%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%B0-GameFeature"><span class="post-toc-list-text">项目实录：我们什么时候决定把功能拆到 GameFeature</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E8%90%BD%E5%9C%B0%E7%9A%84%E5%8A%9F%E8%83%BD%E6%8B%86%E5%88%86%E6%B3%95"><span class="post-toc-list-text">一套可落地的功能拆分法</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%97%97%E8%88%B0%E6%96%87%E9%98%85%E8%AF%BB%E4%BB%BB%E5%8A%A1%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%8C%89%E9%A1%BA%E5%BA%8F%E5%81%9A%EF%BC%89"><span class="post-toc-list-text">旗舰文阅读任务（建议按顺序做）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%96%AD%E7%82%B9%E5%89%A7%E6%9C%AC%EF%BC%88%E5%85%A5%E9%97%A8%E4%BD%86%E5%BE%88%E5%AE%9E%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">断点剧本（入门但很实用）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E8%BF%99%E7%AF%87%E7%9A%84%E4%BA%A4%E4%BB%98%E6%A0%87%E5%87%86%EF%BC%88%E7%BB%99%E5%9B%A2%E9%98%9F%E5%86%85%E9%83%A8%E5%AF%B9%E9%BD%90%E7%94%A8%EF%BC%89"><span class="post-toc-list-text">附录：这篇的交付标准（给团队内部对齐用）</span></a></li></ol>
         </nav>
@@ -351,8 +311,7 @@ GameFeature 的价值就在这里：把功能上线、停用、回滚做成显�
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AnimBlueprint 编译产物：图节点如何变成运行时结构 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,74 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-animation-system/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">AnimBlueprint 编译产物：图节点如何变成运行时结构</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2023.04.02
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#UE5</span>
-            
-            <span style="color: var(--accent);">#Animation System</span>
-            
-            <span style="color: var(--accent);">#AnimBlueprint</span>
-            
-            <span style="color: var(--accent);">#UAnimBlueprintGeneratedClass</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 动画系统源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">AnimBlueprint 编译产物：图节点如何变成运行时结构</h1>
+            <div class="note-post-meta">
+                <time datetime="2023-04-02">2023.04.02</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># UE5</span><span># Animation System</span><span># AnimBlueprint</span><span># UAnimBlueprintGeneratedClass</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
-            <div class="series-meta">
-                <span>第 3 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 38%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-animation-system/">UE5 动画系统</a>
+                <span>第 3 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-animation-system/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-animation-system/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E5%9B%BE%E5%88%B0%E5%86%85%E5%AD%98%EF%BC%9A%E7%9C%9F%E6%AD%A3%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">从图到内存：真正发生了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%BC%96%E8%AF%91%E9%98%B6%E6%AE%B5%E5%85%88%E6%8A%8A%E2%80%9C%E5%9B%BE%E6%8B%93%E6%89%91%E2%80%9D%E7%BF%BB%E8%AF%91%E6%88%90%E2%80%9C%E5%8F%AF%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84%E2%80%9D"><span class="post-toc-list-text">1) 编译阶段先把“图拓扑”翻译成“可索引结构”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%94%9F%E6%88%90%E7%B1%BB%E9%87%8C%E6%9C%80%E5%85%B3%E9%94%AE%E7%9A%84%E6%98%AF%E4%B8%89%E7%B1%BB%E8%A1%A8"><span class="post-toc-list-text">2) 生成类里最关键的是三类表</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Link-%E9%98%B6%E6%AE%B5%E6%8A%8A%E2%80%9C%E6%8F%8F%E8%BF%B0%E2%80%9D%E5%8F%98%E6%88%90%E2%80%9C%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%BB%91%E5%AE%9A%E2%80%9D"><span class="post-toc-list-text">3) Link 阶段把“描述”变成“可执行绑定”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E6%A3%80%E6%9F%A5%E5%8F%91%E7%94%9F%E5%9C%A8%E7%BC%96%E8%AF%91%E5%99%A8%EF%BC%8C%E4%B8%8D%E5%9C%A8%E8%BF%90%E8%A1%8C%E6%97%B6%E8%A1%A5%E6%95%91"><span class="post-toc-list-text">4) 线程安全检查发生在编译器，不在运行时补救</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BD%A0%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E7%94%A8%E7%9A%84%E2%80%9C%E5%9B%BE%E6%94%B9%E5%8A%A8%E9%A3%8E%E9%99%A9%E6%A8%A1%E5%9E%8B%E2%80%9D"><span class="post-toc-list-text">你可以直接用的“图改动风险模型”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -216,49 +192,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-animation-system/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2023/03/19/ue-animation-system-notes/ue-animation-system-02-animinstance-lifecycle-and-proxy-model/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 2 篇</span>
-                    <strong class="series-nav-title">AnimInstance 生命周期与 Proxy 模型：Initialize / Update / Evaluate 与多线程边界</strong>
-                </a>
-                
-
-                
-                <a href="/2023/04/16/ue-animation-system-notes/ue-animation-system-04-state-machine-transition-order-and-jitter/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 4 篇</span>
-                    <strong class="series-nav-title">状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2023/03/19/ue-animation-system-notes/ue-animation-system-02-animinstance-lifecycle-and-proxy-model/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>AnimInstance 生命周期与 Proxy 模型：Initialize / Update / Evaluate 与多线程边界</strong>
+            </a>
+            
+            
+            <a href="/2023/04/16/ue-animation-system-notes/ue-animation-system-04-state-machine-transition-order-and-jitter/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>状态机内核：State、Transition、Rule 的评估顺序与切换抖动根因</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-animation-system/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BB%8E%E5%9B%BE%E5%88%B0%E5%86%85%E5%AD%98%EF%BC%9A%E7%9C%9F%E6%AD%A3%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="post-toc-list-text">从图到内存：真正发生了什么</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-%E7%BC%96%E8%AF%91%E9%98%B6%E6%AE%B5%E5%85%88%E6%8A%8A%E2%80%9C%E5%9B%BE%E6%8B%93%E6%89%91%E2%80%9D%E7%BF%BB%E8%AF%91%E6%88%90%E2%80%9C%E5%8F%AF%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84%E2%80%9D"><span class="post-toc-list-text">1) 编译阶段先把“图拓扑”翻译成“可索引结构”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-%E7%94%9F%E6%88%90%E7%B1%BB%E9%87%8C%E6%9C%80%E5%85%B3%E9%94%AE%E7%9A%84%E6%98%AF%E4%B8%89%E7%B1%BB%E8%A1%A8"><span class="post-toc-list-text">2) 生成类里最关键的是三类表</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-Link-%E9%98%B6%E6%AE%B5%E6%8A%8A%E2%80%9C%E6%8F%8F%E8%BF%B0%E2%80%9D%E5%8F%98%E6%88%90%E2%80%9C%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%BB%91%E5%AE%9A%E2%80%9D"><span class="post-toc-list-text">3) Link 阶段把“描述”变成“可执行绑定”</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E6%A3%80%E6%9F%A5%E5%8F%91%E7%94%9F%E5%9C%A8%E7%BC%96%E8%AF%91%E5%99%A8%EF%BC%8C%E4%B8%8D%E5%9C%A8%E8%BF%90%E8%A1%8C%E6%97%B6%E8%A1%A5%E6%95%91"><span class="post-toc-list-text">4) 线程安全检查发生在编译器，不在运行时补救</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%BD%A0%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E7%94%A8%E7%9A%84%E2%80%9C%E5%9B%BE%E6%94%B9%E5%8A%A8%E9%A3%8E%E9%99%A9%E6%A8%A1%E5%9E%8B%E2%80%9D"><span class="post-toc-list-text">你可以直接用的“图改动风险模型”</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
         </nav>
@@ -276,8 +238,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>

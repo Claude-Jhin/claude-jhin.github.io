@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>动画蓝图分层架构：Linked Anim Layer、Sub Anim Instance、Post Process 的组合策略 - Claude's Desk</title>
     <meta name="description" content="记录开发、技术与持续写作。">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260410b">
@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=20260410b">
     <link rel="preload" href="/fonts/LXGWNeoXiHei.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/css/style.css?v=20260503f">
+    
+    <link rel="stylesheet" href="/css/note-post.css?v=20261111a">
+    
+    
 
         
                 <script>
@@ -27,7 +31,7 @@
                 </script>
 <meta name="generator" content="Hexo 6.1.0"></head>
 
-<body class="is-post">
+<body class="is-post is-reading">
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5"></circle>
@@ -50,76 +54,46 @@
 
     
 
-<div style="position: fixed; top: 24px; left: 24px; z-index: 100;">
-    <a href="/" class="back-btn">
-        <svg class="svg-icon" style="vertical-align: middle; margin-right: 4px; width: 16px; height: 16px;"
-            viewBox="0 0 24 24">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+<div class="note-post-back">
+    <a href="/columns/ue-animation-system/" class="back-btn">
+        <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M19 12H5m7-7-7 7 7 7" />
         </svg>
-        返回首页
+        返回专栏
     </a>
 </div>
 
-<div class="post-page-shell has-toc">
-    <article class="post-container module post-article">
-        <h1 class="post-title">动画蓝图分层架构：Linked Anim Layer、Sub Anim Instance、Post Process 的组合策略</h1>
-        <div class="post-meta post-meta-header">
-            发布于 2023.06.04
-            
-            /
-            
-            <span style="color: var(--accent);">#Unreal Engine</span>
-            
-            <span style="color: var(--accent);">#源码阅读</span>
-            
-            <span style="color: var(--accent);">#UE5</span>
-            
-            <span style="color: var(--accent);">#Animation System</span>
-            
-            <span style="color: var(--accent);">#Linked Anim Layer</span>
-            
-            <span style="color: var(--accent);">#Sub Anim Instance</span>
-            
-            <span style="color: var(--accent);">#Post Process</span>
-            
-            
-        </div>
-
-        
-        <section class="series-callout">
-            <div class="series-callout-top">
-                <div>
-                    <p class="series-kicker">所属专栏</p>
-                    <h2 class="series-title">UE5 动画系统源码拆解</h2>
+<div class="post-page-shell note-post-shell has-toc">
+    <article class="post-container module post-article note-post">
+        <header class="note-post-header">
+            <h1 class="post-title">动画蓝图分层架构：Linked Anim Layer、Sub Anim Instance、Post Process 的组合策略</h1>
+            <div class="note-post-meta">
+                <time datetime="2023-06-04">2023.06.04</time>
+                
+                <div class="note-post-tags" aria-label="文章标签">
+                    <span># Unreal Engine</span><span># 源码阅读</span><span># UE5</span><span># Animation System</span><span># Linked Anim Layer</span><span># Sub Anim Instance</span><span># Post Process</span>
                 </div>
-                <span class="column-badge is-complete">已完结</span>
-            </div>
-            <p class="series-summary">围绕 UE5.5 动画系统的运行时主线，从 SkeletalMeshComponent 每帧驱动、AnimInstance 生命周期、AnimBlueprint 编译产物，到状态机、混合、Montage 与并行评估，形成一套可复用的源码阅读与问题定位框架。</p>
-            <div class="series-meta">
-                <span>第 7 篇</span>
-                <span>已发布 8 / 8</span>
-                
-                <span>阶段：5.5 主线梳理</span>
                 
             </div>
-            <div class="column-progress" aria-hidden="true">
-                <span style="width: 88%"></span>
+        </header>
+
+        
+        <nav class="note-post-series" aria-label="所属专栏">
+            <div>
+                <a href="/columns/ue-animation-system/">UE5 动画系统</a>
+                <span>第 7 篇 · 已发布 8 篇</span>
             </div>
-            <a class="series-link" href="/columns/ue-animation-system/">查看专栏总览 -></a>
-        </section>
+            <a class="note-post-series-index" href="/columns/ue-animation-system/">专栏目录 <span aria-hidden="true">→</span></a>
+        </nav>
         
 
         
-        <section class="post-toc-inline" aria-labelledby="post-toc-inline-title">
-            <div class="post-toc-head">
-                <p class="post-toc-kicker">阅读导航</p>
-                <h2 id="post-toc-inline-title" class="post-toc-title">目录</h2>
-            </div>
+        <details class="post-toc-inline note-post-toc-mobile">
+            <summary><span>文章目录</span><span class="note-toc-expand">展开</span><span class="note-toc-collapse">收起</span></summary>
             <nav class="post-toc-nav" aria-label="文章目录">
                 <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E5%B1%82%E5%9C%A8%E6%BA%90%E7%A0%81%E9%87%8C%E5%A6%82%E4%BD%95%E5%8D%8F%E5%90%8C"><span class="post-toc-list-text">这三层在源码里如何协同</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Linked-Layer%EF%BC%9A%E6%8E%A5%E5%8F%A3%E5%8C%96%E6%89%A9%E5%B1%95%EF%BC%8C%E4%B8%8D%E6%94%B9%E4%B8%BB%E5%9B%BE%E6%8B%93%E6%89%91"><span class="post-toc-list-text">1) Linked Layer：接口化扩展，不改主图拓扑</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Linked-Sub-Graph%EF%BC%9A%E8%BF%90%E8%A1%8C%E6%97%B6%E5%AD%90%E5%AE%9E%E4%BE%8B%E6%8B%86%E5%88%86%E5%A4%8D%E6%9D%82%E8%81%8C%E8%B4%A3"><span class="post-toc-list-text">2) Linked&#x2F;Sub Graph：运行时子实例拆分复杂职责</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-LinkedInputPose%EF%BC%9A%E8%B7%A8%E5%9B%BE%E5%A7%BF%E6%80%81%E4%BC%A0%E9%80%92%E7%9A%84%E6%A1%A5"><span class="post-toc-list-text">3) LinkedInputPose：跨图姿态传递的桥</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Post-Process%EF%BC%9A%E5%90%8E%E7%BD%AE%E4%BF%AE%E6%AD%A3%E5%B1%82%EF%BC%8C%E4%B8%8D%E5%BA%94%E6%89%BF%E6%8B%85%E4%B8%BB%E9%80%BB%E8%BE%91"><span class="post-toc-list-text">4) Post Process：后置修正层，不应承担主逻辑</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%86%E5%B1%82%E5%A5%91%E7%BA%A6%E6%A8%A1%E6%9D%BF%EF%BC%88%E5%8F%AF%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%9C%B0%EF%BC%89"><span class="post-toc-list-text">分层契约模板（可直接落地）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
             </nav>
-        </section>
+        </details>
         
 
         <div class="post-content">
@@ -210,49 +184,35 @@
 
         </div>
 
-        <div class="copyright-box">
-            <strong>版权声明：</strong>除特别说明外，本站文章均采用
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">BY-NC-SA</a>
-            协议发布。
+        <div class="note-post-license">
+            除特别说明外，文章采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> 协议发布。
         </div>
 
         
-        <section class="series-navigation">
-            <div class="series-navigation-head">
-                <div>
-                    <p class="series-navigation-kicker">专栏内导航</p>
-                    <h2 class="series-navigation-title">继续这条阅读路线</h2>
-                </div>
-                <a class="series-navigation-overview" href="/columns/ue-animation-system/">返回专栏总览</a>
-            </div>
-
-            <div class="series-navigation-grid">
-                
-                <a href="/2023/05/21/ue-animation-system-notes/ue-animation-system-06-montage-slot-notify-root-motion/" class="series-nav-card is-prev">
-                    <span class="series-nav-direction">← 上一讲</span>
-                    <span class="series-nav-order">第 6 篇</span>
-                    <strong class="series-nav-title">Montage / Slot / Notify / Root Motion：技能动画如何进入主动画流</strong>
-                </a>
-                
-
-                
-                <a href="/2023/06/18/ue-animation-system-notes/ue-animation-system-08-performance-stability-and-debugging-loop/" class="series-nav-card is-next">
-                    <span class="series-nav-direction">下一讲 →</span>
-                    <span class="series-nav-order">第 8 篇</span>
-                    <strong class="series-nav-title">性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线</strong>
-                </a>
-                
-            </div>
-        </section>
+        <nav class="note-post-navigation" aria-label="专栏内前后篇">
+            
+            <a href="/2023/05/21/ue-animation-system-notes/ue-animation-system-06-montage-slot-notify-root-motion/" class="note-post-prev">
+                <span>← 上一篇</span>
+                <strong>Montage / Slot / Notify / Root Motion：技能动画如何进入主动画流</strong>
+            </a>
+            
+            
+            <a href="/2023/06/18/ue-animation-system-notes/ue-animation-system-08-performance-stability-and-debugging-loop/" class="note-post-next">
+                <span>下一篇 →</span>
+                <strong>性能与稳定性闭环：并行评估、缓存命中、预算控制、定位 checklist 与回归基线</strong>
+            </a>
+            
+        </nav>
         
+        <footer class="note-post-footer">
+            <span>Claude’s Desk</span>
+            <a href="/columns/ue-animation-system/">查看专栏全部文章 <span aria-hidden="true">→</span></a>
+        </footer>
     </article>
 
     
-    <aside class="post-toc-sidebar module" aria-labelledby="post-toc-sidebar-title">
-        <div class="post-toc-head">
-            <p class="post-toc-kicker">阅读导航</p>
-            <h2 id="post-toc-sidebar-title" class="post-toc-title">目录</h2>
-        </div>
+    <aside class="post-toc-sidebar module note-post-toc" aria-labelledby="post-toc-sidebar-title">
+        <h2 id="post-toc-sidebar-title" class="post-toc-title">文章目录</h2>
         <nav class="post-toc-nav" aria-label="文章目录">
             <ol class="post-toc-list"><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="post-toc-list-text">核心问题</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E4%B8%BB%E7%BA%BF%E5%9B%BE"><span class="post-toc-list-text">主线图</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E8%BF%99%E4%B8%89%E5%B1%82%E5%9C%A8%E6%BA%90%E7%A0%81%E9%87%8C%E5%A6%82%E4%BD%95%E5%8D%8F%E5%90%8C"><span class="post-toc-list-text">这三层在源码里如何协同</span></a><ol class="post-toc-list-child"><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#1-Linked-Layer%EF%BC%9A%E6%8E%A5%E5%8F%A3%E5%8C%96%E6%89%A9%E5%B1%95%EF%BC%8C%E4%B8%8D%E6%94%B9%E4%B8%BB%E5%9B%BE%E6%8B%93%E6%89%91"><span class="post-toc-list-text">1) Linked Layer：接口化扩展，不改主图拓扑</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#2-Linked-Sub-Graph%EF%BC%9A%E8%BF%90%E8%A1%8C%E6%97%B6%E5%AD%90%E5%AE%9E%E4%BE%8B%E6%8B%86%E5%88%86%E5%A4%8D%E6%9D%82%E8%81%8C%E8%B4%A3"><span class="post-toc-list-text">2) Linked&#x2F;Sub Graph：运行时子实例拆分复杂职责</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#3-LinkedInputPose%EF%BC%9A%E8%B7%A8%E5%9B%BE%E5%A7%BF%E6%80%81%E4%BC%A0%E9%80%92%E7%9A%84%E6%A1%A5"><span class="post-toc-list-text">3) LinkedInputPose：跨图姿态传递的桥</span></a></li><li class="post-toc-list-item post-toc-list-level-3"><a class="post-toc-list-link" href="#4-Post-Process%EF%BC%9A%E5%90%8E%E7%BD%AE%E4%BF%AE%E6%AD%A3%E5%B1%82%EF%BC%8C%E4%B8%8D%E5%BA%94%E6%89%BF%E6%8B%85%E4%B8%BB%E9%80%BB%E8%BE%91"><span class="post-toc-list-text">4) Post Process：后置修正层，不应承担主逻辑</span></a></li></ol></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%88%86%E5%B1%82%E5%A5%91%E7%BA%A6%E6%A8%A1%E6%9D%BF%EF%BC%88%E5%8F%AF%E7%9B%B4%E6%8E%A5%E8%90%BD%E5%9C%B0%EF%BC%89"><span class="post-toc-list-text">分层契约模板（可直接落地）</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E6%9C%80%E5%B0%8F%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="post-toc-list-text">最小验证步骤</span></a></li><li class="post-toc-list-item post-toc-list-level-2"><a class="post-toc-list-link" href="#%E5%B0%8F%E7%BB%93"><span class="post-toc-list-text">小结</span></a></li></ol>
         </nav>
@@ -270,8 +230,7 @@
         
             <script src="/js/mermaid-render.js?v=20260419a"></script>
             <script src="/js/codeblocks.js?v=20260419a"></script>
-            <script src="/js/toc.js?v=20260419a"></script>
-            
+            <script src="/js/toc.js?v=20261111a"></script>
         
 
         <script>
