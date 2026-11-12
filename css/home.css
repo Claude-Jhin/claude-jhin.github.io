@@ -1,0 +1,95 @@
+/* Stable slots keep a loose paper-desk feel without hiding reading links. */
+body.is-home {
+    position: relative;
+    overflow: visible;
+    touch-action: auto;
+}
+
+.desktop-workspace {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.35fr) minmax(240px, 1fr);
+    grid-template-areas: 'profile posts tags' 'nav posts quote' 'nav posts contact';
+    align-items: start;
+    gap: 28px;
+    width: min(1160px, calc(100% - 112px));
+    margin: 100px auto 40px;
+}
+
+.is-home .desktop-workspace .module {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    user-select: auto;
+    transform: translate(var(--desk-x, 0px), var(--desk-y, 0px)) rotate(var(--desk-angle, 0deg));
+}
+
+.desktop-workspace .mod-profile { grid-area: profile; --desk-angle: -0.6deg; }
+.desktop-workspace .mod-nav { grid-area: nav; --desk-angle: 0.4deg; }
+.desktop-workspace .mod-posts { grid-area: posts; --desk-angle: 0.2deg; }
+.desktop-workspace .mod-tags { grid-area: tags; --desk-angle: -0.4deg; }
+.desktop-workspace .mod-quote { grid-area: quote; --desk-angle: 0.6deg; }
+.desktop-workspace .mod-contact { grid-area: contact; --desk-angle: -0.3deg; }
+.desktop-workspace h2 { font-size: 19px; line-height: 1.5; }
+.desktop-workspace h1 { font-size: 25px; line-height: 1.5; }
+.desktop-workspace a { overflow-wrap: anywhere; }
+.desktop-workspace .nav-link { min-height: 36px; padding-bottom: 0; }
+.desktop-workspace .tag { display: inline-flex; align-items: center; min-height: 32px; }
+.desktop-workspace .post-item a { display: inline-block; min-height: 36px; line-height: 1.7; }
+.desktop-workspace .mod-contact a { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
+.desktop-workspace a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.is-home .controls {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    width: min(1160px, calc(100% - 112px));
+    margin: 0 auto 24px;
+    text-align: right;
+}
+
+body.is-home .global-footer {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    padding: 0 24px 32px;
+    text-align: center;
+    pointer-events: auto;
+}
+
+@media (max-width: 1050px) {
+    .desktop-workspace {
+        width: min(820px, calc(100% - 48px));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: 'profile nav' 'posts tags' 'posts quote' 'posts contact';
+        gap: 20px;
+        margin-top: 88px;
+    }
+    .is-home .desktop-workspace .module { transform: none; cursor: auto; }
+    .is-home .controls { display: none; }
+}
+
+@media (max-width: 640px) {
+    .desktop-workspace {
+        width: calc(100% - 32px);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'profile' 'nav' 'posts' 'tags' 'quote' 'contact';
+        margin-top: 88px;
+        gap: 18px;
+    }
+    .desktop-workspace .nav-link { min-height: 44px; }
+    .desktop-workspace .mod-nav > div {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 16px !important;
+    }
+    .desktop-workspace .tag { min-height: 44px; box-sizing: border-box; }
+    .desktop-workspace .post-item a { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .is-home .desktop-workspace .module,
+    .is-home button { transition: none; }
+}
