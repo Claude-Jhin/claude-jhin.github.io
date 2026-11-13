@@ -93,3 +93,16 @@ body.is-home .global-footer {
     .is-home .desktop-workspace .module,
     .is-home button { transition: none; }
 }
+
+/* Wide desks use gently tilted, staggered stacks; grid remains the fallback. */
+.desktop-workspace.is-scattered { display: block; position: relative; }
+.is-home .desktop-workspace.is-scattered .module {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: transform 420ms cubic-bezier(.22,.68,.25,1), box-shadow 180ms ease;
+}
+.is-home .desktop-workspace.is-scattered .module.dragging { transition: none; cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) {
+    .is-home .desktop-workspace.is-scattered .module { transition: none; }
+}
